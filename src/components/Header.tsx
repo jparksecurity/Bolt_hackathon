@@ -11,7 +11,7 @@ export const Header: React.FC = () => {
             alt="Jigo Tenant Logo" 
             className="w-8 h-8"
           />
-          <h1 className="text-xl font-bold">LeaseTracker Pro</h1>
+          <h1 className="text-xl font-bold">Lease Tracker</h1>
         </div>
         <div className="flex items-center space-x-4">
           <button className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
