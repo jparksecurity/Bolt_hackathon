@@ -23,7 +23,7 @@ export const ProjectHeader: React.FC = () => {
         </div>
         <div className="flex items-center space-x-1 relative">
           <DollarSign className="w-4 h-4" />
-          <span>Expected Fee: $15,000</span>
+          <span>Expected Fee for Tenant: $0</span>
           <div 
             className="relative"
             onMouseEnter={() => setShowTooltip(true)}
