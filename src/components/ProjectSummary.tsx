@@ -13,6 +13,11 @@ export const ProjectSummary: React.FC = () => {
       
       <div className="space-y-4">
         <div>
+          <span className="text-sm text-gray-300 block">Company Name</span>
+          <span className="text-sm font-medium">TechFlow Innovations</span>
+        </div>
+        
+        <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-300">Progress</span>
             <span className="text-sm font-medium">{progress}%</span>
