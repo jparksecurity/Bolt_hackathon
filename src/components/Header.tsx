@@ -1,12 +1,16 @@
 import React from 'react';
-import { Building2, Share, User } from 'lucide-react';
+import { Share, User } from 'lucide-react';
 
 export const Header: React.FC = () => {
   return (
     <header className="bg-gray-900 text-white px-6 py-4 border-b border-gray-800">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <Building2 className="w-6 h-6 text-blue-400" />
+          <img 
+            src="/src/assets/design/Jigo Tenant_BW.png" 
+            alt="Jigo Tenant Logo" 
+            className="w-8 h-8"
+          />
           <h1 className="text-xl font-bold">LeaseTracker Pro</h1>
         </div>
         <div className="flex items-center space-x-4">
