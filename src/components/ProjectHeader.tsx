@@ -64,11 +64,7 @@ export const ProjectHeader: React.FC = () => {
                 <span className="ml-2 font-medium">TechFlow Innovations</span>
               </div>
               <div>
-                <span className="text-gray-600">Industry:</span>
-                <span className="ml-2">Software Development</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Company Size:</span>
+                <span className="text-gray-600">Expected Head Count:</span>
                 <span className="ml-2">75-100 employees</span>
               </div>
             </div>
