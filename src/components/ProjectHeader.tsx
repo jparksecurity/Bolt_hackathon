@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit3, Calendar, DollarSign, Info } from 'lucide-react';
+import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail } from 'lucide-react';
 
 export const ProjectHeader: React.FC = () => {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -41,6 +41,56 @@ export const ProjectHeader: React.FC = () => {
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Company and Contact Information Section */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+            <Building className="w-5 h-5" />
+            <span>Company Information</span>
+          </h3>
+          <Edit3 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className="font-medium text-gray-900 mb-2">Company Details</h4>
+            <div className="space-y-2 text-sm">
+              <div>
+                <span className="text-gray-600">Company Name:</span>
+                <span className="ml-2 font-medium">TechFlow Innovations</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Industry:</span>
+                <span className="ml-2">Software Development</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Company Size:</span>
+                <span className="ml-2">75-100 employees</span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-gray-900 mb-2">Point of Contact</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center space-x-2">
+                <User className="w-4 h-4 text-gray-400" />
+                <span className="font-medium">Sarah Chen</span>
+                <span className="text-gray-600">- Head of Operations</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Phone className="w-4 h-4 text-gray-400" />
+                <span>(555) 123-4567</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Mail className="w-4 h-4 text-gray-400" />
+                <span>sarah.chen@techflow.com</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
