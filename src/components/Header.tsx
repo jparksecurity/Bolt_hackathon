@@ -7,7 +7,7 @@ export const Header: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <img 
-            src="/src/assets/design/Jigo Tenant_BW.png" 
+            src="/src/assets/design/Jigo_Tenant_BW.png" 
             alt="Jigo Tenant Logo" 
             className="w-8 h-8"
           />
