@@ -18,7 +18,6 @@ function App() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <ProjectRoadmap />
             <RecentUpdates />
           </div>
           
@@ -32,6 +31,11 @@ function App() {
         {/* Properties Section - Full Width */}
         <div className="px-6 pb-6">
           <PropertiesOfInterest />
+        </div>
+        
+        {/* Project Roadmap - Full Width at Bottom */}
+        <div className="px-6 pb-6">
+          <ProjectRoadmap />
         </div>
       </div>
     </div>
