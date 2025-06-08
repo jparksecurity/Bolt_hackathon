@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Square, Calendar, Eye, FileText, Plus, Edit3, X, MessageSquare, Building2, DollarSign } from 'lucide-react';
+import { Square, Calendar, Plus, Edit3, X, MessageSquare, Building2, DollarSign } from 'lucide-react';
 
 interface Property {
   id: number;
