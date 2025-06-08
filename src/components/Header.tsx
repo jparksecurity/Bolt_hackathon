@@ -1,11 +1,14 @@
 import React from 'react';
 import { Share, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const Header: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <header className="bg-white text-gray-900 px-6 py-4 border-b border-gray-200">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
           <img 
             src="/src/assets/design/Jigo_Tenant_BW_TP.png" 
             alt="Jigo Tenant Logo" 
