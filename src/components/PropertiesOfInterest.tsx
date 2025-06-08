@@ -1,7 +1,19 @@
-import React from 'react';
-import { MapPin, Square, Calendar, Eye, FileText, Plus, Edit3 } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Square, Calendar, Eye, FileText, Plus, Edit3, X, MessageSquare } from 'lucide-react';
 
-const properties = [
+interface Property {
+  id: number;
+  name: string;
+  size: string;
+  rent: string;
+  availability: string;
+  description: string;
+  features: string[];
+  status: 'active' | 'new' | 'pending' | 'declined';
+  declineReason?: string;
+}
+
+const initialProperties: Property[] = [
   {
     id: 1,
     name: 'Downtown Tech Tower - 5th Street',
@@ -30,11 +42,39 @@ const properties = [
     availability: 'Available February 2024',
     description: 'Converted warehouse with industrial charm. High ceilings, polished concrete floors, and abundant natural light. Includes parking garage and loading dock. Great for companies wanting unique character.',
     features: ['Virtual Tour Pending', 'Brochure'],
-    status: 'pending'
+    status: 'declined',
+    declineReason: 'Client concerned about noise levels from nearby construction and lack of modern HVAC system.'
   }
 ];
 
 export const PropertiesOfInterest: React.FC = () => {
+  const [properties, setProperties] = useState<Property[]>(initialProperties);
+  const [showDeclineModal, setShowDeclineModal] = useState<number | null>(null);
+  const [declineReason, setDeclineReason] = useState('');
+
+  const handleDeclineProperty = (propertyId: number) => {
+    setProperties(properties.map(property => 
+      property.id === propertyId 
+        ? { ...property, status: 'declined', declineReason }
+        : property
+    ));
+    setShowDeclineModal(null);
+    setDeclineReason('');
+  };
+
+  const handleRestoreProperty = (propertyId: number) => {
+    setProperties(properties.map(property => 
+      property.id === propertyId 
+        ? { ...property, status: 'active', declineReason: undefined }
+        : property
+    ));
+  };
+
+  const openDeclineModal = (propertyId: number) => {
+    setShowDeclineModal(propertyId);
+    setDeclineReason('');
+  };
+
   return (
     <div className="bg-white p-6 border border-gray-200 rounded-lg">
       <div className="flex items-center justify-between mb-6">
@@ -47,13 +87,52 @@ export const PropertiesOfInterest: React.FC = () => {
       
       <div className="space-y-6">
         {properties.map((property) => (
-          <div key={property.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+          <div key={property.id} className={`border border-gray-200 rounded-lg p-4 transition-all ${
+            property.status === 'declined' 
+              ? 'opacity-60 bg-gray-50' 
+              : 'hover:shadow-md'
+          }`}>
             <div className="flex items-start justify-between mb-3">
-              <h4 className="font-semibold text-gray-900 text-lg">{property.name}</h4>
-              <Edit3 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+              <h4 className={`font-semibold text-gray-900 text-lg ${
+                property.status === 'declined' ? 'line-through' : ''
+              }`}>
+                {property.name}
+              </h4>
+              <div className="flex items-center space-x-2">
+                {property.status === 'declined' ? (
+                  <button
+                    onClick={() => handleRestoreProperty(property.id)}
+                    className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                  >
+                    Restore
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => openDeclineModal(property.id)}
+                    className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                  >
+                    Decline
+                  </button>
+                )}
+                <Edit3 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+              </div>
             </div>
             
-            <div className="flex items-center space-x-6 mb-3 text-sm text-gray-600">
+            {property.status === 'declined' && property.declineReason && (
+              <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <MessageSquare className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="text-sm font-medium text-red-800">Decline Reason:</span>
+                    <p className="text-sm text-red-700 mt-1">{property.declineReason}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className={`flex items-center space-x-6 mb-3 text-sm text-gray-600 ${
+              property.status === 'declined' ? 'line-through' : ''
+            }`}>
               <div className="flex items-center space-x-1">
                 <Square className="w-4 h-4" />
                 <span>{property.size}</span>
@@ -67,7 +146,11 @@ export const PropertiesOfInterest: React.FC = () => {
               </div>
             </div>
             
-            <p className="text-gray-700 text-sm mb-4 leading-relaxed">{property.description}</p>
+            <p className={`text-gray-700 text-sm mb-4 leading-relaxed ${
+              property.status === 'declined' ? 'line-through' : ''
+            }`}>
+              {property.description}
+            </p>
             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -78,14 +161,16 @@ export const PropertiesOfInterest: React.FC = () => {
                       feature.includes('Tour') 
                         ? 'bg-blue-100 text-blue-700' 
                         : 'bg-green-100 text-green-700'
-                    }`}
+                    } ${property.status === 'declined' ? 'opacity-50' : ''}`}
                   >
                     {feature}
                   </span>
                 ))}
               </div>
               <div className="flex items-center space-x-2">
-                <button className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">
+                <button className={`px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors ${
+                  property.status === 'declined' ? 'opacity-50 cursor-not-allowed' : ''
+                }`}>
                   See More
                 </button>
                 {property.status === 'new' && (
@@ -98,6 +183,52 @@ export const PropertiesOfInterest: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Decline Modal */}
+      {showDeclineModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Decline Property</h3>
+              <button
+                onClick={() => setShowDeclineModal(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason for declining this property:
+              </label>
+              <textarea
+                value={declineReason}
+                onChange={(e) => setDeclineReason(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                rows={4}
+                placeholder="Enter the reason why this property doesn't meet the client's requirements..."
+              />
+            </div>
+            
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={() => setShowDeclineModal(null)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeclineProperty(showDeclineModal)}
+                disabled={!declineReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Decline Property
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
