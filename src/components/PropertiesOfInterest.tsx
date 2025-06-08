@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Square, Calendar, Eye, FileText, Plus, Edit3, X, MessageSquare } from 'lucide-react';
+import { MapPin, Square, Calendar, Eye, FileText, Plus, Edit3, X, MessageSquare, Building2, DollarSign } from 'lucide-react';
 
 interface Property {
   id: number;
@@ -11,6 +11,8 @@ interface Property {
   features: string[];
   status: 'active' | 'new' | 'pending' | 'declined';
   declineReason?: string;
+  leaseType: 'Direct Lease' | 'Sublease' | 'Sub-sublease';
+  serviceType: 'Full Service' | 'NNN' | 'Modified Gross';
 }
 
 const initialProperties: Property[] = [
@@ -22,7 +24,9 @@ const initialProperties: Property[] = [
     availability: 'Available March 2024',
     description: 'Modern Class A office space with exposed brick, high ceilings, and floor-to-ceiling windows. Fiber internet ready, flexible open floor plan perfect for collaborative workspaces. 2 blocks from metro station.',
     features: ['Virtual Tour', 'Brochure'],
-    status: 'active'
+    status: 'active',
+    leaseType: 'Direct Lease',
+    serviceType: 'Full Service'
   },
   {
     id: 2,
@@ -32,7 +36,9 @@ const initialProperties: Property[] = [
     availability: 'Available April 2024',
     description: 'Brand new construction in the Innovation District. Features include rooftop terrace, bike storage, and state-of-the-art HVAC. One block south from light rail with incredible views for maximum flexibility.',
     features: ['Virtual Tour', 'Brochure Coming Soon'],
-    status: 'new'
+    status: 'new',
+    leaseType: 'Direct Lease',
+    serviceType: 'NNN'
   },
   {
     id: 3,
@@ -43,9 +49,37 @@ const initialProperties: Property[] = [
     description: 'Converted warehouse with industrial charm. High ceilings, polished concrete floors, and abundant natural light. Includes parking garage and loading dock. Great for companies wanting unique character.',
     features: ['Virtual Tour Pending', 'Brochure'],
     status: 'declined',
-    declineReason: 'Client concerned about noise levels from nearby construction and lack of modern HVAC system.'
+    declineReason: 'Client concerned about noise levels from nearby construction and lack of modern HVAC system.',
+    leaseType: 'Sublease',
+    serviceType: 'Modified Gross'
   }
 ];
+
+const getLeaseTypeColor = (leaseType: string) => {
+  switch (leaseType) {
+    case 'Direct Lease':
+      return 'bg-green-100 text-green-800';
+    case 'Sublease':
+      return 'bg-blue-100 text-blue-800';
+    case 'Sub-sublease':
+      return 'bg-purple-100 text-purple-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+const getServiceTypeColor = (serviceType: string) => {
+  switch (serviceType) {
+    case 'Full Service':
+      return 'bg-emerald-100 text-emerald-800';
+    case 'NNN':
+      return 'bg-orange-100 text-orange-800';
+    case 'Modified Gross':
+      return 'bg-yellow-100 text-yellow-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
 
 export const PropertiesOfInterest: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>(initialProperties);
@@ -138,12 +172,30 @@ export const PropertiesOfInterest: React.FC = () => {
                 <span>{property.size}</span>
               </div>
               <div className="flex items-center space-x-1">
+                <DollarSign className="w-4 h-4" />
                 <span className="font-medium">{property.rent}</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Calendar className="w-4 h-4" />
                 <span>{property.availability}</span>
               </div>
+            </div>
+
+            {/* Lease and Service Type Information */}
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="flex items-center space-x-2">
+                <Building2 className="w-4 h-4 text-gray-500" />
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getLeaseTypeColor(property.leaseType)} ${
+                  property.status === 'declined' ? 'opacity-50' : ''
+                }`}>
+                  {property.leaseType}
+                </span>
+              </div>
+              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getServiceTypeColor(property.serviceType)} ${
+                property.status === 'declined' ? 'opacity-50' : ''
+              }`}>
+                {property.serviceType}
+              </span>
             </div>
             
             <p className={`text-gray-700 text-sm mb-4 leading-relaxed ${
