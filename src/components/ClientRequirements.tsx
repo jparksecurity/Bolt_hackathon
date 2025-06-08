@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit3, MapPin, Building, Wifi, Users, Car } from 'lucide-react';
+import { Edit3, MapPin, Building, FileText } from 'lucide-react';
 
 const requirementCategories = [
   {
@@ -26,24 +26,13 @@ const requirementCategories = [
   },
   {
     id: 3,
-    title: 'Technology & Infrastructure',
-    icon: Wifi,
+    title: 'Other',
+    icon: FileText,
     items: [
-      'High-speed fiber internet ready',
-      'Modern HVAC system',
-      'Adequate electrical capacity',
-      'Conference room AV capabilities'
-    ]
-  },
-  {
-    id: 4,
-    title: 'Amenities',
-    icon: Users,
-    items: [
-      'Kitchen/break room facilities',
-      'Bike storage',
-      'Building security',
-      'Elevator access'
+      'Move-in ready by March 2024',
+      'Pet-friendly building preferred',
+      'Natural light priority',
+      'Flexible lease terms (3-5 years)'
     ]
   }
 ];
