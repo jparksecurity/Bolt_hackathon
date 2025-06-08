@@ -24,7 +24,6 @@ function App() {
           {/* Sidebar */}
           <div className="space-y-6">
             <ClientRequirements />
-            <ProjectDocuments />
           </div>
         </div>
         
@@ -33,9 +32,14 @@ function App() {
           <PropertiesOfInterest />
         </div>
         
-        {/* Project Roadmap - Full Width at Bottom */}
+        {/* Project Roadmap - Full Width */}
         <div className="px-6 pb-6">
           <ProjectRoadmap />
+        </div>
+        
+        {/* Project Documents - Full Width at Bottom */}
+        <div className="px-6 pb-6">
+          <ProjectDocuments />
         </div>
       </div>
     </div>
