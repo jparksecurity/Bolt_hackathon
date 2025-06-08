@@ -136,14 +136,14 @@ export const PropertiesOfInterest: React.FC = () => {
                 {property.status === 'declined' ? (
                   <button
                     onClick={() => handleRestoreProperty(property.id)}
-                    className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                    className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
                   >
                     Restore
                   </button>
                 ) : (
                   <button
                     onClick={() => openDeclineModal(property.id)}
-                    className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                    className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium"
                   >
                     Decline
                   </button>
