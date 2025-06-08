@@ -1,23 +1,43 @@
-import React, { useState } from 'react';
-import { Check, Edit3 } from 'lucide-react';
+import React from 'react';
+import { Edit3, MapPin, Building, FileText } from 'lucide-react';
 
-const requirements = [
-  { id: 1, text: '15,000 sq ft minimum', completed: true },
-  { id: 2, text: 'Downtown location', completed: true },
-  { id: 3, text: 'High-speed internet ready', completed: true },
-  { id: 4, text: 'Flexible workspace design', completed: false },
-  { id: 5, text: 'Public transport access', completed: true }
+const requirementCategories = [
+  {
+    id: 1,
+    title: 'Space Requirements',
+    icon: Building,
+    items: [
+      '15,000 sq ft minimum',
+      'Open floor plan capability',
+      'Private meeting rooms (4-6)',
+      'Reception area'
+    ]
+  },
+  {
+    id: 2,
+    title: 'Location',
+    icon: MapPin,
+    items: [
+      'Downtown core preferred',
+      'Public transport access',
+      'Walking distance to restaurants',
+      'Parking availability'
+    ]
+  },
+  {
+    id: 3,
+    title: 'Other',
+    icon: FileText,
+    items: [
+      'Move-in ready by March 2024',
+      'Pet-friendly building preferred',
+      'Natural light priority',
+      'Flexible lease terms (3-5 years)'
+    ]
+  }
 ];
 
 export const ClientRequirements: React.FC = () => {
-  const [reqs, setReqs] = useState(requirements);
-
-  const toggleRequirement = (id: number) => {
-    setReqs(reqs.map(req => 
-      req.id === id ? { ...req, completed: !req.completed } : req
-    ));
-  };
-
   return (
     <div className="bg-white p-6 border border-gray-200 rounded-lg">
       <div className="flex items-center justify-between mb-4">
@@ -25,22 +45,21 @@ export const ClientRequirements: React.FC = () => {
         <Edit3 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
       </div>
       
-      <div className="space-y-3">
-        {reqs.map((req) => (
-          <div key={req.id} className="flex items-center space-x-3">
-            <button
-              onClick={() => toggleRequirement(req.id)}
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                req.completed 
-                  ? 'bg-green-500 border-green-500 text-white' 
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              {req.completed && <Check className="w-3 h-3" />}
-            </button>
-            <span className={`text-sm ${req.completed ? 'text-gray-600 line-through' : 'text-gray-900'}`}>
-              {req.text}
-            </span>
+      <div className="space-y-6">
+        {requirementCategories.map((category) => (
+          <div key={category.id}>
+            <div className="flex items-center space-x-2 mb-3">
+              <category.icon className="w-4 h-4 text-blue-600" />
+              <h4 className="font-medium text-gray-900 text-sm">{category.title}</h4>
+            </div>
+            <div className="space-y-2 ml-6">
+              {category.items.map((item, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
+                  <span className="text-sm text-gray-700">{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>

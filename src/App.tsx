@@ -2,11 +2,9 @@ import React from 'react';
 import { Header } from './components/Header';
 import { ProjectHeader } from './components/ProjectHeader';
 import { ProjectRoadmap } from './components/ProjectRoadmap';
-import { ClientRequirements } from './components/ClientRequirements';
 import { ProjectDocuments } from './components/ProjectDocuments';
 import { PropertiesOfInterest } from './components/PropertiesOfInterest';
 import { RecentUpdates } from './components/RecentUpdates';
-import { ProjectSummary } from './components/ProjectSummary';
 
 function App() {
   return (
@@ -16,24 +14,26 @@ function App() {
       <div className="max-w-7xl mx-auto">
         <ProjectHeader />
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            <ProjectRoadmap />
+        <div className="p-6">
+          {/* Recent Updates - Full Width */}
+          <div className="mb-6">
             <RecentUpdates />
-          </div>
-          
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <ClientRequirements />
-            <ProjectDocuments />
-            <ProjectSummary />
           </div>
         </div>
         
         {/* Properties Section - Full Width */}
         <div className="px-6 pb-6">
           <PropertiesOfInterest />
+        </div>
+        
+        {/* Project Roadmap - Full Width */}
+        <div className="px-6 pb-6">
+          <ProjectRoadmap />
+        </div>
+        
+        {/* Project Documents - Full Width at Bottom */}
+        <div className="px-6 pb-6">
+          <ProjectDocuments />
         </div>
       </div>
     </div>
