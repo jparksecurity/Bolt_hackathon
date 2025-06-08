@@ -6,7 +6,6 @@ import { ClientRequirements } from './components/ClientRequirements';
 import { ProjectDocuments } from './components/ProjectDocuments';
 import { PropertiesOfInterest } from './components/PropertiesOfInterest';
 import { RecentUpdates } from './components/RecentUpdates';
-import { ProjectSummary } from './components/ProjectSummary';
 
 function App() {
   return (
@@ -27,7 +26,6 @@ function App() {
           <div className="space-y-6">
             <ClientRequirements />
             <ProjectDocuments />
-            <ProjectSummary />
           </div>
         </div>
         
