@@ -12,7 +12,7 @@ export const ProjectHeader: React.FC = () => {
           <Edit3 className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
         </div>
         <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-          In Progress
+          Step 2: Market Research & Property Sourcing
         </span>
       </div>
       
