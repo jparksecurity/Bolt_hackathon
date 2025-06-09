@@ -1,15 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { LandingPage } from './components/LandingPage';
-import { ProjectsListPage } from './components/ProjectsListPage';
-import { ProjectDetailPage } from './components/ProjectDetailPage';
+import { LeaseTrackerPage } from './components/LeaseTrackerPage';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/projects" element={<ProjectsListPage />} />
-        <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+        <Route path="/lease-tracker" element={<LeaseTrackerPage />} />
       </Routes>
     </Router>
   );
