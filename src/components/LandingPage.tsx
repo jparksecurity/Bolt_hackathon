@@ -17,7 +17,7 @@ export function LandingPage() {
             Streamline your commercial real estate leasing process with our comprehensive tracking and management platform
           </p>
           <Link
-            to="/lease-tracker"
+            to="/projects"
             className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
           >
             Get Started
@@ -66,7 +66,7 @@ export function LandingPage() {
             Join thousands of real estate professionals who trust Lease Tracker for their leasing needs
           </p>
           <Link
-            to="/lease-tracker"
+            to="/projects"
             className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
           >
             Start Tracking Leases

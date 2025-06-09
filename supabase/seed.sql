@@ -8,7 +8,7 @@ INSERT INTO projects (
   company_name, expected_headcount, created_at, updated_at
 ) VALUES (
   '550e8400-e29b-41d4-a716-446655440000',
-  'user_2yG7upkfx21qvIavQ6fEVeegjkb',
+  'user_2yHntOGKi6N4kXscdHcJrYjEpWN',
   'Downtown Tech Hub - Office Lease',
   'Step 2: Market Research & Property Sourcing',
   '2024-01-15',

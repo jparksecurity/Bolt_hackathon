@@ -280,7 +280,7 @@ enabled = false
 [auth.third_party.clerk]
 enabled = true
 # Obtain from https://clerk.com/setup/supabase
-domain = "holy-feline-92.clerk.accounts.dev"
+domain = "env(CLERK_DOMAIN)"
 
 [edge_runtime]
 enabled = true

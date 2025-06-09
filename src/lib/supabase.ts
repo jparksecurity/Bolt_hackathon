@@ -1,6 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
+import { useSession } from "@clerk/clerk-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const useSupabaseClient = () => {
+  const { session } = useSession();
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    accessToken: async () => session?.getToken() ?? null,
+  });
+};
