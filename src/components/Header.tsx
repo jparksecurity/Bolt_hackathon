@@ -1,6 +1,7 @@
 import React from 'react';
-import { Share, User } from 'lucide-react';
+import { Share } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -21,9 +22,23 @@ export const Header: React.FC = () => {
             <Share className="w-4 h-4" />
             <span className="text-sm">Copy Public Link</span>
           </button>
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-            <User className="w-4 h-4 text-white" />
-          </div>
+          <SignedOut>
+            <div className="flex items-center space-x-2">
+              <SignInButton mode="modal">
+                <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                  Sign Up
+                </button>
+              </SignUpButton>
+            </div>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
         </div>
       </div>
     </header>
