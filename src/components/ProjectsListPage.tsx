@@ -117,35 +117,48 @@ export function ProjectsListPage() {
               <Link
                 key={project.id}
                 to={`/projects/${project.id}`}
-                className="block bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+                className="block bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-200 transition-all duration-200"
               >
                 <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{project.title}</h3>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full whitespace-nowrap ml-2">
+                  {/* Status badge on its own line */}
+                  <div className="flex justify-end mb-3">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                       {project.status}
                     </span>
                   </div>
+                  
+                  {/* Title and company with full width */}
+                  <div className="mb-4">
+                    <h3 className="text-xl font-bold text-gray-900 mb-1" title={project.title}>
+                      {project.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 font-medium">{project.company_name}</p>
+                  </div>
 
-                  <div className="space-y-3 text-sm text-gray-600">
-                    <div className="flex items-center space-x-2">
-                      <Building className="w-4 h-4" />
-                      <span>{project.company_name}</span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4" />
-                      <span>{project.expected_headcount}</span>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>Started: {new Date(project.start_date).toLocaleDateString()}</span>
+                  {/* Project details */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <User className="w-4 h-4" />
+                        <span>{project.expected_headcount} employees</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(project.start_date).toLocaleDateString()}</span>
+                      </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4" />
-                      <span>Expected Fee: ${project.expected_fee.toLocaleString()}</span>
+                    {/* Fee prominently displayed */}
+                    <div className="pt-3 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Expected Fee</span>
+                        <div className="flex items-center space-x-1">
+                          <DollarSign className="w-4 h-4 text-green-600" />
+                          <span className="text-lg font-bold text-green-600">
+                            {project.expected_fee.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

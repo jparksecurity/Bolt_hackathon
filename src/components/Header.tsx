@@ -1,9 +1,12 @@
 import React from 'react';
-import { Share } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  children?: React.ReactNode;
+}
+
+export const Header: React.FC<HeaderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   return (
@@ -18,10 +21,7 @@ export const Header: React.FC = () => {
           <h1 className="text-xl font-bold">Lease Tracker</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
-            <Share className="w-4 h-4" />
-            <span className="text-sm">Copy Public Link</span>
-          </button>
+          {children}
           <SignedOut>
             <div className="flex items-center space-x-2">
               <SignInButton mode="modal">

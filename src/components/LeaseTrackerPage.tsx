@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
+import { Share } from 'lucide-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { Header } from './Header';
 import { ProjectHeader } from './ProjectHeader';
@@ -106,7 +107,12 @@ export function LeaseTrackerPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header>
+        <button className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+          <Share className="w-4 h-4" />
+          <span className="text-sm">Copy Public Link</span>
+        </button>
+      </Header>
       
       <div className="max-w-7xl mx-auto">
         <ProjectHeader />
