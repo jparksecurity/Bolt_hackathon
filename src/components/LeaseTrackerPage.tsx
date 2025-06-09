@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { Share } from 'lucide-react';
@@ -34,15 +34,7 @@ export function LeaseTrackerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isLoaded && user && id) {
-      fetchProject();
-    } else if (isLoaded && !user) {
-      navigate('/');
-    }
-  }, [isLoaded, user, id, navigate]);
-
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     if (!id) return;
     
     try {
@@ -52,14 +44,28 @@ export function LeaseTrackerPage() {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching project:', error);
+        setError('Failed to load project');
+        return;
+      }
+
       setProject(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch project');
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, supabase]);
+
+  useEffect(() => {
+    if (isLoaded && user && id) {
+      fetchProject();
+    } else if (isLoaded && !user) {
+      navigate('/');
+    }
+  }, [isLoaded, user, id, navigate, fetchProject]);
 
   if (!isLoaded || loading) {
     return (

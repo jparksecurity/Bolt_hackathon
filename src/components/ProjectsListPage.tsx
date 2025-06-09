@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Header } from './Header';
 import { useUser } from '@clerk/clerk-react';
@@ -24,13 +24,7 @@ export function ProjectsListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isLoaded && user) {
-      fetchProjects();
-    }
-  }, [isLoaded, user]);
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       if (!user) return;
       
@@ -46,7 +40,13 @@ export function ProjectsListPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, supabase]);
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetchProjects();
+    }
+  }, [isLoaded, user, fetchProjects]);
 
   if (!isLoaded || loading) {
     return (
@@ -122,7 +122,7 @@ export function ProjectsListPage() {
                 <div className="p-6">
                   {/* Status badge on its own line */}
                   <div className="flex justify-end mb-3">
-                    <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
                       {project.status}
                     </span>
                   </div>
