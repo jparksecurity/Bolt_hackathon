@@ -23,6 +23,7 @@ interface ProjectData {
   expected_headcount: string;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export function LeaseTrackerPage() {
@@ -42,6 +43,7 @@ export function LeaseTrackerPage() {
         .from('projects')
         .select('*')
         .eq('id', id)
+        .is('deleted_at', null) // Explicitly exclude soft-deleted projects
         .single();
 
       if (error) {

@@ -15,6 +15,7 @@ CREATE TABLE projects (
   payment_due TEXT,
   company_name TEXT,
   expected_headcount TEXT,
+  deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL, -- Soft delete functionality
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -110,32 +111,63 @@ ALTER TABLE project_updates ENABLE ROW LEVEL SECURITY;
 -- OPTIMIZED RLS policies - using (SELECT auth.jwt()) pattern for performance
 -- This ensures auth functions are evaluated once per query, not once per row
 
--- Projects policy - users can only access projects they own
-CREATE POLICY "Users can access their own projects" ON projects
-  FOR ALL USING (clerk_user_id = (SELECT auth.jwt() ->> 'sub'));
+-- Projects policies - separate policies for different operations with soft delete support
+-- SELECT policy - excludes soft-deleted projects by default
+CREATE POLICY "Users can view their own active projects" ON projects
+  FOR SELECT USING (
+    clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND 
+    deleted_at IS NULL
+  );
+
+-- INSERT policy - allows users to insert their own projects
+CREATE POLICY "Users can insert their own projects" ON projects
+  FOR INSERT WITH CHECK (
+    clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+  );
+
+-- UPDATE policy - allows users to update their own projects (including soft delete)
+CREATE POLICY "Users can update their own projects" ON projects
+  FOR UPDATE USING (
+    clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+  ) WITH CHECK (
+    clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+  );
+
+-- DELETE policy - allows users to hard delete their own projects (if needed)
+CREATE POLICY "Users can delete their own projects" ON projects
+  FOR DELETE USING (
+    clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+  );
+
+-- Create a separate policy for viewing deleted projects (for admin/recovery purposes)
+CREATE POLICY "Users can view their own deleted projects" ON projects
+  FOR SELECT USING (
+    clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND 
+    deleted_at IS NOT NULL
+  );
 
 -- Project contacts policy - users can access contacts for their projects
 CREATE POLICY "Users can access their project contacts" ON project_contacts
   FOR ALL USING (project_id IN (
-    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
   ));
 
 -- Client requirements policy - users can access requirements for their projects
 CREATE POLICY "Users can access their client requirements" ON client_requirements
   FOR ALL USING (project_id IN (
-    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
   ));
 
 -- Project roadmap policy - users can access roadmap for their projects
 CREATE POLICY "Users can access their project roadmap" ON project_roadmap
   FOR ALL USING (project_id IN (
-    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
   ));
 
 -- Properties policy - users can access properties for their projects
 CREATE POLICY "Users can access their properties" ON properties
   FOR ALL USING (project_id IN (
-    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
   ));
 
 -- Property features policy - users can access features for properties in their projects
@@ -143,23 +175,25 @@ CREATE POLICY "Users can access their property features" ON property_features
   FOR ALL USING (property_id IN (
     SELECT p.id FROM properties p
     JOIN projects pr ON p.project_id = pr.id
-    WHERE pr.clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    WHERE pr.clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND pr.deleted_at IS NULL
   ));
 
 -- Project documents policy - users can access documents for their projects
 CREATE POLICY "Users can access their project documents" ON project_documents
   FOR ALL USING (project_id IN (
-    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
   ));
 
 -- Project updates policy - users can access updates for their projects
 CREATE POLICY "Users can access their project updates" ON project_updates
   FOR ALL USING (project_id IN (
-    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    SELECT id FROM projects WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
   ));
 
 -- Create indexes for performance optimization
 CREATE INDEX idx_projects_clerk_user_id ON projects(clerk_user_id);
+CREATE INDEX idx_projects_deleted_at ON projects(deleted_at);
+CREATE INDEX idx_projects_clerk_user_deleted ON projects(clerk_user_id, deleted_at);
 CREATE INDEX idx_project_contacts_project_id ON project_contacts(project_id);
 CREATE INDEX idx_client_requirements_project_id ON client_requirements(project_id);
 CREATE INDEX idx_project_roadmap_project_id ON project_roadmap(project_id);
@@ -205,10 +239,10 @@ CREATE POLICY "Users can upload to their project folders" ON storage.objects
     bucket_id = 'project-documents' AND
     -- Path should be: user_id/project_id/filename
     (storage.foldername(name))[1] = (SELECT auth.jwt() ->> 'sub') AND
-    -- Ensure the project belongs to the user
+    -- Ensure the project belongs to the user and is not soft-deleted
     (storage.foldername(name))[2] IN (
       SELECT id::text FROM projects 
-      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
     )
   );
 
@@ -218,10 +252,10 @@ CREATE POLICY "Users can view their project files" ON storage.objects
     bucket_id = 'project-documents' AND
     -- Path should be: user_id/project_id/filename
     (storage.foldername(name))[1] = (SELECT auth.jwt() ->> 'sub') AND
-    -- Ensure the project belongs to the user
+    -- Ensure the project belongs to the user and is not soft-deleted
     (storage.foldername(name))[2] IN (
       SELECT id::text FROM projects 
-      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
     )
   );
 
@@ -231,10 +265,10 @@ CREATE POLICY "Users can delete their project files" ON storage.objects
     bucket_id = 'project-documents' AND
     -- Path should be: user_id/project_id/filename
     (storage.foldername(name))[1] = (SELECT auth.jwt() ->> 'sub') AND
-    -- Ensure the project belongs to the user
+    -- Ensure the project belongs to the user and is not soft-deleted
     (storage.foldername(name))[2] IN (
       SELECT id::text FROM projects 
-      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
     )
   );
 
@@ -244,9 +278,9 @@ CREATE POLICY "Users can update their project files" ON storage.objects
     bucket_id = 'project-documents' AND
     -- Path should be: user_id/project_id/filename
     (storage.foldername(name))[1] = (SELECT auth.jwt() ->> 'sub') AND
-    -- Ensure the project belongs to the user
+    -- Ensure the project belongs to the user and is not soft-deleted
     (storage.foldername(name))[2] IN (
       SELECT id::text FROM projects 
-      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub') AND deleted_at IS NULL
     )
   ); 
