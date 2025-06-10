@@ -571,16 +571,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
           </div>
         )}
       </div>
-      
-      <p className="text-gray-700 leading-relaxed">
-        {project.title === 'Untitled Project' 
-          ? 'Project description to be added. Click the edit icon to update project details.'
-          : `Project: ${project.title}. Click the edit icon to update project details.`
-        }
-        <button onClick={openProjectModal}>
-          <Edit3 className="w-4 h-4 text-gray-400 inline ml-2 cursor-pointer hover:text-gray-600 transition-colors" />
-        </button>
-      </p>
 
       {/* Project Edit Modal */}
       {showProjectModal && (
