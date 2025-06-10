@@ -64,6 +64,12 @@ interface CompanyInfoFormData {
   contact_email: string;
 }
 
+enum Modal {
+  PROJECT = 'project',
+  REQUIREMENT = 'requirement',
+  COMPANY_INFO = 'companyInfo'
+}
+
 const requirementCategories = [
   {
     id: 'Space Requirements',
@@ -90,10 +96,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal states
-  const [showProjectModal, setShowProjectModal] = useState(false);
-  const [showRequirementModal, setShowRequirementModal] = useState(false);
-  const [showCompanyInfoModal, setShowCompanyInfoModal] = useState(false);
+  // Modal state
+  const [activeModal, setActiveModal] = useState<Modal | null>(null);
 
   // Editing states
   const [editingRequirement, setEditingRequirement] = useState<Requirement | null>(null);
@@ -202,7 +206,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
   // Modal open functions
   const openProjectModal = () => {
     resetProjectForm();
-    setShowProjectModal(true);
+    setActiveModal(Modal.PROJECT);
   };
 
 
@@ -217,12 +221,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
     } else {
       resetRequirementForm();
     }
-    setShowRequirementModal(true);
+    setActiveModal(Modal.REQUIREMENT);
   };
 
   const openCompanyInfoModal = () => {
     resetCompanyInfoForm();
-    setShowCompanyInfoModal(true);
+    setActiveModal(Modal.COMPANY_INFO);
   };
 
   // Save functions
@@ -247,7 +251,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
 
       if (error) throw error;
 
-      setShowProjectModal(false);
+      setActiveModal(null);
       onProjectUpdate?.();
     } catch (err) {
       console.error('Error updating project:', err);
@@ -283,7 +287,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
         if (error) throw error;
       }
 
-      setShowRequirementModal(false);
+      setActiveModal(null);
       resetRequirementForm();
       await fetchContactsAndRequirements();
     } catch (err) {
@@ -347,7 +351,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
 
       await fetchContactsAndRequirements();
       if (onProjectUpdate) onProjectUpdate();
-      setShowCompanyInfoModal(false);
+      setActiveModal(null);
     } catch (err) {
       console.error('Error saving company information:', err);
       alert('Error saving company information. Please try again.');
@@ -559,12 +563,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
       </div>
       
       {/* Project Edit Modal */}
-      {showProjectModal && (
+      {activeModal === Modal.PROJECT && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900">Edit Project Details</h3>
-              <button onClick={() => setShowProjectModal(false)}>
+              <button onClick={() => setActiveModal(null)}>
                 <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
               </button>
             </div>
@@ -655,7 +659,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
 
               <div className="flex justify-end space-x-3 pt-4">
                 <button
-                  onClick={() => setShowProjectModal(false)}
+                  onClick={() => setActiveModal(null)}
                   className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
                 >
                   Cancel
@@ -677,14 +681,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
 
 
       {/* Requirement Modal */}
-      {showRequirementModal && (
+      {activeModal === Modal.REQUIREMENT && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900">
                 {editingRequirement ? 'Edit Requirement' : 'Add Requirement'}
               </h3>
-              <button onClick={() => setShowRequirementModal(false)}>
+              <button onClick={() => setActiveModal(null)}>
                 <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
               </button>
             </div>
@@ -717,7 +721,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
 
               <div className="flex justify-end space-x-3 pt-4">
                 <button
-                  onClick={() => setShowRequirementModal(false)}
+                  onClick={() => setActiveModal(null)}
                   className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
                 >
                   Cancel
@@ -737,12 +741,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
       )}
 
       {/* Company Information Modal */}
-      {showCompanyInfoModal && (
+      {activeModal === Modal.COMPANY_INFO && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900">Edit Company Information</h3>
-              <button onClick={() => setShowCompanyInfoModal(false)}>
+              <button onClick={() => setActiveModal(null)}>
                 <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
               </button>
             </div>
@@ -830,7 +834,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
 
               <div className="flex justify-end space-x-3 pt-4">
                 <button
-                  onClick={() => setShowCompanyInfoModal(false)}
+                  onClick={() => setActiveModal(null)}
                   className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
                 >
                   Cancel
