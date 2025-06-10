@@ -46,8 +46,6 @@ interface ProjectFormData {
   broker_commission: string;
   commission_paid_by: string;
   payment_due: string;
-  company_name: string;
-  expected_headcount: string;
 }
 
 
@@ -108,9 +106,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
     expected_fee: '',
     broker_commission: '',
     commission_paid_by: '',
-    payment_due: '',
-    company_name: '',
-    expected_headcount: ''
+    payment_due: ''
   });
 
 
@@ -177,9 +173,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
       expected_fee: project.expected_fee?.toString() || '',
       broker_commission: project.broker_commission?.toString() || '',
       commission_paid_by: project.commission_paid_by || '',
-      payment_due: project.payment_due || '',
-      company_name: project.company_name || '',
-      expected_headcount: project.expected_headcount || ''
+      payment_due: project.payment_due || ''
     });
   };
 
@@ -243,8 +237,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
         broker_commission: projectFormData.broker_commission ? parseFloat(projectFormData.broker_commission) : null,
         commission_paid_by: projectFormData.commission_paid_by.trim() || null,
         payment_due: projectFormData.payment_due.trim() || null,
-        company_name: projectFormData.company_name.trim() || null,
-        expected_headcount: projectFormData.expected_headcount.trim() || null,
         updated_at: new Date().toISOString()
       };
 
@@ -658,27 +650,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                  <input
-                    type="text"
-                    value={projectFormData.company_name}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, company_name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    placeholder="Client company name"
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Expected Headcount</label>
-                  <input
-                    type="text"
-                    value={projectFormData.expected_headcount}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, expected_headcount: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    placeholder="e.g., 50-75 employees"
-                  />
-                </div>
               </div>
 
               <div className="flex justify-end space-x-3 pt-4">
