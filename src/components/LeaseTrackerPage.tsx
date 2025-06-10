@@ -123,7 +123,7 @@ export function LeaseTrackerPage() {
       </Header>
       
       <div className="max-w-7xl mx-auto">
-        <ProjectHeader project={project} />
+        <ProjectHeader project={project} onProjectUpdate={fetchProject} />
         
         <div className="p-6">
           {/* Recent Updates - Full Width */}
