@@ -1,6 +1,25 @@
 import React, { useState } from 'react';
 import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail, MapPin, FileText } from 'lucide-react';
 
+interface ProjectData {
+  id: string;
+  title: string;
+  status: string;
+  start_date?: string | null;
+  expected_fee?: number | null;
+  broker_commission?: number | null;
+  commission_paid_by?: string | null;
+  payment_due?: string | null;
+  company_name?: string | null;
+  expected_headcount?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ProjectHeaderProps {
+  project: ProjectData;
+}
+
 const requirementCategories = [
   {
     id: 1,
@@ -37,47 +56,49 @@ const requirementCategories = [
   }
 ];
 
-export const ProjectHeader: React.FC = () => {
+export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
     <div className="bg-white p-6 border-b border-gray-200">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <h2 className="text-2xl font-bold text-gray-900">Downtown Tech Hub - Office Lease</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{project.title}</h2>
           <Edit3 className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
         </div>
         <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-          Step 2: Market Research & Property Sourcing
+          {project.status}
         </span>
       </div>
       
       <div className="flex items-center space-x-6 mb-4 text-sm text-gray-600">
         <div className="flex items-center space-x-1">
           <Calendar className="w-4 h-4" />
-          <span>Started: Jan 15, 2024</span>
+          <span>Started: {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
         </div>
         <div className="flex items-center space-x-1 relative">
           <DollarSign className="w-4 h-4" />
-          <span>Expected Fee for Tenant: $0</span>
-          <div 
-            className="relative"
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-          >
-            <Info className="w-4 h-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
-            {showTooltip && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg z-10">
-                <div className="space-y-1">
-                  <div className="font-medium">Commission Breakdown:</div>
-                  <div>• Broker commission: $15,000</div>
-                  <div>• Paid by: Landlord</div>
-                  <div>• Payment due: Upon lease signing</div>
+          <span>Expected Fee: ${project.expected_fee ? project.expected_fee.toLocaleString() : '0'}</span>
+          {project.broker_commission && project.broker_commission > 0 && (
+            <div 
+              className="relative"
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+            >
+              <Info className="w-4 h-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
+              {showTooltip && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg z-10">
+                  <div className="space-y-1">
+                    <div className="font-medium">Commission Breakdown:</div>
+                    <div>• Broker commission: ${project.broker_commission?.toLocaleString() || '0'}</div>
+                    <div>• Paid by: {project.commission_paid_by || 'TBD'}</div>
+                    <div>• Payment due: {project.payment_due || 'TBD'}</div>
+                  </div>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                 </div>
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -97,11 +118,11 @@ export const ProjectHeader: React.FC = () => {
             <div className="space-y-2 text-sm">
               <div>
                 <span className="text-gray-600">Company Name:</span>
-                <span className="ml-2 font-medium">TechFlow Innovations</span>
+                <span className="ml-2 font-medium">{project.company_name || 'Not specified'}</span>
               </div>
               <div>
                 <span className="text-gray-600">Expected Head Count:</span>
-                <span className="ml-2">75-100 employees</span>
+                <span className="ml-2">{project.expected_headcount || 'Not specified'}</span>
               </div>
             </div>
           </div>
@@ -111,16 +132,16 @@ export const ProjectHeader: React.FC = () => {
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
                 <User className="w-4 h-4 text-gray-400" />
-                <span className="font-medium">Sarah Chen</span>
-                <span className="text-gray-600">- Head of Operations</span>
+                <span className="font-medium">To be added</span>
+                <span className="text-gray-600">- Contact Person</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 text-gray-400" />
-                <span>(555) 123-4567</span>
+                <span>To be added</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-gray-400" />
-                <span>sarah.chen@techflow.com</span>
+                <span>To be added</span>
               </div>
             </div>
           </div>
@@ -142,12 +163,10 @@ export const ProjectHeader: React.FC = () => {
                 <h4 className="font-medium text-gray-900 text-sm">{category.title}</h4>
               </div>
               <div className="space-y-2 ml-6">
-                {category.items.map((item, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-                    <span className="text-sm text-gray-700">{item}</span>
-                  </div>
-                ))}
+                <div className="flex items-center space-x-2">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
+                  <span className="text-sm text-gray-700">To be defined</span>
+                </div>
               </div>
             </div>
           ))}
@@ -155,8 +174,10 @@ export const ProjectHeader: React.FC = () => {
       </div>
       
       <p className="text-gray-700 leading-relaxed">
-        Securing a modern 15,000 sq ft office space in the heart of downtown for a rapidly growing tech startup. 
-        The client requires flexible workspace design, high-speed internet infrastructure, and proximity to public transportation.
+        {project.title === 'Untitled Project' 
+          ? 'Project description to be added. Click the edit icon to update project details.'
+          : `Project: ${project.title}. Click the edit icon to update project details.`
+        }
         <Edit3 className="w-4 h-4 text-gray-400 inline ml-2 cursor-pointer hover:text-gray-600 transition-colors" />
       </p>
     </div>

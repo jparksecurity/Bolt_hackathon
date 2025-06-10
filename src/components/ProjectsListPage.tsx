@@ -9,11 +9,11 @@ interface Project {
   id: string;
   title: string;
   status: string;
-  start_date: string;
-  expected_fee: number;
-  broker_commission: number;
-  company_name: string;
-  expected_headcount: string;
+  start_date?: string | null;
+  expected_fee?: number | null;
+  broker_commission?: number | null;
+  company_name?: string | null;
+  expected_headcount?: string | null;
   created_at: string;
 }
 
@@ -22,6 +22,7 @@ export function ProjectsListPage() {
   const supabase = useSupabaseClient();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchProjects = useCallback(async () => {
@@ -41,6 +42,36 @@ export function ProjectsListPage() {
       setLoading(false);
     }
   }, [user, supabase]);
+
+  const createEmptyProject = useCallback(async () => {
+    try {
+      if (!user) return;
+      
+      setCreating(true);
+      setError(null);
+      
+      const newProject = {
+        clerk_user_id: user.id,
+        title: 'Untitled Project',
+        status: 'Planning'
+      };
+
+      const { error } = await supabase
+        .from('projects')
+        .insert(newProject)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Refresh the projects list
+      await fetchProjects();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create project');
+    } finally {
+      setCreating(false);
+    }
+  }, [user, supabase, fetchProjects]);
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -94,9 +125,13 @@ export function ProjectsListPage() {
             <h1 className="text-3xl font-bold text-gray-900">My Projects</h1>
             <p className="text-gray-600 mt-2">Track and manage your commercial real estate projects</p>
           </div>
-          <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+          <button 
+            onClick={createEmptyProject}
+            disabled={creating}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Plus className="w-4 h-4 mr-2" />
-            New Project
+            {creating ? 'Creating...' : 'New Project'}
           </button>
         </div>
 
@@ -106,9 +141,13 @@ export function ProjectsListPage() {
             <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects yet</h3>
             <p className="text-gray-600 mb-6">Create your first lease tracking project to get started</p>
-            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              onClick={createEmptyProject}
+              disabled={creating}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Create Project
+              {creating ? 'Creating...' : 'Create Project'}
             </button>
           </div>
         ) : (
@@ -132,7 +171,7 @@ export function ProjectsListPage() {
                     <h3 className="text-xl font-bold text-gray-900 mb-1" title={project.title}>
                       {project.title}
                     </h3>
-                    <p className="text-sm text-gray-500 font-medium">{project.company_name}</p>
+                    <p className="text-sm text-gray-500 font-medium">{project.company_name || 'No company specified'}</p>
                   </div>
 
                   {/* Project details */}
@@ -140,11 +179,11 @@ export function ProjectsListPage() {
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center space-x-2 text-gray-600">
                         <User className="w-4 h-4" />
-                        <span>{project.expected_headcount} employees</span>
+                        <span>{project.expected_headcount || 'Not specified'}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Calendar className="w-4 h-4" />
-                        <span>{new Date(project.start_date).toLocaleDateString()}</span>
+                        <span>{project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
                       </div>
                     </div>
 
@@ -155,7 +194,7 @@ export function ProjectsListPage() {
                         <div className="flex items-center space-x-1">
                           <DollarSign className="w-4 h-4 text-green-600" />
                           <span className="text-lg font-bold text-green-600">
-                            {project.expected_fee.toLocaleString()}
+                            {project.expected_fee != null ? `${project.expected_fee.toLocaleString()}` : 'Not set'}
                           </span>
                         </div>
                       </div>

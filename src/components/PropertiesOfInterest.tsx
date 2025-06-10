@@ -81,7 +81,11 @@ const getServiceTypeColor = (serviceType: string) => {
   }
 };
 
-export const PropertiesOfInterest: React.FC = () => {
+interface PropertiesOfInterestProps {
+  projectId: string;
+}
+
+export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = () => {
   const [properties, setProperties] = useState<Property[]>(initialProperties);
   const [showDeclineModal, setShowDeclineModal] = useState<number | null>(null);
   const [declineReason, setDeclineReason] = useState('');

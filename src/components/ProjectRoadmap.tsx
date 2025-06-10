@@ -1,6 +1,10 @@
 import React from 'react';
 import { CheckCircle, Circle, Clock, Plus, Edit3 } from 'lucide-react';
 
+interface ProjectRoadmapProps {
+  projectId: string;
+}
+
 const roadmapSteps = [
   {
     id: 1,
@@ -28,7 +32,9 @@ const roadmapSteps = [
   }
 ];
 
-export const ProjectRoadmap: React.FC = () => {
+export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = () => {
+  // TODO: Use projectId to fetch roadmap from database
+
   return (
     <div className="bg-white p-6">
       <div className="flex items-center justify-between mb-6">

@@ -121,28 +121,28 @@ export function LeaseTrackerPage() {
       </Header>
       
       <div className="max-w-7xl mx-auto">
-        <ProjectHeader />
+        <ProjectHeader project={project} />
         
         <div className="p-6">
           {/* Recent Updates - Full Width */}
           <div className="mb-6">
-            <RecentUpdates />
+            <RecentUpdates projectId={project.id} />
           </div>
         </div>
         
         {/* Properties Section - Full Width */}
         <div className="px-6 pb-6">
-          <PropertiesOfInterest />
+          <PropertiesOfInterest projectId={project.id} />
         </div>
         
         {/* Project Roadmap - Full Width */}
         <div className="px-6 pb-6">
-          <ProjectRoadmap />
+          <ProjectRoadmap projectId={project.id} />
         </div>
         
         {/* Project Documents - Full Width at Bottom */}
         <div className="px-6 pb-6">
-          <ProjectDocuments />
+          <ProjectDocuments projectId={project.id} />
         </div>
       </div>
     </div>

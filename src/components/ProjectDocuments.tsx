@@ -1,6 +1,10 @@
 import React from 'react';
 import { FileText, BarChart3, Image, FileSpreadsheet, File, Plus, ExternalLink, Edit3 } from 'lucide-react';
 
+interface ProjectDocumentsProps {
+  projectId: string;
+}
+
 const documents = [
   { id: 1, name: 'Client Requirements.pdf', type: 'pdf', icon: FileText, color: 'text-red-500' },
   { id: 2, name: 'Market Analysis.xlsx', type: 'xlsx', icon: BarChart3, color: 'text-green-500' },
@@ -9,7 +13,9 @@ const documents = [
   { id: 5, name: 'Financial Projections.pdf', type: 'pdf', icon: FileSpreadsheet, color: 'text-orange-500' }
 ];
 
-export const ProjectDocuments: React.FC = () => {
+export const ProjectDocuments: React.FC<ProjectDocumentsProps> = () => {
+  // TODO: Use projectId to fetch documents from database
+
   return (
     <div className="bg-white p-6 border border-gray-200 rounded-lg">
       <div className="flex items-center justify-between mb-4">
