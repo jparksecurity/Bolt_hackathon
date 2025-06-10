@@ -13,6 +13,9 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
 # Clerk Configuration
 VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key_here
+
+# Clerk Domain (required for Supabase + Clerk integration)
+CLERK_DOMAIN=your-production-domain.clerk.accounts.dev
 ```
 
 ## Local Development
@@ -76,6 +79,12 @@ The remote database has been linked and reset with migrations applied. To update
    vercel env add VITE_SUPABASE_ANON_KEY
    vercel env add VITE_CLERK_PUBLISHABLE_KEY
    ```
+
+**Important Notes for Production:**
+
+- **CLERK_DOMAIN**: **Required** for Supabase + Clerk integration. Use your production Clerk domain (e.g., `your-app.clerk.accounts.dev` or your custom domain)
+- **VITE_CLERK_PUBLISHABLE_KEY**: Make sure to use your **production** Clerk publishable key (starts with `pk_live_` instead of `pk_test_`)
+- **Supabase URLs**: Use your remote Supabase project URL, not the local development URL
 
 ### Option 2: Netlify
 
