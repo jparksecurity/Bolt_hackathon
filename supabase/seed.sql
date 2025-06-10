@@ -10,7 +10,7 @@ INSERT INTO projects (
   '550e8400-e29b-41d4-a716-446655440000',
   'user_2yHntOGKi6N4kXscdHcJrYjEpWN',
   'Downtown Tech Hub - Office Lease',
-  'Step 2: Market Research & Property Sourcing',
+  'Active',
   '2024-01-15',
   0.00,
   15000.00,

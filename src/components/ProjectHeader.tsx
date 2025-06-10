@@ -2,24 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail, MapPin, FileText, X, Save, Plus, Trash2 } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
-
-interface ProjectData {
-  id: string;
-  title: string;
-  status: string;
-  start_date?: string | null;
-  expected_fee?: number | null;
-  broker_commission?: number | null;
-  commission_paid_by?: string | null;
-  payment_due?: string | null;
-  company_name?: string | null;
-  expected_headcount?: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import { ProjectStatus, BaseProjectData } from '../types/project';
 
 interface ProjectHeaderProps {
-  project: ProjectData;
+  project: BaseProjectData;
   onProjectUpdate?: () => void;
 }
 
@@ -40,7 +26,7 @@ interface Requirement {
 
 interface ProjectFormData {
   title: string;
-  status: string;
+  status: ProjectStatus;
   start_date: string;
   expected_fee: string;
   broker_commission: string;
@@ -105,7 +91,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
   // Form data states
   const [projectFormData, setProjectFormData] = useState<ProjectFormData>({
     title: '',
-    status: '',
+    status: ProjectStatus.ACTIVE,
     start_date: '',
     expected_fee: '',
     broker_commission: '',
@@ -590,13 +576,13 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                   <select
                     value={projectFormData.status}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, status: e.target.value }))}
+                    onChange={(e) => setProjectFormData(prev => ({ ...prev, status: e.target.value as ProjectStatus }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   >
-                    <option value="Active">Active</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Completed">Completed</option>
-                    <option value="On Hold">On Hold</option>
+                    <option value={ProjectStatus.ACTIVE}>Active</option>
+                    <option value={ProjectStatus.PENDING}>Pending</option>
+                    <option value={ProjectStatus.COMPLETED}>Completed</option>
+                    <option value={ProjectStatus.ON_HOLD}>On Hold</option>
                   </select>
                 </div>
 

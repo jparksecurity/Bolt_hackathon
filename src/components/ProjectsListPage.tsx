@@ -4,17 +4,9 @@ import { Header } from './Header';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { Plus, Calendar, DollarSign, Building, User, Trash2, X } from 'lucide-react';
+import { ProjectStatus, BaseProjectData } from '../types/project';
 
-interface Project {
-  id: string;
-  title: string;
-  status: string;
-  start_date?: string | null;
-  expected_fee?: number | null;
-  broker_commission?: number | null;
-  company_name?: string | null;
-  expected_headcount?: string | null;
-  created_at: string;
+interface Project extends BaseProjectData {
   deleted_at?: string | null;
 }
 
@@ -61,7 +53,7 @@ export function ProjectsListPage() {
       const newProject = {
         clerk_user_id: user.id,
         title: 'Untitled Project',
-        status: 'Planning'
+        status: ProjectStatus.PENDING // Use enum instead of 'Planning'
       };
 
       const { error } = await supabase

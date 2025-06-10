@@ -7,7 +7,7 @@ CREATE TABLE projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   clerk_user_id TEXT NOT NULL, -- Clerk user identifier
   title TEXT NOT NULL,
-  status TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('Active', 'Pending', 'Completed', 'On Hold')),
   start_date DATE,
   expected_fee DECIMAL(10,2),
   broker_commission DECIMAL(10,2),
@@ -19,6 +19,9 @@ CREATE TABLE projects (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Add comment to document the valid status values
+COMMENT ON COLUMN projects.status IS 'Valid values: Active, Pending, Completed, On Hold';
 
 -- Project contacts table (client contacts for each project)
 CREATE TABLE project_contacts (
@@ -192,6 +195,7 @@ CREATE POLICY "Users can access their project updates" ON project_updates
 
 -- Primary composite index for projects - serves multiple query patterns
 CREATE INDEX idx_projects_clerk_user_deleted ON projects(clerk_user_id, deleted_at);
+CREATE INDEX idx_projects_status ON projects(status);
 
 -- Additional indexes for foreign key relationships and common queries
 CREATE INDEX idx_project_contacts_project_id ON project_contacts(project_id);
