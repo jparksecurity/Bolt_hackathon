@@ -50,17 +50,20 @@ interface ProjectFormData {
   expected_headcount: string;
 }
 
-interface ContactFormData {
-  name: string;
-  title: string;
-  phone: string;
-  email: string;
-  is_primary: boolean;
-}
+
 
 interface RequirementFormData {
   category: string;
   requirement_text: string;
+}
+
+interface CompanyInfoFormData {
+  company_name: string;
+  expected_headcount: string;
+  contact_name: string;
+  contact_title: string;
+  contact_phone: string;
+  contact_email: string;
 }
 
 const requirementCategories = [
@@ -91,11 +94,10 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
 
   // Modal states
   const [showProjectModal, setShowProjectModal] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
   const [showRequirementModal, setShowRequirementModal] = useState(false);
+  const [showCompanyInfoModal, setShowCompanyInfoModal] = useState(false);
 
   // Editing states
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [editingRequirement, setEditingRequirement] = useState<Requirement | null>(null);
 
   // Form data states
@@ -111,17 +113,20 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
     expected_headcount: ''
   });
 
-  const [contactFormData, setContactFormData] = useState<ContactFormData>({
-    name: '',
-    title: '',
-    phone: '',
-    email: '',
-    is_primary: false
-  });
+
 
   const [requirementFormData, setRequirementFormData] = useState<RequirementFormData>({
     category: 'Space Requirements',
     requirement_text: ''
+  });
+
+  const [companyInfoFormData, setCompanyInfoFormData] = useState<CompanyInfoFormData>({
+    company_name: '',
+    expected_headcount: '',
+    contact_name: '',
+    contact_title: '',
+    contact_phone: '',
+    contact_email: ''
   });
 
   const [saving, setSaving] = useState(false);
@@ -178,16 +183,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
     });
   };
 
-  const resetContactForm = () => {
-    setContactFormData({
-      name: '',
-      title: '',
-      phone: '',
-      email: '',
-      is_primary: false
-    });
-    setEditingContact(null);
-  };
+
 
   const resetRequirementForm = () => {
     setRequirementFormData({
@@ -197,27 +193,25 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
     setEditingRequirement(null);
   };
 
+  const resetCompanyInfoForm = () => {
+    const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
+    setCompanyInfoFormData({
+      company_name: project.company_name || '',
+      expected_headcount: project.expected_headcount || '',
+      contact_name: primaryContact?.name || '',
+      contact_title: primaryContact?.title || '',
+      contact_phone: primaryContact?.phone || '',
+      contact_email: primaryContact?.email || ''
+    });
+  };
+
   // Modal open functions
   const openProjectModal = () => {
     resetProjectForm();
     setShowProjectModal(true);
   };
 
-  const openContactModal = (contact?: Contact) => {
-    if (contact) {
-      setContactFormData({
-        name: contact.name,
-        title: contact.title || '',
-        phone: contact.phone || '',
-        email: contact.email || '',
-        is_primary: contact.is_primary
-      });
-      setEditingContact(contact);
-    } else {
-      resetContactForm();
-    }
-    setShowContactModal(true);
-  };
+
 
   const openRequirementModal = (requirement?: Requirement) => {
     if (requirement) {
@@ -230,6 +224,11 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
       resetRequirementForm();
     }
     setShowRequirementModal(true);
+  };
+
+  const openCompanyInfoModal = () => {
+    resetCompanyInfoForm();
+    setShowCompanyInfoModal(true);
   };
 
   // Save functions
@@ -266,43 +265,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
     }
   };
 
-  const saveContact = async () => {
-    setSaving(true);
-    try {
-      const contactData = {
-        project_id: project.id,
-        name: contactFormData.name.trim(),
-        title: contactFormData.title.trim() || null,
-        phone: contactFormData.phone.trim() || null,
-        email: contactFormData.email.trim() || null,
-        is_primary: contactFormData.is_primary
-      };
 
-      if (editingContact) {
-        const { error } = await supabase
-          .from('project_contacts')
-          .update(contactData)
-          .eq('id', editingContact.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('project_contacts')
-          .insert([contactData]);
-
-        if (error) throw error;
-      }
-
-      setShowContactModal(false);
-      resetContactForm();
-      await fetchContactsAndRequirements();
-    } catch (err) {
-      console.error('Error saving contact:', err);
-      alert('Error saving contact. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const saveRequirement = async () => {
     setSaving(true);
@@ -339,23 +302,69 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
     }
   };
 
-  // Delete functions
-  const deleteContact = async (contactId: string) => {
-    if (!confirm('Are you sure you want to delete this contact?')) return;
-
+  const saveCompanyInfo = async () => {
+    if (!companyInfoFormData.company_name.trim() || !companyInfoFormData.contact_name.trim()) return;
+    
+    setSaving(true);
     try {
-      const { error } = await supabase
-        .from('project_contacts')
-        .delete()
-        .eq('id', contactId);
+      // Update project with company details
+      const { error: projectError } = await supabase
+        .from('projects')
+        .update({
+          company_name: companyInfoFormData.company_name,
+          expected_headcount: companyInfoFormData.expected_headcount,
+        })
+        .eq('id', project.id);
 
-      if (error) throw error;
+      if (projectError) throw projectError;
+
+      // Handle primary contact
+      const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
+      
+      if (primaryContact) {
+        // Update existing primary contact
+        const { error: contactError } = await supabase
+          .from('project_contacts')
+          .update({
+            name: companyInfoFormData.contact_name,
+            title: companyInfoFormData.contact_title,
+            phone: companyInfoFormData.contact_phone,
+            email: companyInfoFormData.contact_email,
+            is_primary: true,
+          })
+          .eq('id', primaryContact.id);
+
+        if (contactError) throw contactError;
+      } else {
+        // Create new primary contact
+        const { error: contactError } = await supabase
+          .from('project_contacts')
+          .insert([
+            {
+              project_id: project.id,
+              name: companyInfoFormData.contact_name,
+              title: companyInfoFormData.contact_title,
+              phone: companyInfoFormData.contact_phone,
+              email: companyInfoFormData.contact_email,
+              is_primary: true,
+            }
+          ]);
+
+        if (contactError) throw contactError;
+      }
+
       await fetchContactsAndRequirements();
+      if (onProjectUpdate) onProjectUpdate();
+      setShowCompanyInfoModal(false);
     } catch (err) {
-      console.error('Error deleting contact:', err);
-      alert('Error deleting contact. Please try again.');
+      console.error('Error saving company information:', err);
+      alert('Error saving company information. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
+
+  // Delete functions
 
   const deleteRequirement = async (requirementId: string) => {
     if (!confirm('Are you sure you want to delete this requirement?')) return;
@@ -387,7 +396,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
           <h1 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
             <span>{project.title}</span>
             <button onClick={openProjectModal}>
-              <Edit3 className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+            <Edit3 className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
             </button>
           </h1>
           <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
@@ -437,14 +446,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
             <Building className="w-5 h-5" />
             <span>Company Information</span>
           </h3>
-          <div className="flex items-center space-x-2">
-            <button onClick={() => openContactModal()} title="Add Contact">
-              <Plus className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
-            </button>
-            <button onClick={openProjectModal}>
-              <Edit3 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
-            </button>
-          </div>
+          <button onClick={openCompanyInfoModal} title="Edit Company Information">
+            <Edit3 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+          </button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -468,22 +472,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
               <div className="text-sm text-gray-500">Loading contact...</div>
             ) : primaryContact ? (
               <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">{primaryContact.name}</span>
-                    {primaryContact.title && (
-                      <span className="text-gray-600">- {primaryContact.title}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openContactModal(primaryContact)}>
-                      <Edit3 className="w-3 h-3 text-gray-400 hover:text-gray-600" />
-                    </button>
-                    <button onClick={() => deleteContact(primaryContact.id)}>
-                      <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-600" />
-                    </button>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">{primaryContact.name}</span>
+                  {primaryContact.title && (
+                    <span className="text-gray-600">- {primaryContact.title}</span>
+                  )}
                 </div>
                 {primaryContact.phone && (
                   <div className="flex items-center space-x-2">
@@ -545,8 +539,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
                       categoryRequirements.map((req) => (
                         <div key={req.id} className="flex items-center justify-between group">
                           <div className="flex items-center space-x-2">
-                            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
-                            <span className="text-sm text-gray-700">{req.requirement_text}</span>
+                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                          <span className="text-sm text-gray-700">{req.requirement_text}</span>
                           </div>
                           <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onClick={() => openRequirementModal(req)}>
@@ -571,7 +565,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
           </div>
         )}
       </div>
-
+      
       {/* Project Edit Modal */}
       {showProjectModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -708,95 +702,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
         </div>
       )}
 
-      {/* Contact Modal */}
-      {showContactModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {editingContact ? 'Edit Contact' : 'Add Contact'}
-              </h3>
-              <button onClick={() => setShowContactModal(false)}>
-                <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              </button>
-            </div>
 
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                <input
-                  type="text"
-                  value={contactFormData.name}
-                  onChange={(e) => setContactFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input
-                  type="text"
-                  value={contactFormData.title}
-                  onChange={(e) => setContactFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  placeholder="e.g., CEO, Facility Manager"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input
-                  type="tel"
-                  value={contactFormData.phone}
-                  onChange={(e) => setContactFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  value={contactFormData.email}
-                  onChange={(e) => setContactFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  placeholder="contact@company.com"
-                />
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_primary"
-                  checked={contactFormData.is_primary}
-                  onChange={(e) => setContactFormData(prev => ({ ...prev, is_primary: e.target.checked }))}
-                  className="mr-2"
-                />
-                <label htmlFor="is_primary" className="text-sm text-gray-700">Primary contact</label>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  onClick={() => setShowContactModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveContact}
-                  disabled={saving || !contactFormData.name.trim()}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{saving ? 'Saving...' : editingContact ? 'Update Contact' : 'Add Contact'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Requirement Modal */}
       {showRequirementModal && (
@@ -851,6 +757,119 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
                 >
                   <Save className="w-4 h-4" />
                   <span>{saving ? 'Saving...' : editingRequirement ? 'Update Requirement' : 'Add Requirement'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Company Information Modal */}
+      {showCompanyInfoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Edit Company Information</h3>
+              <button onClick={() => setShowCompanyInfoModal(false)}>
+                <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Company Details */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Company Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
+                    <input
+                      type="text"
+                      value={companyInfoFormData.company_name}
+                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, company_name: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="Client company name"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Expected Headcount</label>
+                    <input
+                      type="text"
+                      value={companyInfoFormData.expected_headcount}
+                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, expected_headcount: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="e.g., 50-75 employees"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Primary Contact</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name *</label>
+                    <input
+                      type="text"
+                      value={companyInfoFormData.contact_name}
+                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, contact_name: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="Full name"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <input
+                      type="text"
+                      value={companyInfoFormData.contact_title}
+                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, contact_title: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="e.g., CEO, Facility Manager"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={companyInfoFormData.contact_phone}
+                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, contact_phone: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={companyInfoFormData.contact_email}
+                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, contact_email: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="contact@company.com"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  onClick={() => setShowCompanyInfoModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveCompanyInfo}
+                  disabled={saving || !companyInfoFormData.company_name.trim() || !companyInfoFormData.contact_name.trim()}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
                 </button>
               </div>
             </div>
