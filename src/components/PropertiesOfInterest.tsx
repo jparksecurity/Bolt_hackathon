@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Square, Calendar, Plus, Edit3, X, MessageSquare, Building2, DollarSign } from 'lucide-react';
+import { Square, Calendar, Plus, Edit3, X, MessageSquare, Building2, DollarSign, Trash2, Save } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 
@@ -18,6 +18,17 @@ interface Property {
   updated_at: string;
 }
 
+interface PropertyFormData {
+  name: string;
+  size: string;
+  rent: string;
+  availability: string;
+  description: string;
+  status: 'active' | 'new' | 'pending' | 'declined';
+  lease_type: 'Direct Lease' | 'Sublease' | 'Sub-sublease' | '';
+  service_type: 'Full Service' | 'NNN' | 'Modified Gross' | '';
+}
+
 interface PropertiesOfInterestProps {
   projectId: string;
 }
@@ -29,6 +40,19 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
   const [loading, setLoading] = useState(true);
   const [showDeclineModal, setShowDeclineModal] = useState<string | null>(null);
   const [declineReason, setDeclineReason] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [formData, setFormData] = useState<PropertyFormData>({
+    name: '',
+    size: '',
+    rent: '',
+    availability: '',
+    description: '',
+    status: 'new',
+    lease_type: '',
+    service_type: ''
+  });
+  const [saving, setSaving] = useState(false);
 
   const fetchProperties = useCallback(async () => {
     try {
@@ -55,13 +79,141 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
     }
   }, [user, projectId, fetchProperties]);
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      size: '',
+      rent: '',
+      availability: '',
+      description: '',
+      status: 'new',
+      lease_type: '',
+      service_type: ''
+    });
+    setEditingProperty(null);
+  };
+
+  const openAddModal = () => {
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (property: Property) => {
+    setFormData({
+      name: property.name,
+      size: property.size || '',
+      rent: property.rent || '',
+      availability: property.availability || '',
+      description: property.description || '',
+      status: property.status,
+      lease_type: property.lease_type || '',
+      service_type: property.service_type || ''
+    });
+    setEditingProperty(property);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    resetForm();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !formData.name.trim()) return;
+
+    setSaving(true);
+    try {
+      const propertyData = {
+        project_id: projectId,
+        name: formData.name.trim(),
+        size: formData.size.trim() || null,
+        rent: formData.rent.trim() || null,
+        availability: formData.availability.trim() || null,
+        description: formData.description.trim() || null,
+        status: formData.status,
+        lease_type: formData.lease_type || null,
+        service_type: formData.service_type || null,
+        updated_at: new Date().toISOString()
+      };
+
+      if (editingProperty) {
+        // Update existing property
+        const { error } = await supabase
+          .from('properties')
+          .update(propertyData)
+          .eq('id', editingProperty.id);
+
+        if (error) throw error;
+      } else {
+        // Create new property
+        const { error } = await supabase
+          .from('properties')
+          .insert([propertyData]);
+
+        if (error) throw error;
+      }
+
+      await fetchProperties();
+      closeModal();
+    } catch (err) {
+      console.error('Error saving property:', err);
+      alert('Error saving property. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (propertyId: string) => {
+    if (!confirm('Are you sure you want to delete this property?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', propertyId);
+
+      if (error) throw error;
+
+      await fetchProperties();
+    } catch (err) {
+      console.error('Error deleting property:', err);
+      alert('Error deleting property. Please try again.');
+    }
+  };
+
+  const handleStatusUpdate = async (propertyId: string, newStatus: 'active' | 'new' | 'pending' | 'declined') => {
+    try {
+      const updateData: Partial<Property> = {
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+        decline_reason: newStatus === 'declined' ? null : undefined
+      };
+
+      const { error } = await supabase
+        .from('properties')
+        .update(updateData)
+        .eq('id', propertyId);
+
+      if (error) throw error;
+
+      await fetchProperties();
+    } catch (err) {
+      console.error('Error updating property status:', err);
+      alert('Error updating status. Please try again.');
+    }
+  };
+
   const handleDeclineProperty = async (propertyId: string) => {
     try {
       const { error } = await supabase
         .from('properties')
         .update({ 
           status: 'declined', 
-          decline_reason: declineReason 
+          decline_reason: declineReason,
+          updated_at: new Date().toISOString()
         })
         .eq('id', propertyId);
 
@@ -85,7 +237,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
         .from('properties')
         .update({ 
           status: 'active', 
-          decline_reason: null 
+          decline_reason: null,
+          updated_at: new Date().toISOString()
         })
         .eq('id', propertyId);
 
@@ -118,7 +271,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
     <div className="bg-white p-6 border border-gray-200 rounded-lg">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">Properties of Interest</h3>
-        <button className="flex items-center space-x-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors">
+        <button 
+          onClick={openAddModal}
+          className="flex items-center space-x-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
+        >
           <Plus className="w-4 h-4" />
           <span>Add Property</span>
         </button>
@@ -129,7 +285,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
           <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h4 className="text-lg font-semibold text-gray-900 mb-2">No properties yet</h4>
           <p className="text-gray-600 mb-6">Start adding properties that match your client's criteria</p>
-          <button className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto">
+          <button 
+            onClick={openAddModal}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto"
+          >
             <Plus className="w-4 h-4" />
             <span>Add First Property</span>
           </button>
@@ -164,7 +323,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
                       Decline
                     </button>
                   )}
-                  <Edit3 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+                  <button
+                    onClick={() => openEditModal(property)}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Edit property"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(property.id)}
+                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Delete property"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
               
@@ -222,26 +394,198 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    property.status === 'new' 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : property.status === 'pending'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : property.status === 'declined'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-green-100 text-green-700'
-                  }`}>
+                  <span 
+                    className={`px-2 py-1 text-xs rounded-full cursor-pointer ${
+                      property.status === 'new' 
+                        ? 'bg-blue-100 text-blue-700' 
+                        : property.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : property.status === 'declined'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-green-100 text-green-700'
+                    }`}
+                    onClick={() => {
+                      if (property.status !== 'declined') {
+                                                 const statuses: ('new' | 'pending' | 'active')[] = ['new', 'pending', 'active'];
+                         const currentIndex = statuses.indexOf(property.status as 'new' | 'pending' | 'active');
+                        const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+                        handleStatusUpdate(property.id, nextStatus);
+                      }
+                    }}
+                    title={property.status !== 'declined' ? 'Click to cycle through status' : ''}
+                  >
                     {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
                   </span>
                 </div>
-                <button className={`px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors ${
-                  property.status === 'declined' ? 'opacity-50 cursor-not-allowed' : ''
-                }`}>
-                  See More
-                </button>
+                <span className="text-xs text-gray-500">
+                  Updated: {new Date(property.updated_at).toLocaleDateString()}
+                </span>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Add/Edit Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingProperty ? 'Edit Property' : 'Add New Property'}
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Property Name *
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    placeholder="Enter property name"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-1">
+                    Size
+                  </label>
+                  <input
+                    id="size"
+                    type="text"
+                    value={formData.size}
+                    onChange={(e) => setFormData(prev => ({ ...prev, size: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    placeholder="e.g., 5,000 sq ft"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="rent" className="block text-sm font-medium text-gray-700 mb-1">
+                    Rent
+                  </label>
+                  <input
+                    id="rent"
+                    type="text"
+                    value={formData.rent}
+                    onChange={(e) => setFormData(prev => ({ ...prev, rent: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    placeholder="e.g., $25/sq ft/year"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="availability" className="block text-sm font-medium text-gray-700 mb-1">
+                    Availability
+                  </label>
+                  <input
+                    id="availability"
+                    type="text"
+                    value={formData.availability}
+                    onChange={(e) => setFormData(prev => ({ ...prev, availability: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    placeholder="e.g., Available Q2 2024"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <select
+                    id="status"
+                    value={formData.status}
+                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'active' | 'new' | 'pending' | 'declined' }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  >
+                    <option value="new">New</option>
+                    <option value="pending">Pending</option>
+                    <option value="active">Active</option>
+                    <option value="declined">Declined</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="lease_type" className="block text-sm font-medium text-gray-700 mb-1">
+                    Lease Type
+                  </label>
+                  <select
+                    id="lease_type"
+                    value={formData.lease_type}
+                                         onChange={(e) => setFormData(prev => ({ ...prev, lease_type: e.target.value as 'Direct Lease' | 'Sublease' | 'Sub-sublease' | '' }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  >
+                    <option value="">Select lease type</option>
+                    <option value="Direct Lease">Direct Lease</option>
+                    <option value="Sublease">Sublease</option>
+                    <option value="Sub-sublease">Sub-sublease</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="service_type" className="block text-sm font-medium text-gray-700 mb-1">
+                    Service Type
+                  </label>
+                  <select
+                    id="service_type"
+                    value={formData.service_type}
+                                         onChange={(e) => setFormData(prev => ({ ...prev, service_type: e.target.value as 'Full Service' | 'NNN' | 'Modified Gross' | '' }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  >
+                    <option value="">Select service type</option>
+                    <option value="Full Service">Full Service</option>
+                    <option value="NNN">NNN</option>
+                    <option value="Modified Gross">Modified Gross</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  placeholder="Enter property description"
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || !formData.name.trim()}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{saving ? 'Saving...' : editingProperty ? 'Update Property' : 'Add Property'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
