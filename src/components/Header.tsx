@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
+import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -14,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({ children }) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
           <img 
-            src="/src/assets/design/Jigo_Tenant_BW_TP.png" 
+            src={logoImage}
             alt="Jigo Tenant Logo" 
             className="w-8 h-8"
           />
