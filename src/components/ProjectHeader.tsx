@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail, MapPin, FileText } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
+import { useSupabaseClient } from '../lib/supabase';
 
 interface ProjectData {
   id: string;
@@ -20,58 +22,108 @@ interface ProjectHeaderProps {
   project: ProjectData;
 }
 
+interface Contact {
+  id: string;
+  name: string;
+  title?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  is_primary: boolean;
+}
+
+interface Requirement {
+  id: string;
+  category: string;
+  requirement_text: string;
+}
+
 const requirementCategories = [
   {
-    id: 1,
+    id: 'Space Requirements',
     title: 'Space Requirements',
     icon: Building,
-    items: [
-      '15,000 sq ft minimum',
-      'Open floor plan capability',
-      'Private meeting rooms (4-6)',
-      'Reception area'
-    ]
   },
   {
-    id: 2,
+    id: 'Location',
     title: 'Location',
     icon: MapPin,
-    items: [
-      'Downtown core preferred',
-      'Public transport access',
-      'Walking distance to restaurants',
-      'Parking availability'
-    ]
   },
   {
-    id: 3,
+    id: 'Other',
     title: 'Other',
     icon: FileText,
-    items: [
-      'Move-in ready by March 2024',
-      'Pet-friendly building preferred',
-      'Natural light priority',
-      'Flexible lease terms (3-5 years)'
-    ]
   }
 ];
 
 export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project }) => {
+  const { user } = useUser();
+  const supabase = useSupabaseClient();
   const [showTooltip, setShowTooltip] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [requirements, setRequirements] = useState<Requirement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchContactsAndRequirements = useCallback(async () => {
+    try {
+      if (!user) return;
+
+      // Fetch contacts
+      const { data: contactsData, error: contactsError } = await supabase
+        .from('project_contacts')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('is_primary', { ascending: false });
+
+      if (contactsError) throw contactsError;
+
+      // Fetch requirements
+      const { data: requirementsData, error: requirementsError } = await supabase
+        .from('client_requirements')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('category');
+
+      if (requirementsError) throw requirementsError;
+
+      setContacts(contactsData || []);
+      setRequirements(requirementsData || []);
+    } catch (err) {
+      console.error('Error fetching contacts and requirements:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, supabase, project.id]);
+
+  useEffect(() => {
+    if (user && project.id) {
+      fetchContactsAndRequirements();
+    }
+  }, [user, project.id, fetchContactsAndRequirements]);
+
+  const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
+  
+  const getRequirementsByCategory = (category: string) => {
+    return requirements.filter(req => req.category === category);
+  };
 
   return (
     <div className="bg-white p-6 border-b border-gray-200">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <h2 className="text-2xl font-bold text-gray-900">{project.title}</h2>
-          <Edit3 className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
+            <span>{project.title}</span>
+            <Edit3 className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+          </h1>
+          <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
+              {project.status}
+            </span>
+          </div>
         </div>
-        <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-          {project.status}
-        </span>
       </div>
-      
-      <div className="flex items-center space-x-6 mb-4 text-sm text-gray-600">
+
+      {/* Project metrics */}
+      <div className="flex items-center space-x-6 mb-6 text-sm text-gray-600">
         <div className="flex items-center space-x-1">
           <Calendar className="w-4 h-4" />
           <span>Started: {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
@@ -129,21 +181,47 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project }) => {
           
           <div>
             <h4 className="font-medium text-gray-900 mb-2">Point of Contact</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4 text-gray-400" />
-                <span className="font-medium">To be added</span>
-                <span className="text-gray-600">- Contact Person</span>
+            {loading ? (
+              <div className="text-sm text-gray-500">Loading contact...</div>
+            ) : primaryContact ? (
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">{primaryContact.name}</span>
+                  {primaryContact.title && (
+                    <span className="text-gray-600">- {primaryContact.title}</span>
+                  )}
+                </div>
+                {primaryContact.phone && (
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4 text-gray-400" />
+                    <span>{primaryContact.phone}</span>
+                  </div>
+                )}
+                {primaryContact.email && (
+                  <div className="flex items-center space-x-2">
+                    <Mail className="w-4 h-4 text-gray-400" />
+                    <span>{primaryContact.email}</span>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <span>To be added</span>
+            ) : (
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">To be added</span>
+                  <span className="text-gray-600">- Contact Person</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <span>To be added</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <span>To be added</span>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-gray-400" />
-                <span>To be added</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -155,22 +233,38 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project }) => {
           <Edit3 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {requirementCategories.map((category) => (
-            <div key={category.id}>
-              <div className="flex items-center space-x-2 mb-3">
-                <category.icon className="w-4 h-4 text-blue-600" />
-                <h4 className="font-medium text-gray-900 text-sm">{category.title}</h4>
-              </div>
-              <div className="space-y-2 ml-6">
-                <div className="flex items-center space-x-2">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-                  <span className="text-sm text-gray-700">To be defined</span>
+        {loading ? (
+          <div className="text-sm text-gray-500">Loading requirements...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {requirementCategories.map((category) => {
+              const categoryRequirements = getRequirementsByCategory(category.id);
+              return (
+                <div key={category.id}>
+                  <div className="flex items-center space-x-2 mb-3">
+                    <category.icon className="w-4 h-4 text-blue-600" />
+                    <h4 className="font-medium text-gray-900 text-sm">{category.title}</h4>
+                  </div>
+                  <div className="space-y-2 ml-6">
+                    {categoryRequirements.length > 0 ? (
+                      categoryRequirements.map((req) => (
+                        <div key={req.id} className="flex items-center space-x-2">
+                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                          <span className="text-sm text-gray-700">{req.requirement_text}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
+                        <span className="text-sm text-gray-700">To be defined</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
       
       <p className="text-gray-700 leading-relaxed">

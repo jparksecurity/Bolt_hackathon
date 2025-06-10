@@ -1,39 +1,60 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { CheckCircle, Circle, Clock, Plus, Edit3 } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
+import { useSupabaseClient } from '../lib/supabase';
 
 interface ProjectRoadmapProps {
   projectId: string;
 }
 
-const roadmapSteps = [
-  {
-    id: 1,
-    title: 'Initial Client Consultation',
-    description: 'Gathered detailed requirements, timeline expectations, and timeline expectations from the client team.',
-    status: 'completed',
-    expectedDate: 'Jan 15, 2024',
-    completedDate: 'Jan 15, 2024'
-  },
-  {
-    id: 2,
-    title: 'Market Research & Property Sourcing',
-    description: 'Identifying suitable properties that match client criteria and conducting market analysis for competitive pricing.',
-    status: 'in-progress',
-    expectedDate: 'Feb 1, 2024',
-    completedDate: null
-  },
-  {
-    id: 3,
-    title: 'Property Tours & Negotiations',
-    description: 'Schedule property viewings with client and begin lease negotiations with preferred properties.',
-    status: 'pending',
-    expectedDate: 'Feb 15, 2024',
-    completedDate: null
-  }
-];
+interface RoadmapStep {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: 'completed' | 'in-progress' | 'pending';
+  expected_date?: string | null;
+  completed_date?: string | null;
+  order_index?: number | null;
+}
 
-export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = () => {
-  // TODO: Use projectId to fetch roadmap from database
+export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId }) => {
+  const { user } = useUser();
+  const supabase = useSupabaseClient();
+  const [roadmapSteps, setRoadmapSteps] = useState<RoadmapStep[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRoadmap = useCallback(async () => {
+    try {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('project_roadmap')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+      setRoadmapSteps(data || []);
+    } catch (err) {
+      console.error('Error fetching roadmap:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, supabase, projectId]);
+
+  useEffect(() => {
+    if (user && projectId) {
+      fetchRoadmap();
+    }
+  }, [user, projectId, fetchRoadmap]);
+
+  if (loading) {
+    return (
+      <div className="bg-white p-6">
+        <div className="text-center text-gray-500">Loading roadmap...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-6">
@@ -45,8 +66,19 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = () => {
         </button>
       </div>
       
-      <div className="space-y-6">
-        {roadmapSteps.map((step, index) => (
+      {roadmapSteps.length === 0 ? (
+        <div className="text-center py-12">
+          <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h4 className="text-lg font-semibold text-gray-900 mb-2">No roadmap steps yet</h4>
+          <p className="text-gray-600 mb-6">Create a roadmap to track your project's progress</p>
+          <button className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto">
+            <Plus className="w-4 h-4" />
+            <span>Add First Step</span>
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {roadmapSteps.map((step, index) => (
           <div key={step.id} className="flex items-start space-x-4">
             <div className="flex flex-col items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -87,16 +119,19 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = () => {
               </div>
               <p className="text-gray-600 text-sm mb-2">{step.description}</p>
               <div className="text-xs text-gray-500">
-                {step.completedDate ? (
-                  <span>Completed: {step.completedDate}</span>
+                {step.completed_date ? (
+                  <span>Completed: {new Date(step.completed_date).toLocaleDateString()}</span>
+                ) : step.expected_date ? (
+                  <span>Expected: {new Date(step.expected_date).toLocaleDateString()}</span>
                 ) : (
-                  <span>Expected: {step.expectedDate}</span>
+                  <span>No date set</span>
                 )}
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
