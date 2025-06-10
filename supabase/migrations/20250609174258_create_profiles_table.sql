@@ -84,7 +84,7 @@ CREATE TABLE project_documents (
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   file_type TEXT NOT NULL,
-  file_url TEXT, -- Supabase Storage URL
+  storage_path TEXT, -- Path in Supabase Storage
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -169,4 +169,84 @@ CREATE INDEX idx_properties_status ON properties(project_id, status);
 CREATE INDEX idx_property_features_property_id ON property_features(property_id);
 CREATE INDEX idx_project_documents_project_id ON project_documents(project_id);
 CREATE INDEX idx_project_updates_project_id ON project_updates(project_id);
-CREATE INDEX idx_project_updates_date ON project_updates(project_id, update_date DESC); 
+CREATE INDEX idx_project_updates_date ON project_updates(project_id, update_date DESC);
+
+-- =====================================
+-- STORAGE SETUP
+-- =====================================
+
+-- Create a bucket for project documents
+-- Note: Storage is already enabled in Supabase local development
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'project-documents',
+  'project-documents', 
+  false, -- private bucket, users can only access their own files
+  52428800, -- 50MB limit
+  ARRAY[
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip',
+    'application/x-zip-compressed',
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'text/plain'
+  ]
+);
+
+-- Storage policies for project documents bucket
+-- Allow users to upload files to their project folders
+CREATE POLICY "Users can upload to their project folders" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'project-documents' AND
+    -- Path should be: user_id/project_id/filename
+    (storage.foldername(name))[1] = (SELECT auth.jwt() ->> 'sub') AND
+    -- Ensure the project belongs to the user
+    (storage.foldername(name))[2] IN (
+      SELECT id::text FROM projects 
+      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    )
+  );
+
+-- Allow users to view files from their project folders
+CREATE POLICY "Users can view their project files" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'project-documents' AND
+    -- Path should be: user_id/project_id/filename
+    (storage.foldername(name))[1] = (SELECT auth.jwt() ->> 'sub') AND
+    -- Ensure the project belongs to the user
+    (storage.foldername(name))[2] IN (
+      SELECT id::text FROM projects 
+      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    )
+  );
+
+-- Allow users to delete files from their project folders
+CREATE POLICY "Users can delete their project files" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'project-documents' AND
+    -- Path should be: user_id/project_id/filename
+    (storage.foldername(name))[1] = (SELECT auth.jwt() ->> 'sub') AND
+    -- Ensure the project belongs to the user
+    (storage.foldername(name))[2] IN (
+      SELECT id::text FROM projects 
+      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    )
+  );
+
+-- Allow users to update files from their project folders  
+CREATE POLICY "Users can update their project files" ON storage.objects
+  FOR UPDATE USING (
+    bucket_id = 'project-documents' AND
+    -- Path should be: user_id/project_id/filename
+    (storage.foldername(name))[1] = (SELECT auth.jwt() ->> 'sub') AND
+    -- Ensure the project belongs to the user
+    (storage.foldername(name))[2] IN (
+      SELECT id::text FROM projects 
+      WHERE clerk_user_id = (SELECT auth.jwt() ->> 'sub')
+    )
+  ); 
