@@ -61,25 +61,7 @@ The remote database has been linked and reset with migrations applied. To update
 
 ## Deployment
 
-### Option 1: Vercel (Recommended)
-
-1. Install Vercel CLI:
-   ```bash
-   npm i -g vercel
-   ```
-
-2. Deploy:
-   ```bash
-   vercel
-   ```
-
-**Important Notes for Production:**
-
-- **CLERK_DOMAIN**: **Required** for Supabase + Clerk integration. Use your production Clerk domain (e.g., `your-app.clerk.accounts.dev` or your custom domain)
-- **VITE_CLERK_PUBLISHABLE_KEY**: Make sure to use your **production** Clerk publishable key (starts with `pk_live_` instead of `pk_test_`)
-- **Supabase URLs**: Use your remote Supabase project URL, not the local development URL
-
-### Option 2: Netlify
+### Netlify (Primary Deployment)
 
 1. Build the project:
    ```bash
@@ -90,7 +72,13 @@ The remote database has been linked and reset with migrations applied. To update
 
 3. Set environment variables in Netlify dashboard
 
-### Option 3: Manual Build
+**Important Notes for Production:**
+
+- **CLERK_DOMAIN**: **Required** for Supabase + Clerk integration. Use your production Clerk domain (e.g., `your-app.clerk.accounts.dev` or your custom domain)
+- **VITE_CLERK_PUBLISHABLE_KEY**: Make sure to use your **production** Clerk publishable key (starts with `pk_live_` instead of `pk_test_`)
+- **Supabase URLs**: Use your remote Supabase project URL, not the local development URL
+
+### Alternative: Manual Build
 
 1. Build the project:
    ```bash
@@ -105,7 +93,7 @@ The remote database has been linked and reset with migrations applied. To update
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Clerk
-- **Deployment**: Vercel/Netlify ready
+- **Deployment**: Netlify
 
 ## Project Structure
 
@@ -113,10 +101,19 @@ The remote database has been linked and reset with migrations applied. To update
 src/
 ├── components/           # React components
 ├── lib/                 # Utility libraries (Supabase client)
-└── assets/              # Static assets
+├── assets/              # Static assets
+│   └── design/          # Logo and design assets
+├── App.tsx              # Main application component
+└── main.tsx             # Application entry point
 
 supabase/
 ├── migrations/          # Database migrations
 ├── seed.sql            # Sample data
 └── config.toml         # Supabase configuration
+
+Configuration files:
+├── package.json         # Dependencies and scripts
+├── vite.config.ts       # Vite configuration
+├── tailwind.config.js   # Tailwind CSS configuration
+└── tsconfig.json        # TypeScript configuration
 ```
