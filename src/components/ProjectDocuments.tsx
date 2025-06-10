@@ -10,6 +10,8 @@ import {
   Upload,
   X,
   Trash2,
+  Edit3,
+  Save,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../lib/supabase";
@@ -60,6 +62,10 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [renamingDocument, setRenamingDocument] = useState<Document | null>(null);
+  const [newDocumentName, setNewDocumentName] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   const fetchDocuments = useCallback(async () => {
     try {
@@ -134,6 +140,10 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   };
 
   const deleteDocument = async (doc: Document) => {
+    if (!confirm(`Are you sure you want to delete "${doc.name}"?`)) {
+      return;
+    }
+
     try {
       if (!user) return;
 
@@ -162,6 +172,43 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       console.error("Error deleting document:", err);
       alert("Failed to delete document. Please try again.");
     }
+  };
+
+  const renameDocument = async () => {
+    if (!renamingDocument || !newDocumentName.trim()) return;
+
+    setRenaming(true);
+    try {
+      const { error } = await supabase
+        .from("project_documents")
+        .update({ name: newDocumentName.trim() })
+        .eq("id", renamingDocument.id);
+
+      if (error) throw error;
+
+      // Refresh documents list
+      await fetchDocuments();
+      setShowRenameModal(false);
+      setRenamingDocument(null);
+      setNewDocumentName("");
+    } catch (err) {
+      console.error("Error renaming document:", err);
+      alert("Failed to rename document. Please try again.");
+    } finally {
+      setRenaming(false);
+    }
+  };
+
+  const openRenameModal = (doc: Document) => {
+    setRenamingDocument(doc);
+    setNewDocumentName(doc.name);
+    setShowRenameModal(true);
+  };
+
+  const closeRenameModal = () => {
+    setShowRenameModal(false);
+    setRenamingDocument(null);
+    setNewDocumentName("");
   };
 
   const downloadDocument = async (doc: Document) => {
@@ -292,6 +339,13 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                     <ExternalLink className="w-4 h-4" />
                   </button>
                   <button
+                    onClick={() => openRenameModal(doc)}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Rename"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => deleteDocument(doc)}
                     className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                     title="Delete"
@@ -367,6 +421,61 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Rename Modal */}
+      {showRenameModal && renamingDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Rename Document
+              </h3>
+              <button
+                onClick={closeRenameModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                disabled={renaming}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-4">
+                <label htmlFor="document-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Document Name
+                </label>
+                <input
+                  id="document-name"
+                  type="text"
+                  value={newDocumentName}
+                  onChange={(e) => setNewDocumentName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  placeholder="Enter document name"
+                  disabled={renaming}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={closeRenameModal}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  disabled={renaming}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={renameDocument}
+                  disabled={renaming || !newDocumentName.trim() || newDocumentName.trim() === renamingDocument.name}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{renaming ? 'Renaming...' : 'Rename'}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
