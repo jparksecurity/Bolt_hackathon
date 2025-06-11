@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Header } from './Header';
-import { Building, TrendingUp, Users, FileText, ArrowRight, Star } from 'lucide-react';
+import { Building, TrendingUp, Users, FileText, ArrowRight } from 'lucide-react';
 
 export function LandingPage() {
   return (
@@ -10,10 +10,6 @@ export function LandingPage() {
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="text-center mb-20 animate-fade-in-up">
-          <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-full text-sm text-slate-600 mb-6">
-            <Star className="w-4 h-4 mr-2 text-indigo-600" />
-            Trusted by 500+ Real Estate Professionals
-          </div>
           <h1 className="text-6xl font-bold text-slate-900 mb-6 leading-tight">
             JIGO <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Dash</span>
           </h1>
