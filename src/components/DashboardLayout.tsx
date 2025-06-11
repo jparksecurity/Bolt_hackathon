@@ -52,8 +52,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
   return (
     <div className="dashboard-layout">
       {/* Sidebar */}
-      <div className="sidebar">
-        <div className="p-6 border-b border-gray-200">
+      <div className="sidebar flex flex-col">
+        {/* Logo Section */}
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <img 
               src={logoImage}
@@ -67,21 +68,24 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
           </div>
         </div>
         
-        <nav className="sidebar-nav">
-          {navigationItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={`sidebar-nav-item ${isActive(item.href) ? 'active' : ''}`}
-            >
-              <item.icon />
-              {item.name}
-            </Link>
-          ))}
+        {/* Navigation Section */}
+        <nav className="flex-1 p-6">
+          <div className="space-y-1">
+            {navigationItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`sidebar-nav-item ${isActive(item.href) ? 'active' : ''}`}
+              >
+                <item.icon />
+                {item.name}
+              </Link>
+            ))}
+          </div>
         </nav>
         
-        {/* User Account Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200 bg-white">
+        {/* User Account Section - Fixed at bottom */}
+        <div className="p-6 border-t border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
             {/* User Avatar */}
             <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0">
