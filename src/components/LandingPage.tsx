@@ -11,7 +11,7 @@ export function LandingPage() {
         {/* Hero Section */}
         <div className="text-center mb-20 animate-fade-in-up">
           <h1 className="text-6xl font-bold text-slate-900 mb-6 leading-tight">
-            JIGO <span className="text-gradient">Dash</span>
+            Commercial Real Estate <span className="text-gradient">Management Platform</span>
           </h1>
           <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             Transform your commercial real estate leasing process with our intelligent tracking and management platform
@@ -85,7 +85,7 @@ export function LandingPage() {
         <div className="dashboard-card p-8 text-center">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">Ready to Transform Your Business?</h2>
           <p className="text-slate-600 mb-6 max-w-2xl mx-auto">
-            Join thousands of real estate professionals who trust JIGO Dash for their leasing needs
+            Join thousands of real estate professionals who trust our platform for their leasing needs
           </p>
           <Link
             to="/projects"
