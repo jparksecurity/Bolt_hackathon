@@ -9,20 +9,9 @@ import { ProjectRoadmap } from './ProjectRoadmap';
 import { ProjectDocuments } from './ProjectDocuments';
 import { PropertiesOfInterest } from './PropertiesOfInterest';
 import { RecentUpdates } from './RecentUpdates';
+import { BaseProjectData } from '../types/project';
 
-interface ProjectData {
-  id: string;
-  title: string;
-  status: string;
-  start_date: string;
-  expected_fee: number;
-  broker_commission: number;
-  commission_paid_by: string;
-  payment_due: string;
-  company_name: string;
-  expected_headcount: string;
-  created_at: string;
-  updated_at: string;
+interface ProjectData extends BaseProjectData {
   deleted_at?: string | null;
 }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Square, Calendar, Plus, Edit3, X, MessageSquare, Building2, DollarSign, Trash2, Save } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
+import { DragDropList } from './DragDropList';
 
 interface Property {
   id: string;
@@ -16,6 +17,7 @@ interface Property {
   service_type?: 'Full Service' | 'NNN' | 'Modified Gross' | null;
   created_at: string;
   updated_at: string;
+  order_index?: number | null;
 }
 
 interface PropertyFormData {
@@ -62,7 +64,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
         .from('properties')
         .select('*')
         .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
+        .order('order_index', { ascending: true });
 
       if (error) throw error;
       setProperties(data || []);
@@ -134,7 +136,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
         status: formData.status,
         lease_type: formData.lease_type || null,
         service_type: formData.service_type || null,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        order_index: editingProperty ? editingProperty.order_index : properties.length
       };
 
       if (editingProperty) {
@@ -259,6 +262,45 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
     setDeclineReason('');
   };
 
+  const handleReorder = async (oldIndex: number, newIndex: number) => {
+    // Optimistically update the UI
+    const sortedProperties = [...properties].sort((a, b) => {
+      const aOrder = a.order_index ?? 999999;
+      const bOrder = b.order_index ?? 999999;
+      return aOrder - bOrder;
+    });
+
+    const reorderedProperties = [...sortedProperties];
+    const [removed] = reorderedProperties.splice(oldIndex, 1);
+    reorderedProperties.splice(newIndex, 0, removed);
+
+    // Update order_index for all properties
+    const updates = reorderedProperties.map((property, index) => ({
+      id: property.id,
+      order_index: index
+    }));
+
+    try {
+      // Update each property's order_index in the database
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('properties')
+          .update({ order_index: update.order_index })
+          .eq('id', update.id);
+
+        if (error) throw error;
+      }
+
+      // Refresh the data
+      await fetchProperties();
+    } catch (err) {
+      console.error('Error reordering properties:', err);
+      alert('Error reordering properties. Please try again.');
+      // Refresh on error to revert optimistic update
+      await fetchProperties();
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white p-6 border border-gray-200 rounded-lg">
@@ -294,8 +336,11 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {properties.map((property) => (
+        <DragDropList
+          items={properties}
+          onReorder={handleReorder}
+        >
+          {(property) => (
             <div key={property.id} className={`border border-gray-200 rounded-lg p-4 transition-all ${
               property.status === 'declined' 
                 ? 'opacity-60 bg-gray-50' 
@@ -422,8 +467,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ proj
                 </span>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </DragDropList>
       )}
 
       {/* Add/Edit Modal */}

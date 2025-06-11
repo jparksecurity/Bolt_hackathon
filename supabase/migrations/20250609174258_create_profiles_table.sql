@@ -53,7 +53,7 @@ CREATE TABLE project_roadmap (
   status TEXT CHECK (status IN ('completed', 'in-progress', 'pending')),
   expected_date DATE,
   completed_date DATE,
-  order_index INTEGER,
+  order_index INTEGER NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -70,6 +70,7 @@ CREATE TABLE properties (
   decline_reason TEXT,
   lease_type TEXT CHECK (lease_type IN ('Direct Lease', 'Sublease', 'Sub-sublease')),
   service_type TEXT CHECK (service_type IN ('Full Service', 'NNN', 'Modified Gross')),
+  order_index INTEGER NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -89,6 +90,7 @@ CREATE TABLE project_documents (
   name TEXT NOT NULL,
   file_type TEXT NOT NULL,
   storage_path TEXT, -- Path in Supabase Storage
+  order_index INTEGER NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -204,8 +206,10 @@ CREATE INDEX idx_project_roadmap_project_id ON project_roadmap(project_id);
 CREATE INDEX idx_project_roadmap_order ON project_roadmap(project_id, order_index);
 CREATE INDEX idx_properties_project_id ON properties(project_id);
 CREATE INDEX idx_properties_status ON properties(project_id, status);
+CREATE INDEX idx_properties_order ON properties(project_id, order_index);
 CREATE INDEX idx_property_features_property_id ON property_features(property_id);
 CREATE INDEX idx_project_documents_project_id ON project_documents(project_id);
+CREATE INDEX idx_project_documents_order ON project_documents(project_id, order_index);
 CREATE INDEX idx_project_updates_project_id ON project_updates(project_id);
 CREATE INDEX idx_project_updates_date ON project_updates(project_id, update_date DESC);
 

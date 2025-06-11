@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../lib/supabase";
+import { DragDropList } from "./DragDropList";
 
 interface ProjectDocumentsProps {
   projectId: string;
@@ -26,6 +27,7 @@ interface Document {
   file_type: string;
   storage_path: string;
   created_at: string;
+  order_index?: number | null;
 }
 
 const getFileIcon = (fileType: string) => {
@@ -73,9 +75,9 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
       const { data, error } = await supabase
         .from("project_documents")
-        .select("id, name, file_type, storage_path, created_at")
+        .select("id, name, file_type, storage_path, created_at, order_index")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false });
+        .order("order_index", { ascending: true });
 
       if (error) throw error;
       setDocuments(data || []);
@@ -123,6 +125,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
           name: file.name,
           file_type: fileExt || "unknown",
           storage_path: filePath,
+          order_index: documents.length,
         });
 
       if (dbError) throw dbError;
@@ -209,6 +212,45 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     setShowRenameModal(false);
     setRenamingDocument(null);
     setNewDocumentName("");
+  };
+
+  const handleReorder = async (oldIndex: number, newIndex: number) => {
+    // Optimistically update the UI
+    const sortedDocuments = [...documents].sort((a, b) => {
+      const aOrder = a.order_index ?? 999999;
+      const bOrder = b.order_index ?? 999999;
+      return aOrder - bOrder;
+    });
+
+    const reorderedDocuments = [...sortedDocuments];
+    const [removed] = reorderedDocuments.splice(oldIndex, 1);
+    reorderedDocuments.splice(newIndex, 0, removed);
+
+    // Update order_index for all documents
+    const updates = reorderedDocuments.map((document, index) => ({
+      id: document.id,
+      order_index: index
+    }));
+
+    try {
+      // Update each document's order_index in the database
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('project_documents')
+          .update({ order_index: update.order_index })
+          .eq('id', update.id);
+
+        if (error) throw error;
+      }
+
+      // Refresh the data
+      await fetchDocuments();
+    } catch (err) {
+      console.error('Error reordering documents:', err);
+      alert('Error reordering documents. Please try again.');
+      // Refresh on error to revert optimistic update
+      await fetchDocuments();
+    }
   };
 
   const downloadDocument = async (doc: Document) => {
@@ -310,8 +352,11 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {documents.map((doc) => {
+        <DragDropList
+          items={documents}
+          onReorder={handleReorder}
+        >
+          {(doc) => {
             const { icon: IconComponent, color } = getFileIcon(doc.file_type);
             return (
               <div
@@ -355,8 +400,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                 </div>
               </div>
             );
-          })}
-        </div>
+          }}
+        </DragDropList>
       )}
 
       {/* Upload Modal */}

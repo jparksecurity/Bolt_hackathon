@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { CheckCircle, Circle, Clock, Plus, Edit3, Trash2, X, Save } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
+import { DragDropList } from './DragDropList';
 
 interface ProjectRoadmapProps {
   projectId: string;
@@ -179,6 +180,45 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId }) => 
     }
   };
 
+  const handleReorder = async (oldIndex: number, newIndex: number) => {
+    // Optimistically update the UI
+    const sortedSteps = [...roadmapSteps].sort((a, b) => {
+      const aOrder = a.order_index ?? 999999;
+      const bOrder = b.order_index ?? 999999;
+      return aOrder - bOrder;
+    });
+
+    const reorderedSteps = [...sortedSteps];
+    const [removed] = reorderedSteps.splice(oldIndex, 1);
+    reorderedSteps.splice(newIndex, 0, removed);
+
+    // Update order_index for all steps
+    const updates = reorderedSteps.map((step, index) => ({
+      id: step.id,
+      order_index: index
+    }));
+
+    try {
+      // Update each step's order_index in the database
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('project_roadmap')
+          .update({ order_index: update.order_index })
+          .eq('id', update.id);
+
+        if (error) throw error;
+      }
+
+      // Refresh the data
+      await fetchRoadmap();
+    } catch (err) {
+      console.error('Error reordering roadmap steps:', err);
+      alert('Error reordering roadmap steps. Please try again.');
+      // Refresh on error to revert optimistic update
+      await fetchRoadmap();
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white p-6">
@@ -214,8 +254,11 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId }) => 
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {roadmapSteps.map((step, index) => (
+        <DragDropList
+          items={roadmapSteps}
+          onReorder={handleReorder}
+        >
+          {(step, index) => (
           <div key={step.id} className="flex items-start space-x-4">
             <div className="flex flex-col items-center">
               <div 
@@ -290,8 +333,8 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId }) => 
               </div>
             </div>
             </div>
-          ))}
-        </div>
+          )}
+        </DragDropList>
       )}
 
       {/* Add/Edit Modal */}

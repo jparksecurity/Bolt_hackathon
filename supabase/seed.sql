@@ -95,7 +95,7 @@ INSERT INTO project_roadmap (
 -- Insert properties
 INSERT INTO properties (
   id, project_id, name, size, rent, availability, description,
-  status, lease_type, service_type, created_at, updated_at
+  status, lease_type, service_type, order_index, created_at, updated_at
 ) VALUES
 (
   '550e8400-e29b-41d4-a716-446655440020',
@@ -108,6 +108,7 @@ INSERT INTO properties (
   'active',
   'Direct Lease',
   'Full Service',
+  0,
   NOW(),
   NOW()
 ),
@@ -122,6 +123,7 @@ INSERT INTO properties (
   'new',
   'Direct Lease',
   'NNN',
+  1,
   NOW(),
   NOW()
 ),
@@ -136,6 +138,7 @@ INSERT INTO properties (
   'declined',
   'Sublease',
   'Modified Gross',
+  2,
   NOW(),
   NOW()
 );
@@ -156,13 +159,13 @@ INSERT INTO property_features (property_id, feature) VALUES
 
 -- Insert project documents
 INSERT INTO project_documents (
-  id, project_id, name, file_type, created_at
+  id, project_id, name, file_type, order_index, created_at
 ) VALUES
-('550e8400-e29b-41d4-a716-446655440030', '550e8400-e29b-41d4-a716-446655440000', 'Client Requirements.pdf', 'pdf', NOW()),
-('550e8400-e29b-41d4-a716-446655440031', '550e8400-e29b-41d4-a716-446655440000', 'Market Analysis.xlsx', 'xlsx', NOW()),
-('550e8400-e29b-41d4-a716-446655440032', '550e8400-e29b-41d4-a716-446655440000', 'Property Photos.zip', 'zip', NOW()),
-('550e8400-e29b-41d4-a716-446655440033', '550e8400-e29b-41d4-a716-446655440000', 'Lease Template.docx', 'docx', NOW()),
-('550e8400-e29b-41d4-a716-446655440034', '550e8400-e29b-41d4-a716-446655440000', 'Financial Projections.pdf', 'pdf', NOW());
+('550e8400-e29b-41d4-a716-446655440030', '550e8400-e29b-41d4-a716-446655440000', 'Client Requirements.pdf', 'pdf', 0, NOW()),
+('550e8400-e29b-41d4-a716-446655440031', '550e8400-e29b-41d4-a716-446655440000', 'Market Analysis.xlsx', 'xlsx', 1, NOW()),
+('550e8400-e29b-41d4-a716-446655440032', '550e8400-e29b-41d4-a716-446655440000', 'Property Photos.zip', 'zip', 2, NOW()),
+('550e8400-e29b-41d4-a716-446655440033', '550e8400-e29b-41d4-a716-446655440000', 'Lease Template.docx', 'docx', 3, NOW()),
+('550e8400-e29b-41d4-a716-446655440034', '550e8400-e29b-41d4-a716-446655440000', 'Financial Projections.pdf', 'pdf', 4, NOW());
 
 -- Insert project updates
 INSERT INTO project_updates (
