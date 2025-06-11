@@ -3,6 +3,7 @@ import { LandingPage } from './components/LandingPage';
 import { ProjectsListPage } from './components/ProjectsListPage';
 import { LeaseTrackerPage } from './components/LeaseTrackerPage';
 import { PublicProjectPage } from './components/PublicProjectPage';
+import { SettingsPage } from './components/SettingsPage';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/projects" element={<ProjectsListPage />} />
         <Route path="/projects/:id" element={<LeaseTrackerPage />} />
         <Route path="/share/:shareId" element={<PublicProjectPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </Router>
   );
