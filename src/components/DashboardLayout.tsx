@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Building, Home, FileText, Settings, User } from 'lucide-react';
+import { Building, Home, FileText, Settings } from 'lucide-react';
 import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
 
 interface DashboardLayoutProps {
@@ -71,18 +71,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
             </Link>
           ))}
         </nav>
-        
-        <div className="absolute bottom-6 left-6 right-6">
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center">
-              <User className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">User Account</p>
-              <p className="text-xs text-gray-500 truncate">Manage settings</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Main Content */}
