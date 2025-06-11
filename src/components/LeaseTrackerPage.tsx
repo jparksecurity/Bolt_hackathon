@@ -9,20 +9,10 @@ import { ProjectRoadmap } from './ProjectRoadmap';
 import { ProjectDocuments } from './ProjectDocuments';
 import { PropertiesOfInterest } from './PropertiesOfInterest';
 import { RecentUpdates } from './RecentUpdates';
+import { BaseProjectData } from '../types/project';
 
-interface ProjectData {
-  id: string;
-  title: string;
-  status: string;
-  start_date: string;
-  expected_fee: number;
-  broker_commission: number;
-  commission_paid_by: string;
-  payment_due: string;
-  company_name: string;
-  expected_headcount: string;
-  created_at: string;
-  updated_at: string;
+interface ProjectData extends BaseProjectData {
+  deleted_at?: string | null;
 }
 
 export function LeaseTrackerPage() {
@@ -42,6 +32,7 @@ export function LeaseTrackerPage() {
         .from('projects')
         .select('*')
         .eq('id', id)
+        .is('deleted_at', null) // Explicitly exclude soft-deleted projects
         .single();
 
       if (error) {
@@ -121,28 +112,28 @@ export function LeaseTrackerPage() {
       </Header>
       
       <div className="max-w-7xl mx-auto">
-        <ProjectHeader />
+        <ProjectHeader project={project} onProjectUpdate={fetchProject} />
         
         <div className="p-6">
           {/* Recent Updates - Full Width */}
           <div className="mb-6">
-            <RecentUpdates />
+            <RecentUpdates projectId={project.id} />
           </div>
         </div>
         
         {/* Properties Section - Full Width */}
         <div className="px-6 pb-6">
-          <PropertiesOfInterest />
+          <PropertiesOfInterest projectId={project.id} />
         </div>
         
         {/* Project Roadmap - Full Width */}
         <div className="px-6 pb-6">
-          <ProjectRoadmap />
+          <ProjectRoadmap projectId={project.id} />
         </div>
         
         {/* Project Documents - Full Width at Bottom */}
         <div className="px-6 pb-6">
-          <ProjectDocuments />
+          <ProjectDocuments projectId={project.id} />
         </div>
       </div>
     </div>
