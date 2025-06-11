@@ -13,7 +13,7 @@ export function LandingPage() {
           <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             Transform your commercial real estate leasing process with our intelligent tracking and management platform
           </p>
-          <div className="flex items-center justify-center space-x-4">
+          <div className="flex items-center justify-center">
             <Link
               to="/projects"
               className="btn-primary flex items-center space-x-2 px-8 py-4 text-lg"
@@ -21,9 +21,6 @@ export function LandingPage() {
               Get Started
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <button className="btn-secondary px-8 py-4 text-lg">
-              Watch Demo
-            </button>
           </div>
         </div>
 
