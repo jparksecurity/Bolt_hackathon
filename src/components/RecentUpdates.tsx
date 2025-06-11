@@ -192,7 +192,7 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
         ) : (
           <div className="space-y-4">
             {updates.map((update) => (
-              <div key={update.id} className="border-l-4 border-blue-200 pl-4 py-2">
+              <div key={update.id} className="border-l-4 border-blue-200 pl-4 py-2 group">
                 <div className="flex justify-between items-start mb-1">
                   <div className="text-sm text-gray-500">
                     {formatDate(update.update_date)}
