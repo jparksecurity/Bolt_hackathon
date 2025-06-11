@@ -74,7 +74,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
         
         <div className="absolute bottom-6 left-6 right-6">
           <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center">
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">

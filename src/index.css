@@ -5,24 +5,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --primary-blue: #2563eb;
-  --primary-blue-dark: #1d4ed8;
-  --secondary-blue: #3b82f6;
-  --accent-orange: #f97316;
-  --light-bg: #fafafa;
+  --primary-dark: #111827;
+  --primary-grey: #1f2937;
+  --secondary-grey: #374151;
+  --light-grey: #6b7280;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+  --light-bg: #f9fafb;
   --light-card: #ffffff;
   --light-surface: #f8fafc;
   --sidebar-bg: #ffffff;
   --sidebar-border: #e5e7eb;
   --sidebar-text: #6b7280;
-  --sidebar-active: #2563eb;
+  --sidebar-active: #111827;
   --text-primary: #111827;
   --text-secondary: #4b5563;
   --text-muted: #9ca3af;
   --border-color: #e5e7eb;
-  --success: #059669;
-  --warning: #d97706;
-  --error: #dc2626;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
 }
 
 * {
@@ -46,12 +50,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary-blue);
+  background: var(--primary-dark);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-blue-dark);
+  background: var(--primary-grey);
 }
 
 /* Dashboard layout */
@@ -101,7 +105,7 @@ body {
 .sidebar-nav-item.active {
   background: var(--sidebar-active);
   color: white;
-  box-shadow: 0 1px 3px 0 rgba(37, 99, 235, 0.3);
+  box-shadow: 0 1px 3px 0 rgba(17, 24, 39, 0.3);
 }
 
 .sidebar-nav-item svg {
@@ -136,7 +140,7 @@ body {
 
 /* Button styles */
 .btn-primary {
-  background: var(--primary-blue);
+  background: var(--primary-dark);
   border: none;
   color: white;
   padding: 0.75rem 1.5rem;
@@ -144,13 +148,13 @@ body {
   font-weight: 600;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px 0 rgba(37, 99, 235, 0.3);
+  box-shadow: 0 1px 3px 0 rgba(17, 24, 39, 0.3);
 }
 
 .btn-primary:hover {
-  background: var(--primary-blue-dark);
+  background: var(--primary-grey);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px 0 rgba(37, 99, 235, 0.4);
+  box-shadow: 0 4px 12px 0 rgba(17, 24, 39, 0.4);
 }
 
 .btn-secondary {
@@ -166,8 +170,8 @@ body {
 
 .btn-secondary:hover {
   background: #f9fafb;
-  border-color: var(--primary-blue);
-  color: var(--primary-blue);
+  border-color: var(--primary-dark);
+  color: var(--primary-dark);
 }
 
 /* Status badges */
@@ -182,7 +186,7 @@ body {
 }
 
 .status-completed {
-  background: var(--primary-blue);
+  background: var(--primary-dark);
   color: white;
 }
 
@@ -202,8 +206,8 @@ body {
 }
 
 .form-input:focus {
-  border-color: var(--primary-blue);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--primary-dark);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1);
   outline: none;
 }
 
@@ -225,7 +229,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-orange) 100%);
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-grey) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -306,7 +310,7 @@ h1, h2, h3, h4, h5, h6 {
 .project-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px 0 rgba(0, 0, 0, 0.08);
-  border-color: var(--primary-blue);
+  border-color: var(--primary-dark);
 }
 
 .project-card::before {
@@ -316,7 +320,7 @@ h1, h2, h3, h4, h5, h6 {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary-blue), var(--accent-orange));
+  background: linear-gradient(90deg, var(--primary-dark), var(--secondary-grey));
   opacity: 0;
   transition: opacity 0.3s ease;
 }

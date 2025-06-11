@@ -215,7 +215,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           <div className="flex items-center space-x-4 mb-4">
             <h1 className="text-3xl font-bold text-gray-900">{project.title}</h1>
             {!readonly && (
-              <button onClick={openProjectModal} className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-gray-50">
+              <button onClick={openProjectModal} className="p-2 text-gray-400 hover:text-gray-800 transition-colors rounded-lg hover:bg-gray-50">
                 <Edit3 className="w-5 h-5" />
               </button>
             )}
@@ -236,14 +236,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
       {/* Project metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
               <Calendar className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-blue-700 text-sm font-medium">Start Date</p>
-              <p className="text-blue-900 font-bold text-lg">
+              <p className="text-gray-700 text-sm font-medium">Start Date</p>
+              <p className="text-gray-900 font-bold text-lg">
                 {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}
               </p>
             </div>
@@ -252,7 +252,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
         <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -264,14 +264,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200 relative">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 relative">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
               <Info className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-purple-700 text-sm font-medium">Commission</p>
-              <p className="text-purple-900 font-bold text-lg">
+              <p className="text-gray-700 text-sm font-medium">Commission</p>
+              <p className="text-gray-900 font-bold text-lg">
                 ${project.broker_commission ? project.broker_commission.toLocaleString() : '0'}
               </p>
             </div>
@@ -281,11 +281,11 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
               >
-                <Info className="w-4 h-4 text-purple-400 cursor-help hover:text-purple-600 transition-colors" />
+                <Info className="w-4 h-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
                 {showTooltip && (
                   <div className="absolute bottom-full right-0 mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg z-10">
                     <div className="space-y-1">
-                      <div className="font-medium text-blue-400">Commission Details:</div>
+                      <div className="font-medium text-gray-300">Commission Details:</div>
                       <div>• Amount: ${project.broker_commission?.toLocaleString() || '0'}</div>
                       <div>• Paid by: {project.commission_paid_by || 'TBD'}</div>
                       <div>• Payment due: {project.payment_due || 'TBD'}</div>
@@ -298,14 +298,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-orange-700 text-sm font-medium">Head Count</p>
-              <p className="text-orange-900 font-bold text-lg">
+              <p className="text-gray-700 text-sm font-medium">Head Count</p>
+              <p className="text-gray-900 font-bold text-lg">
                 {project.expected_headcount || 'Not set'}
               </p>
             </div>
@@ -317,12 +317,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       {primaryContact && (
         <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
           <h4 className="font-bold text-gray-900 mb-4 flex items-center space-x-2">
-            <User className="w-5 h-5 text-blue-600" />
+            <User className="w-5 h-5 text-gray-800" />
             <span>Primary Contact</span>
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
               <div>

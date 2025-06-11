@@ -33,7 +33,7 @@ export function LandingPage() {
         {/* Features Grid */}
         <section className="feature-grid">
           <div className="feature-card group">
-            <div className="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+            <div className="w-14 h-14 bg-gray-800 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <Building className="w-7 h-7 text-white" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Property Management</h3>
@@ -41,7 +41,7 @@ export function LandingPage() {
           </div>
 
           <div className="feature-card group">
-            <div className="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+            <div className="w-14 h-14 bg-gray-700 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <TrendingUp className="w-7 h-7 text-white" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Market Analysis</h3>
@@ -49,7 +49,7 @@ export function LandingPage() {
           </div>
 
           <div className="feature-card group">
-            <div className="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+            <div className="w-14 h-14 bg-gray-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <Users className="w-7 h-7 text-white" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Client Management</h3>
@@ -57,7 +57,7 @@ export function LandingPage() {
           </div>
 
           <div className="feature-card group">
-            <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+            <div className="w-14 h-14 bg-gray-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <FileText className="w-7 h-7 text-white" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-4">Document Tracking</h3>
@@ -73,17 +73,17 @@ export function LandingPage() {
           </div>
           <div className="grid md:grid-cols-3 gap-12">
             <div className="text-center">
-              <div className="text-5xl font-bold text-blue-600 mb-3">500+</div>
+              <div className="text-5xl font-bold text-gray-800 mb-3">500+</div>
               <div className="text-gray-600 text-lg font-medium">Active Projects</div>
               <div className="text-gray-500 text-sm mt-1">Managed monthly</div>
             </div>
             <div className="text-center">
-              <div className="text-5xl font-bold text-blue-600 mb-3">$2.5B+</div>
+              <div className="text-5xl font-bold text-gray-800 mb-3">$2.5B+</div>
               <div className="text-gray-600 text-lg font-medium">Deals Tracked</div>
               <div className="text-gray-500 text-sm mt-1">Total transaction value</div>
             </div>
             <div className="text-center">
-              <div className="text-5xl font-bold text-blue-600 mb-3">98%</div>
+              <div className="text-5xl font-bold text-gray-800 mb-3">98%</div>
               <div className="text-gray-600 text-lg font-medium">Client Satisfaction</div>
               <div className="text-gray-500 text-sm mt-1">Based on user feedback</div>
             </div>
@@ -97,7 +97,7 @@ export function LandingPage() {
               <h2 className="text-4xl font-bold text-gray-900 mb-6">Why Choose Our Platform?</h2>
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
                   <div>
@@ -106,7 +106,7 @@ export function LandingPage() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
                   <div>
@@ -115,7 +115,7 @@ export function LandingPage() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
                   <div>
@@ -125,9 +125,9 @@ export function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 border border-gray-200">
               <div className="text-center">
-                <div className="w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <div className="w-20 h-20 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Star className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Get Started?</h3>
