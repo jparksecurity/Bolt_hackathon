@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/clerk-react';
 import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
 
 interface HeaderProps {
@@ -41,13 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ children }) => {
             </div>
           </SignedOut>
           <SignedIn>
-            <UserButton 
-              appearance={{
-                elements: {
-                  avatarBox: "w-10 h-10"
-                }
-              }}
-            />
+            {/* Account management is now only available in the dashboard sidebar */}
           </SignedIn>
         </div>
       </div>
