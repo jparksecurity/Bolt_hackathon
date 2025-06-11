@@ -64,8 +64,8 @@ export const ClientRequirements: React.FC<ClientRequirementsProps> = ({ projectI
 
       if (error) throw error;
       setRequirements(data || []);
-    } catch (err) {
-      console.error('Error fetching requirements:', err);
+    } catch {
+      // Error fetching requirements - use empty array
     } finally {
       setLoading(false);
     }
@@ -131,8 +131,7 @@ export const ClientRequirements: React.FC<ClientRequirementsProps> = ({ projectI
 
       await fetchRequirements();
       closeModal();
-    } catch (err) {
-      console.error('Error saving requirement:', err);
+    } catch {
       alert('Error saving requirement. Please try again.');
     } finally {
       setSaving(false);
@@ -150,8 +149,7 @@ export const ClientRequirements: React.FC<ClientRequirementsProps> = ({ projectI
 
       if (error) throw error;
       await fetchRequirements();
-    } catch (err) {
-      console.error('Error deleting requirement:', err);
+    } catch {
       alert('Error deleting requirement. Please try again.');
     }
   };

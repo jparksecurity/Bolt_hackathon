@@ -1,12 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail, MapPin, FileText, X, Save, Plus, Trash2 } from 'lucide-react';
+import { Edit3, Calendar, DollarSign, Info } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { ProjectStatus, BaseProjectData } from '../types/project';
+import { useProjectData } from '../hooks/useProjectData';
+import { CompanyInfoSection } from './CompanyInfoSection';
+import { ClientRequirementsSection } from './ClientRequirementsSection';
+import { Modal } from './ui/Modal';
+import { FormButton } from './ui/FormButton';
 
 interface ProjectHeaderProps {
   project: BaseProjectData;
   onProjectUpdate?: () => void;
+  readonly?: boolean;
+  shareId?: string;
 }
 
 interface Contact {
@@ -34,8 +41,6 @@ interface ProjectFormData {
   payment_due: string;
 }
 
-
-
 interface RequirementFormData {
   category: string;
   requirement_text: string;
@@ -50,45 +55,22 @@ interface CompanyInfoFormData {
   contact_email: string;
 }
 
-enum Modal {
-  PROJECT = 'project',
-  REQUIREMENT = 'requirement',
-  COMPANY_INFO = 'companyInfo'
-}
-
-const requirementCategories = [
-  {
-    id: 'Space Requirements',
-    title: 'Space Requirements',
-    icon: Building,
-  },
-  {
-    id: 'Location',
-    title: 'Location',
-    icon: MapPin,
-  },
-  {
-    id: 'Other',
-    title: 'Other',
-    icon: FileText,
-  }
-];
-
-export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProjectUpdate }) => {
+export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ 
+  project, 
+  onProjectUpdate, 
+  readonly = false, 
+  shareId 
+}) => {
   const { user } = useUser();
   const supabase = useSupabaseClient();
   const [showTooltip, setShowTooltip] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Modal state
-  const [activeModal, setActiveModal] = useState<Modal | null>(null);
-
-  // Editing states
-  const [editingRequirement, setEditingRequirement] = useState<Requirement | null>(null);
-
-  // Form data states
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  
+  // Project form data
   const [projectFormData, setProjectFormData] = useState<ProjectFormData>({
     title: '',
     status: ProjectStatus.ACTIVE,
@@ -99,62 +81,43 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
     payment_due: ''
   });
 
-
-
-  const [requirementFormData, setRequirementFormData] = useState<RequirementFormData>({
-    category: 'Space Requirements',
-    requirement_text: ''
+  // Use data hooks for public mode
+  const { 
+    data: publicContacts, 
+    loading: publicContactsLoading 
+  } = useProjectData<Contact>({ 
+    shareId: readonly && shareId ? shareId : undefined,
+    projectId: !readonly ? project.id : undefined,
+    dataType: 'contacts' 
   });
 
-  const [companyInfoFormData, setCompanyInfoFormData] = useState<CompanyInfoFormData>({
-    company_name: '',
-    expected_headcount: '',
-    contact_name: '',
-    contact_title: '',
-    contact_phone: '',
-    contact_email: ''
+  const { 
+    data: publicRequirements, 
+    loading: publicRequirementsLoading,
+    refetch: refetchRequirements
+  } = useProjectData<Requirement>({ 
+    shareId: readonly && shareId ? shareId : undefined,
+    projectId: !readonly ? project.id : undefined,
+    dataType: 'requirements' 
   });
-
-  const [saving, setSaving] = useState(false);
 
   const fetchContactsAndRequirements = useCallback(async () => {
     try {
-      if (!user) return;
-
-      // Fetch contacts
-      const { data: contactsData, error: contactsError } = await supabase
-        .from('project_contacts')
-        .select('*')
-        .eq('project_id', project.id)
-        .order('is_primary', { ascending: false });
-
-      if (contactsError) throw contactsError;
-
-      // Fetch requirements
-      const { data: requirementsData, error: requirementsError } = await supabase
-        .from('client_requirements')
-        .select('*')
-        .eq('project_id', project.id)
-        .order('category');
-
-      if (requirementsError) throw requirementsError;
-
-      setContacts(contactsData || []);
-      setRequirements(requirementsData || []);
-    } catch (err) {
-      console.error('Error fetching contacts and requirements:', err);
-    } finally {
-      setLoading(false);
+      setContacts(publicContacts);
+      setRequirements(publicRequirements);
+      setLoading(publicContactsLoading || publicRequirementsLoading);
+    } catch {
+      // Error fetching contacts and requirements - use empty arrays
     }
-  }, [user, supabase, project.id]);
+  }, [publicContacts, publicRequirements, publicContactsLoading, publicRequirementsLoading]);
 
   useEffect(() => {
-    if (user && project.id) {
+    if (readonly || (user && project.id)) {
       fetchContactsAndRequirements();
     }
-  }, [user, project.id, fetchContactsAndRequirements]);
+  }, [user, project.id, fetchContactsAndRequirements, readonly]);
 
-  // Reset form functions
+  // Project form functions
   const resetProjectForm = () => {
     setProjectFormData({
       title: project.title,
@@ -167,55 +130,15 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
     });
   };
 
-
-
-  const resetRequirementForm = () => {
-    setRequirementFormData({
-      category: 'Space Requirements',
-      requirement_text: ''
-    });
-    setEditingRequirement(null);
-  };
-
-  const resetCompanyInfoForm = () => {
-    const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
-    setCompanyInfoFormData({
-      company_name: project.company_name || '',
-      expected_headcount: project.expected_headcount || '',
-      contact_name: primaryContact?.name || '',
-      contact_title: primaryContact?.title || '',
-      contact_phone: primaryContact?.phone || '',
-      contact_email: primaryContact?.email || ''
-    });
-  };
-
-  // Modal open functions
   const openProjectModal = () => {
     resetProjectForm();
-    setActiveModal(Modal.PROJECT);
+    setIsProjectModalOpen(true);
   };
 
-
-
-  const openRequirementModal = (requirement?: Requirement) => {
-    if (requirement) {
-      setRequirementFormData({
-        category: requirement.category,
-        requirement_text: requirement.requirement_text
-      });
-      setEditingRequirement(requirement);
-    } else {
-      resetRequirementForm();
-    }
-    setActiveModal(Modal.REQUIREMENT);
+  const closeProjectModal = () => {
+    setIsProjectModalOpen(false);
   };
 
-  const openCompanyInfoModal = () => {
-    resetCompanyInfoForm();
-    setActiveModal(Modal.COMPANY_INFO);
-  };
-
-  // Save functions
   const saveProject = async () => {
     setSaving(true);
     try {
@@ -237,138 +160,102 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
 
       if (error) throw error;
 
-      setActiveModal(null);
+      setIsProjectModalOpen(false);
       onProjectUpdate?.();
-    } catch (err) {
-      console.error('Error updating project:', err);
+    } catch {
       alert('Error updating project. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
+  // Company info save handler
+  const handleCompanyInfoSave = async (formData: CompanyInfoFormData) => {
+    // Update project with company details
+    const { error: projectError } = await supabase
+      .from('projects')
+      .update({
+        company_name: formData.company_name,
+        expected_headcount: formData.expected_headcount,
+      })
+      .eq('id', project.id);
 
+    if (projectError) throw projectError;
 
-  const saveRequirement = async () => {
-    setSaving(true);
-    try {
-      const requirementData = {
-        project_id: project.id,
-        category: requirementFormData.category,
-        requirement_text: requirementFormData.requirement_text.trim()
-      };
-
-      if (editingRequirement) {
-        const { error } = await supabase
-          .from('client_requirements')
-          .update(requirementData)
-          .eq('id', editingRequirement.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('client_requirements')
-          .insert([requirementData]);
-
-        if (error) throw error;
-      }
-
-      setActiveModal(null);
-      resetRequirementForm();
-      await fetchContactsAndRequirements();
-    } catch (err) {
-      console.error('Error saving requirement:', err);
-      alert('Error saving requirement. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveCompanyInfo = async () => {
-    if (!companyInfoFormData.company_name.trim() || !companyInfoFormData.contact_name.trim()) return;
+    // Handle primary contact
+    const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
     
-    setSaving(true);
-    try {
-      // Update project with company details
-      const { error: projectError } = await supabase
-        .from('projects')
+    if (primaryContact) {
+      // Update existing primary contact
+      const { error: contactError } = await supabase
+        .from('project_contacts')
         .update({
-          company_name: companyInfoFormData.company_name,
-          expected_headcount: companyInfoFormData.expected_headcount,
+          name: formData.contact_name,
+          title: formData.contact_title,
+          phone: formData.contact_phone,
+          email: formData.contact_email,
+          is_primary: true,
         })
-        .eq('id', project.id);
+        .eq('id', primaryContact.id);
 
-      if (projectError) throw projectError;
-
-      // Handle primary contact
-      const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
-      
-      if (primaryContact) {
-        // Update existing primary contact
-        const { error: contactError } = await supabase
-          .from('project_contacts')
-          .update({
-            name: companyInfoFormData.contact_name,
-            title: companyInfoFormData.contact_title,
-            phone: companyInfoFormData.contact_phone,
-            email: companyInfoFormData.contact_email,
+      if (contactError) throw contactError;
+    } else {
+      // Create new primary contact
+      const { error: contactError } = await supabase
+        .from('project_contacts')
+        .insert([
+          {
+            project_id: project.id,
+            name: formData.contact_name,
+            title: formData.contact_title,
+            phone: formData.contact_phone,
+            email: formData.contact_email,
             is_primary: true,
-          })
-          .eq('id', primaryContact.id);
+          }
+        ]);
 
-        if (contactError) throw contactError;
-      } else {
-        // Create new primary contact
-        const { error: contactError } = await supabase
-          .from('project_contacts')
-          .insert([
-            {
-              project_id: project.id,
-              name: companyInfoFormData.contact_name,
-              title: companyInfoFormData.contact_title,
-              phone: companyInfoFormData.contact_phone,
-              email: companyInfoFormData.contact_email,
-              is_primary: true,
-            }
-          ]);
-
-        if (contactError) throw contactError;
-      }
-
-      await fetchContactsAndRequirements();
-      if (onProjectUpdate) onProjectUpdate();
-      setActiveModal(null);
-    } catch (err) {
-      console.error('Error saving company information:', err);
-      alert('Error saving company information. Please try again.');
-    } finally {
-      setSaving(false);
+      if (contactError) throw contactError;
     }
+
+    await fetchContactsAndRequirements();
+    onProjectUpdate?.();
   };
 
-  // Delete functions
+  // Requirements save handler
+  const handleRequirementSave = async (formData: RequirementFormData, editingId?: string) => {
+    const requirementData = {
+      project_id: project.id,
+      category: formData.category,
+      requirement_text: formData.requirement_text.trim()
+    };
 
-  const deleteRequirement = async (requirementId: string) => {
-    if (!confirm('Are you sure you want to delete this requirement?')) return;
-
-    try {
+    if (editingId) {
       const { error } = await supabase
         .from('client_requirements')
-        .delete()
-        .eq('id', requirementId);
+        .update(requirementData)
+        .eq('id', editingId);
 
       if (error) throw error;
-      await fetchContactsAndRequirements();
-    } catch (err) {
-      console.error('Error deleting requirement:', err);
-      alert('Error deleting requirement. Please try again.');
+    } else {
+      const { error } = await supabase
+        .from('client_requirements')
+        .insert([requirementData]);
+
+      if (error) throw error;
     }
+
+    await refetchRequirements();
   };
 
-  const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
-  
-  const getRequirementsByCategory = (category: string) => {
-    return requirements.filter(req => req.category === category);
+  // Requirements delete handler
+  const handleRequirementDelete = async (requirementId: string) => {
+    const { error } = await supabase
+      .from('client_requirements')
+      .delete()
+      .eq('id', requirementId);
+
+    if (error) throw error;
+    await refetchRequirements();
   };
 
   return (
@@ -377,9 +264,11 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
             <span>{project.title}</span>
-            <button onClick={openProjectModal}>
-            <Edit3 className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
-            </button>
+            {!readonly && (
+              <button onClick={openProjectModal}>
+                <Edit3 className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+              </button>
+            )}
           </h1>
           <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
             <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
@@ -421,423 +310,136 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, onProject
         </div>
       </div>
 
-      {/* Company and Contact Information Section */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-            <Building className="w-5 h-5" />
-            <span>Company Information</span>
-          </h3>
-          <button onClick={openCompanyInfoModal} title="Edit Company Information">
-            <Edit3 className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Company Details</h4>
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="text-gray-600">Company Name:</span>
-                <span className="ml-2 font-medium">{project.company_name || 'Not specified'}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Expected Head Count:</span>
-                <span className="ml-2">{project.expected_headcount || 'Not specified'}</span>
-              </div>
+      {/* Company Information Section */}
+      <CompanyInfoSection
+        project={project}
+        contacts={contacts}
+        loading={loading}
+        readonly={readonly}
+        onSave={handleCompanyInfoSave}
+      />
+
+      {/* Client Requirements Section */}
+      <ClientRequirementsSection
+        requirements={requirements}
+        loading={loading}
+        readonly={readonly}
+        onSave={handleRequirementSave}
+        onDelete={handleRequirementDelete}
+      />
+      
+      {/* Project Edit Modal */}
+      <Modal
+        isOpen={isProjectModalOpen}
+        onClose={closeProjectModal}
+        title="Edit Project"
+        size="lg"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); saveProject(); }} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Project Title
+              </label>
+              <input
+                type="text"
+                value={projectFormData.title}
+                onChange={(e) => setProjectFormData({ ...projectFormData, title: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={projectFormData.status}
+                onChange={(e) => setProjectFormData({ ...projectFormData, status: e.target.value as ProjectStatus })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {Object.values(ProjectStatus).map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={projectFormData.start_date}
+                onChange={(e) => setProjectFormData({ ...projectFormData, start_date: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Expected Fee
+              </label>
+              <input
+                type="number"
+                value={projectFormData.expected_fee}
+                onChange={(e) => setProjectFormData({ ...projectFormData, expected_fee: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Broker Commission
+              </label>
+              <input
+                type="number"
+                value={projectFormData.broker_commission}
+                onChange={(e) => setProjectFormData({ ...projectFormData, broker_commission: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Commission Paid By
+              </label>
+              <input
+                type="text"
+                value={projectFormData.commission_paid_by}
+                onChange={(e) => setProjectFormData({ ...projectFormData, commission_paid_by: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Payment Due
+              </label>
+              <input
+                type="text"
+                value={projectFormData.payment_due}
+                onChange={(e) => setProjectFormData({ ...projectFormData, payment_due: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
           
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Point of Contact</h4>
-            {loading ? (
-              <div className="text-sm text-gray-500">Loading contact...</div>
-            ) : primaryContact ? (
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">{primaryContact.name}</span>
-                  {primaryContact.title && (
-                    <span className="text-gray-600">- {primaryContact.title}</span>
-                  )}
-                </div>
-                {primaryContact.phone && (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <span>{primaryContact.phone}</span>
-                  </div>
-                )}
-                {primaryContact.email && (
-                  <div className="flex items-center space-x-2">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <span>{primaryContact.email}</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">To be added</span>
-                  <span className="text-gray-600">- Contact Person</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <span>To be added</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <span>To be added</span>
-                </div>
-              </div>
-            )}
+          <div className="flex justify-end space-x-3 pt-4">
+            <FormButton variant="secondary" onClick={closeProjectModal}>
+              Cancel
+            </FormButton>
+            <FormButton 
+              type="submit" 
+              loading={saving}
+              disabled={!projectFormData.title.trim()}
+            >
+              Save Changes
+            </FormButton>
           </div>
-        </div>
-      </div>
-
-      {/* Client Requirements Section */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900">Client Requirements</h3>
-          <button onClick={() => openRequirementModal()} title="Add Requirement">
-            <Plus className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
-          </button>
-        </div>
-        
-        {loading ? (
-          <div className="text-sm text-gray-500">Loading requirements...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {requirementCategories.map((category) => {
-              const categoryRequirements = getRequirementsByCategory(category.id);
-              return (
-                <div key={category.id}>
-                  <div className="flex items-center space-x-2 mb-3">
-                    <category.icon className="w-4 h-4 text-blue-600" />
-                    <h4 className="font-medium text-gray-900 text-sm">{category.title}</h4>
-                  </div>
-                  <div className="space-y-2 ml-6">
-                    {categoryRequirements.length > 0 ? (
-                      categoryRequirements.map((req) => (
-                        <div key={req.id} className="flex items-center justify-between group">
-                          <div className="flex items-center space-x-2">
-                          <div className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
-                          <span className="text-sm text-gray-700">{req.requirement_text}</span>
-                          </div>
-                          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => openRequirementModal(req)}>
-                              <Edit3 className="w-3 h-3 text-gray-400 hover:text-gray-600" />
-                            </button>
-                            <button onClick={() => deleteRequirement(req.id)}>
-                              <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-600" />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-                        <span className="text-sm text-gray-700">To be defined</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-      
-      {/* Project Edit Modal */}
-      {activeModal === Modal.PROJECT && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Edit Project Details</h3>
-              <button onClick={() => setActiveModal(null)}>
-                <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Project Title *</label>
-                  <input
-                    type="text"
-                    value={projectFormData.title}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select
-                    value={projectFormData.status}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, status: e.target.value as ProjectStatus }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  >
-                    <option value={ProjectStatus.ACTIVE}>Active</option>
-                    <option value={ProjectStatus.PENDING}>Pending</option>
-                    <option value={ProjectStatus.COMPLETED}>Completed</option>
-                    <option value={ProjectStatus.ON_HOLD}>On Hold</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    value={projectFormData.start_date}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Expected Fee</label>
-                  <input
-                    type="number"
-                    value={projectFormData.expected_fee}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, expected_fee: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    placeholder="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Broker Commission</label>
-                  <input
-                    type="number"
-                    value={projectFormData.broker_commission}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, broker_commission: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    placeholder="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Commission Paid By</label>
-                  <input
-                    type="text"
-                    value={projectFormData.commission_paid_by}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, commission_paid_by: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    placeholder="e.g., Landlord, Tenant"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Payment Due</label>
-                  <input
-                    type="text"
-                    value={projectFormData.payment_due}
-                    onChange={(e) => setProjectFormData(prev => ({ ...prev, payment_due: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                    placeholder="e.g., Upon lease signing"
-                  />
-                </div>
-
-
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  onClick={() => setActiveModal(null)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveProject}
-                  disabled={saving || !projectFormData.title.trim()}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-
-      {/* Requirement Modal */}
-      {activeModal === Modal.REQUIREMENT && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {editingRequirement ? 'Edit Requirement' : 'Add Requirement'}
-              </h3>
-              <button onClick={() => setActiveModal(null)}>
-                <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={requirementFormData.category}
-                  onChange={(e) => setRequirementFormData(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  {requirementCategories.map(category => (
-                    <option key={category.id} value={category.id}>{category.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Requirement *</label>
-                <textarea
-                  value={requirementFormData.requirement_text}
-                  onChange={(e) => setRequirementFormData(prev => ({ ...prev, requirement_text: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  rows={3}
-                  placeholder="Enter requirement details"
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  onClick={() => setActiveModal(null)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveRequirement}
-                  disabled={saving || !requirementFormData.requirement_text.trim()}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{saving ? 'Saving...' : editingRequirement ? 'Update Requirement' : 'Add Requirement'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Company Information Modal */}
-      {activeModal === Modal.COMPANY_INFO && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Edit Company Information</h3>
-              <button onClick={() => setActiveModal(null)}>
-                <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Company Details */}
-              <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Company Details</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
-                    <input
-                      type="text"
-                      value={companyInfoFormData.company_name}
-                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, company_name: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      placeholder="Client company name"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Expected Headcount</label>
-                    <input
-                      type="text"
-                      value={companyInfoFormData.expected_headcount}
-                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, expected_headcount: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      placeholder="e.g., 50-75 employees"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Primary Contact</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name *</label>
-                    <input
-                      type="text"
-                      value={companyInfoFormData.contact_name}
-                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, contact_name: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      placeholder="Full name"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                    <input
-                      type="text"
-                      value={companyInfoFormData.contact_title}
-                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, contact_title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      placeholder="e.g., CEO, Facility Manager"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      value={companyInfoFormData.contact_phone}
-                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, contact_phone: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={companyInfoFormData.contact_email}
-                      onChange={(e) => setCompanyInfoFormData(prev => ({ ...prev, contact_email: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      placeholder="contact@company.com"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  onClick={() => setActiveModal(null)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveCompanyInfo}
-                  disabled={saving || !companyInfoFormData.company_name.trim() || !companyInfoFormData.contact_name.trim()}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        </form>
+      </Modal>
     </div>
   );
-};
+}; 

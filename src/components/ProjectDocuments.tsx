@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
   FileText,
   BarChart3,
@@ -16,9 +16,13 @@ import {
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../lib/supabase";
 import { DragDropList } from "./DragDropList";
+import { useProjectData } from "../hooks/useProjectData";
+import { PublicProjectAPI } from "../lib/publicApi";
 
 interface ProjectDocumentsProps {
-  projectId: string;
+  projectId?: string;
+  shareId?: string;
+  readonly?: boolean;
 }
 
 interface Document {
@@ -55,11 +59,22 @@ const getFileIcon = (fileType: string) => {
 
 export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   projectId,
+  shareId,
+  readonly = false,
 }) => {
   const { user } = useUser();
   const supabase = useSupabaseClient();
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Use unified data hook for both public and authenticated modes
+  const { 
+    data: documents, 
+    loading, 
+    refetch: fetchDocuments 
+  } = useProjectData<Document>({ 
+    projectId, 
+    shareId, 
+    dataType: 'documents' 
+  });
   const [uploading, setUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -69,34 +84,11 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   const [newDocumentName, setNewDocumentName] = useState("");
   const [renaming, setRenaming] = useState(false);
 
-  const fetchDocuments = useCallback(async () => {
-    try {
-      if (!user) return;
 
-      const { data, error } = await supabase
-        .from("project_documents")
-        .select("id, name, file_type, storage_path, created_at, order_index")
-        .eq("project_id", projectId)
-        .order("order_index", { ascending: true });
-
-      if (error) throw error;
-      setDocuments(data || []);
-    } catch (err) {
-      console.error("Error fetching documents:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, supabase, projectId]);
-
-  useEffect(() => {
-    if (user && projectId) {
-      fetchDocuments();
-    }
-  }, [user, projectId, fetchDocuments]);
 
   const uploadFile = async (file: File) => {
     try {
-      if (!user) throw new Error("User not authenticated");
+      if (!user || readonly) throw new Error("User not authenticated or in readonly mode");
 
       setUploading(true);
       setUploadProgress(0);
@@ -133,8 +125,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       // Refresh documents list
       await fetchDocuments();
       setShowUploadModal(false);
-    } catch (err) {
-      console.error("Error uploading file:", err);
+    } catch {
       alert("Failed to upload file. Please try again.");
     } finally {
       setUploading(false);
@@ -143,7 +134,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   };
 
   const deleteDocument = async (doc: Document) => {
-    if (!confirm(`Are you sure you want to delete "${doc.name}"?`)) {
+    if (readonly || !confirm(`Are you sure you want to delete "${doc.name}"?`)) {
       return;
     }
 
@@ -157,7 +148,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
           .remove([doc.storage_path]);
 
         if (storageError) {
-          console.error("Storage deletion error:", storageError);
+          // Storage deletion failed, but continue with database deletion
         }
       }
 
@@ -171,14 +162,13 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
       // Refresh documents list
       await fetchDocuments();
-    } catch (err) {
-      console.error("Error deleting document:", err);
+    } catch {
       alert("Failed to delete document. Please try again.");
     }
   };
 
   const renameDocument = async () => {
-    if (!renamingDocument || !newDocumentName.trim()) return;
+    if (!renamingDocument || !newDocumentName.trim() || readonly) return;
 
     setRenaming(true);
     try {
@@ -194,8 +184,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       setShowRenameModal(false);
       setRenamingDocument(null);
       setNewDocumentName("");
-    } catch (err) {
-      console.error("Error renaming document:", err);
+    } catch {
       alert("Failed to rename document. Please try again.");
     } finally {
       setRenaming(false);
@@ -215,6 +204,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   };
 
   const handleReorder = async (oldIndex: number, newIndex: number) => {
+    if (readonly) return;
+    
     // Optimistically update the UI
     const sortedDocuments = [...documents].sort((a, b) => {
       const aOrder = a.order_index ?? 999999;
@@ -245,8 +236,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
       // Refresh the data
       await fetchDocuments();
-    } catch (err) {
-      console.error('Error reordering documents:', err);
+    } catch {
       alert('Error reordering documents. Please try again.');
       // Refresh on error to revert optimistic update
       await fetchDocuments();
@@ -257,28 +247,65 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     try {
       if (!doc.storage_path) return;
 
-      // Get a signed URL for downloading
-      const { data, error } = await supabase.storage
-        .from("project-documents")
-        .createSignedUrl(doc.storage_path, 60); // 60 seconds expiry
+      let signedUrl: string | null = null;
 
-      if (error) {
-        console.error("Error creating signed URL:", error);
-        alert("Failed to download document. Please try again.");
-        return;
+      if (shareId && readonly) {
+        // For public users, check if this is a real document or seeded data
+        if (!doc.storage_path) {
+          alert("This document is not available for download (demo data).");
+          return;
+        }
+
+        // For public users, use the PublicProjectAPI to verify access
+        const publicAPI = new PublicProjectAPI(supabase);
+        const result = await publicAPI.getDocumentDownloadInfo(shareId, doc.id);
+        
+        if (result.error || !result.documentInfo) {
+          alert("Failed to download document. Please try again.");
+          return;
+        }
+
+        // Try to get public URL directly (this works if bucket is public)
+        const { data: publicUrlData } = supabase.storage
+          .from("project-documents")
+          .getPublicUrl(result.documentInfo.storage_path);
+        
+        if (publicUrlData?.publicUrl) {
+          signedUrl = publicUrlData.publicUrl;
+        } else {
+          alert("Document download is not available in public view.");
+          return;
+        }
+      } else {
+        // For authenticated users, check if this is a real document or seeded data
+        if (!doc.storage_path) {
+          alert("This document is not available for download (demo data).");
+          return;
+        }
+
+        // For authenticated users, use the standard approach
+        const { data, error } = await supabase.storage
+          .from("project-documents")
+          .createSignedUrl(doc.storage_path, 60); // 60 seconds expiry
+
+        if (error) {
+          alert("Failed to download document. Please try again.");
+          return;
+        }
+
+        signedUrl = data?.signedUrl || null;
       }
 
-      if (data?.signedUrl) {
+      if (signedUrl) {
         // Create a temporary link to trigger download
         const link = document.createElement("a");
-        link.href = data.signedUrl;
+        link.href = signedUrl;
         link.download = doc.name;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       }
-    } catch (err) {
-      console.error("Error downloading document:", err);
+    } catch {
       alert("Failed to download document. Please try again.");
     }
   };
@@ -325,13 +352,15 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         <h3 className="text-lg font-semibold text-gray-900">
           Project Documents
         </h3>
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="flex items-center space-x-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Upload Document</span>
-        </button>
+        {!readonly && (
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="flex items-center space-x-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Upload Document</span>
+          </button>
+        )}
       </div>
 
       {documents.length === 0 ? (
@@ -341,17 +370,55 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
             No documents yet
           </h4>
           <p className="text-gray-600 mb-6">
-            Upload documents related to this project
+            {readonly ? "No documents have been uploaded for this project" : "Upload documents related to this project"}
           </p>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Upload First Document</span>
-          </button>
+          {!readonly && (
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Upload First Document</span>
+            </button>
+          )}
+        </div>
+      ) : readonly ? (
+        // Static view for readonly mode
+        <div className="space-y-3">
+          {documents.map((doc) => {
+            const { icon: IconComponent, color } = getFileIcon(doc.file_type);
+            return (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+              >
+                <div className="flex items-center space-x-3">
+                  <IconComponent className={`w-5 h-5 ${color}`} />
+                  <div>
+                    <span className="text-sm text-gray-900 font-medium">
+                      {doc.name}
+                    </span>
+                    <div className="text-xs text-gray-500">
+                      {doc.file_type.toUpperCase()} •{" "}
+                      {new Date(doc.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => downloadDocument(doc)}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Download"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
+        // Interactive view for authenticated mode
         <DragDropList
           items={documents}
           onReorder={handleReorder}
@@ -383,20 +450,24 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                   >
                     <ExternalLink className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => openRenameModal(doc)}
-                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Rename"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => deleteDocument(doc)}
-                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {!readonly && (
+                    <>
+                      <button
+                        onClick={() => openRenameModal(doc)}
+                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Rename"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteDocument(doc)}
+                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -404,8 +475,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         </DragDropList>
       )}
 
-      {/* Upload Modal */}
-      {showUploadModal && (
+      {/* Upload Modal - only show if not readonly */}
+      {showUploadModal && !readonly && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 max-w-90vw">
             <div className="flex items-center justify-between mb-4">
@@ -470,8 +541,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         </div>
       )}
 
-      {/* Rename Modal */}
-      {showRenameModal && renamingDocument && (
+      {/* Rename Modal - only show if not readonly */}
+      {showRenameModal && renamingDocument && !readonly && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="flex items-center justify-between p-6 border-b">

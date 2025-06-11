@@ -38,7 +38,7 @@ CLERK_DOMAIN=your-production-domain.clerk.accounts.dev
 ## Database Setup
 
 The project uses Supabase with the following schema:
-- **projects**: Main lease tracking projects
+- **projects**: Main lease tracking projects (includes public sharing functionality)
 - **project_contacts**: Client contacts for each project
 - **client_requirements**: Categorized requirements per project
 - **project_roadmap**: Project phases and milestones
@@ -46,6 +46,32 @@ The project uses Supabase with the following schema:
 - **property_features**: Features for each property
 - **project_documents**: Documents associated with projects
 - **project_updates**: Activity log for each project
+
+### Database Migration
+
+Apply the complete schema using the consolidated migration file:
+
+1. **Using Supabase CLI** (if available):
+   ```bash
+   supabase db push
+   ```
+
+2. **Using Supabase Dashboard**:
+   - Go to your Supabase dashboard
+   - Navigate to the SQL Editor
+   - Copy and paste the contents of `supabase/migrations/00_complete_schema.sql`
+   - Execute the migration
+
+### What the Migration Includes
+
+The consolidated migration sets up:
+
+1. **Core Tables**: All lease tracking tables with proper relationships
+2. **Row Level Security (RLS)**: Multi-tenant security policies
+3. **Optimized Indexes**: Performance-optimized database indexes
+4. **Storage Setup**: Document storage bucket with proper permissions
+5. **Public Sharing**: Functions and permissions for read-only project sharing
+6. **Anonymous Access**: Secure functions for public project viewing
 
 ### Remote Database Setup (Already Done)
 
@@ -58,6 +84,40 @@ The remote database has been linked and reset with migrations applied. To update
    SET clerk_user_id = 'your_actual_clerk_user_id' 
    WHERE clerk_user_id = 'user_2yHntOGKi6N4kXscdHcJrYjEpWN';
    ```
+
+## Public Project Sharing
+
+The system includes a public sharing feature that allows project owners to generate shareable links for read-only access.
+
+### How to Use Public Sharing
+
+1. **For Project Owners**:
+   - Navigate to any project page (`/projects/:id`)
+   - Click the "Copy Public Link" button in the header
+   - Share the generated URL with clients or stakeholders
+
+2. **For Public Viewers**:
+   - Visit the shared URL (e.g., `https://yourapp.com/share/{shareId}`)
+   - View project details, updates, properties, roadmap, and documents in read-only mode
+   - Download documents (if available)
+
+### Security Features
+
+- **Read-only Access**: Public viewers cannot edit or modify any data
+- **Selective Sharing**: Only projects with generated share IDs are accessible publicly
+- **Secure Functions**: Database functions use `SECURITY DEFINER` to bypass RLS safely
+- **No Authentication Required**: Public links work without user accounts
+- **Non-guessable URLs**: Public URLs use UUIDs for security
+
+### Revoking Public Access
+
+To revoke public access to a project:
+
+```sql
+UPDATE projects 
+SET public_share_id = NULL 
+WHERE id = 'your-project-id';
+```
 
 ## Deployment
 
@@ -100,7 +160,13 @@ The remote database has been linked and reset with migrations applied. To update
 ```
 src/
 ├── components/           # React components
-├── lib/                 # Utility libraries (Supabase client)
+│   ├── PublicProjectPage.tsx       # Main public sharing page
+│   ├── PublicProjectHeader.tsx     # Read-only header
+│   ├── PublicRecentUpdates.tsx     # Public updates view
+│   ├── PublicPropertiesOfInterest.tsx
+│   ├── PublicProjectRoadmap.tsx
+│   └── PublicProjectDocuments.tsx
+├── lib/                 # Utility libraries (Supabase client, public API)
 ├── assets/              # Static assets
 │   └── design/          # Logo and design assets
 ├── App.tsx              # Main application component
@@ -108,6 +174,7 @@ src/
 
 supabase/
 ├── migrations/          # Database migrations
+│   └── 00_complete_schema.sql  # Consolidated migration file
 ├── seed.sql            # Sample data
 └── config.toml         # Supabase configuration
 
