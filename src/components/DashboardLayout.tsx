@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Building, Home, FileText, Settings, User, LogOut } from 'lucide-react';
+import { Building, Home, LogOut } from 'lucide-react';
 import { useUser, SignOutButton } from '@clerk/clerk-react';
 import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
 
@@ -19,16 +19,6 @@ const navigationItems = [
     name: 'Projects',
     href: '/projects',
     icon: Building,
-  },
-  {
-    name: 'Documents',
-    href: '/documents',
-    icon: FileText,
-  },
-  {
-    name: 'Settings',
-    href: '/settings',
-    icon: Settings,
   },
 ];
 
@@ -137,13 +127,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
             <h1 className="text-2xl font-bold text-gray-900">
               {location.pathname === '/projects' ? 'Projects' : 
                location.pathname.startsWith('/projects/') ? 'Project Details' : 
-               location.pathname === '/settings' ? 'Settings' :
                'Dashboard'}
             </h1>
             <p className="text-gray-600 text-sm mt-1">
               {location.pathname === '/projects' ? 'Manage your commercial real estate projects' : 
                location.pathname.startsWith('/projects/') ? 'Track progress and manage project details' : 
-               location.pathname === '/settings' ? 'Manage your account and preferences' :
                'Overview of your activities'}
             </p>
           </div>
