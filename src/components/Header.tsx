@@ -11,27 +11,27 @@ export const Header: React.FC<HeaderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white text-gray-900 px-6 py-4 border-b border-gray-200">
+    <header className="bg-[#1a1a2e] border-b border-[#27272a] px-6 py-4 glass-effect">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
           <img 
             src={logoImage}
             alt="Jigo Tenant Logo" 
-            className="w-8 h-8"
+            className="w-8 h-8 filter brightness-0 invert"
           />
-          <h1 className="text-xl font-bold">JIGO Dash</h1>
+          <h1 className="text-xl font-bold text-white">JIGO Dash</h1>
         </div>
         <div className="flex items-center space-x-4">
           {children}
           <SignedOut>
             <div className="flex items-center space-x-2">
               <SignInButton mode="modal">
-                <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button className="px-4 py-2 text-sm font-medium text-[#a1a1aa] bg-[#1a1a2e] border border-[#27272a] rounded-lg hover:bg-[#16213e] hover:border-[#6366f1] transition-all duration-300">
                   Sign In
                 </button>
               </SignInButton>
               <SignUpButton mode="modal">
-                <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                <button className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] rounded-lg hover:shadow-lg hover:shadow-[#6366f1]/25 transition-all duration-300">
                   Sign Up
                 </button>
               </SignUpButton>

@@ -20,10 +20,10 @@ export const FormButton: React.FC<FormButtonProps> = ({
   icon: Icon,
   children
 }) => {
-  const baseClasses = "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors";
+  const baseClasses = "flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300";
   const variantClasses = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50",
-    secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200"
+    primary: "bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white hover:shadow-lg hover:shadow-[#6366f1]/25 hover:-translate-y-0.5 disabled:opacity-50",
+    secondary: "bg-[#1a1a2e] border border-[#27272a] text-[#a1a1aa] hover:bg-[#16213e] hover:border-[#6366f1] hover:text-white"
   };
 
   return (
@@ -46,4 +46,4 @@ export const FormButton: React.FC<FormButtonProps> = ({
       )}
     </button>
   );
-}; 
+};
