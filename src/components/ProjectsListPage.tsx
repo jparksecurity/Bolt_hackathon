@@ -123,7 +123,7 @@ export function ProjectsListPage() {
       case 'On Hold':
         return 'status-on-hold';
       default:
-        return 'bg-[#27272a]';
+        return 'bg-slate-500';
     }
   };
 
@@ -135,12 +135,12 @@ export function ProjectsListPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-[#0f0f23]">
+      <div className="min-h-screen bg-slate-50">
         <Header />
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6366f1] mx-auto mb-4"></div>
-            <p className="text-[#a1a1aa]">Loading projects...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading projects...</p>
           </div>
         </div>
       </div>
@@ -149,11 +149,11 @@ export function ProjectsListPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#0f0f23]">
+      <div className="min-h-screen bg-slate-50">
         <Header />
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Please sign in to view your projects</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Please sign in to view your projects</h2>
           </div>
         </div>
       </div>
@@ -162,10 +162,10 @@ export function ProjectsListPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0f0f23]">
+      <div className="min-h-screen bg-slate-50">
         <Header />
         <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center text-[#ef4444]">Error: {error}</div>
+          <div className="text-center text-red-600">Error: {error}</div>
         </div>
       </div>
     );
@@ -173,20 +173,20 @@ export function ProjectsListPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#0f0f23]">
+      <div className="min-h-screen bg-slate-50">
         <Header />
         
         <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Page Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">My Projects</h1>
-              <p className="text-[#a1a1aa]">Track and manage your commercial real estate projects</p>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">My Projects</h1>
+              <p className="text-slate-600">Track and manage your commercial real estate projects</p>
             </div>
             <button 
               onClick={createEmptyProject}
               disabled={creating}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#6366f1]/25 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="w-5 h-5 mr-2" />
               {creating ? 'Creating...' : 'New Project'}
@@ -198,10 +198,10 @@ export function ProjectsListPage() {
             <div className="gradient-card p-6 rounded-xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[#a1a1aa] text-sm">Total Projects</p>
-                  <p className="text-2xl font-bold text-white">{projects.length}</p>
+                  <p className="text-slate-600 text-sm">Total Projects</p>
+                  <p className="text-2xl font-bold text-slate-900">{projects.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
                   <Building className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -210,10 +210,10 @@ export function ProjectsListPage() {
             <div className="gradient-card p-6 rounded-xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[#a1a1aa] text-sm">Active</p>
-                  <p className="text-2xl font-bold text-white">{projects.filter(p => p.status === 'Active').length}</p>
+                  <p className="text-slate-600 text-sm">Active</p>
+                  <p className="text-2xl font-bold text-slate-900">{projects.filter(p => p.status === 'Active').length}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-[#10b981] to-[#059669] rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
                   <Activity className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -222,12 +222,12 @@ export function ProjectsListPage() {
             <div className="gradient-card p-6 rounded-xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[#a1a1aa] text-sm">Total Value</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-slate-600 text-sm">Total Value</p>
+                  <p className="text-2xl font-bold text-slate-900">
                     ${projects.reduce((sum, p) => sum + (p.expected_fee || 0), 0).toLocaleString()}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-[#06b6d4] to-[#0891b2] rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -236,10 +236,10 @@ export function ProjectsListPage() {
             <div className="gradient-card p-6 rounded-xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[#a1a1aa] text-sm">Completed</p>
-                  <p className="text-2xl font-bold text-white">{projects.filter(p => p.status === 'Completed').length}</p>
+                  <p className="text-slate-600 text-sm">Completed</p>
+                  <p className="text-2xl font-bold text-slate-900">{projects.filter(p => p.status === 'Completed').length}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-[#8b5cf6] to-[#a855f7] rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-violet-600 rounded-xl flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -249,15 +249,15 @@ export function ProjectsListPage() {
           {/* Projects Grid */}
           {projects.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <div className="w-20 h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Building className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">No projects yet</h3>
-              <p className="text-[#a1a1aa] mb-8">Create your first lease tracking project to get started</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">No projects yet</h3>
+              <p className="text-slate-600 mb-8">Create your first lease tracking project to get started</p>
               <button 
                 onClick={createEmptyProject}
                 disabled={creating}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#6366f1]/25 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 {creating ? 'Creating...' : 'Create Project'}
@@ -274,11 +274,11 @@ export function ProjectsListPage() {
                   <button
                     onClick={(e) => handleDeleteClick(project.id, project.title, e)}
                     disabled={deleting === project.id}
-                    className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 rounded-full bg-[#ef4444]/20 hover:bg-[#ef4444]/30 text-[#ef4444] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Delete project"
                   >
                     {deleting === project.id ? (
-                      <div className="w-4 h-4 border-2 border-[#ef4444] border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <Trash2 className="w-4 h-4" />
                     )}
@@ -295,32 +295,32 @@ export function ProjectsListPage() {
                     
                     {/* Title and company */}
                     <div className="mb-6 pr-8">
-                      <h3 className="text-xl font-bold text-white mb-2 line-clamp-2" title={project.title}>
+                      <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2" title={project.title}>
                         {project.title}
                       </h3>
-                      <p className="text-sm text-[#a1a1aa] font-medium">{project.company_name || 'No company specified'}</p>
+                      <p className="text-sm text-slate-600 font-medium">{project.company_name || 'No company specified'}</p>
                     </div>
 
                     {/* Project details */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center space-x-2 text-[#a1a1aa]">
+                        <div className="flex items-center space-x-2 text-slate-600">
                           <User className="w-4 h-4" />
                           <span>{project.expected_headcount || 'Not specified'}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-[#a1a1aa]">
+                        <div className="flex items-center space-x-2 text-slate-600">
                           <Calendar className="w-4 h-4" />
                           <span>{project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
                         </div>
                       </div>
 
                       {/* Fee prominently displayed */}
-                      <div className="pt-4 border-t border-[#27272a]">
+                      <div className="pt-4 border-t border-slate-200">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-[#a1a1aa]">Expected Fee</span>
+                          <span className="text-sm font-medium text-slate-600">Expected Fee</span>
                           <div className="flex items-center space-x-1">
-                            <DollarSign className="w-4 h-4 text-[#10b981]" />
-                            <span className="text-lg font-bold text-[#10b981]">
+                            <DollarSign className="w-4 h-4 text-emerald-600" />
+                            <span className="text-lg font-bold text-emerald-600">
                               {project.expected_fee != null ? `${project.expected_fee.toLocaleString()}` : 'Not set'}
                             </span>
                           </div>
@@ -338,34 +338,34 @@ export function ProjectsListPage() {
       {/* Delete Confirmation Modal */}
       {deleteConfirmation.show && (
         <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
-          <div className="gradient-card rounded-xl shadow-2xl max-w-md w-full mx-4 border border-[#27272a]">
+          <div className="gradient-card rounded-xl shadow-2xl max-w-md w-full mx-4 border border-slate-200">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Delete Project</h3>
+                <h3 className="text-lg font-semibold text-slate-900">Delete Project</h3>
                 <button
                   onClick={handleCancelDelete}
-                  className="text-[#a1a1aa] hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               
-              <p className="text-[#a1a1aa] mb-6">
-                Are you sure you want to delete <strong className="text-white">"{deleteConfirmation.projectTitle}"</strong>? 
+              <p className="text-slate-600 mb-6">
+                Are you sure you want to delete <strong className="text-slate-900">"{deleteConfirmation.projectTitle}"</strong>? 
                 This action cannot be undone.
               </p>
               
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={handleCancelDelete}
-                  className="px-4 py-2 text-[#a1a1aa] bg-[#1a1a2e] border border-[#27272a] hover:bg-[#16213e] hover:border-[#6366f1] rounded-lg transition-all duration-300"
+                  className="px-4 py-2 text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 hover:border-indigo-500 rounded-lg transition-all duration-300"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirmDelete}
                   disabled={deleting !== null}
-                  className="px-4 py-2 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white rounded-lg hover:shadow-lg hover:shadow-[#ef4444]/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:shadow-red-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {deleting ? 'Deleting...' : 'Delete Project'}
                 </button>

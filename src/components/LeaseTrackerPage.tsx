@@ -137,12 +137,12 @@ export function LeaseTrackerPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-[#0f0f23]">
+      <div className="min-h-screen bg-slate-50">
         <Header />
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6366f1] mx-auto mb-4"></div>
-            <p className="text-[#a1a1aa]">Loading project...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading project...</p>
           </div>
         </div>
       </div>
@@ -151,11 +151,11 @@ export function LeaseTrackerPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#0f0f23]">
+      <div className="min-h-screen bg-slate-50">
         <Header />
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Please sign in to view this project</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Please sign in to view this project</h2>
           </div>
         </div>
       </div>
@@ -164,15 +164,15 @@ export function LeaseTrackerPage() {
 
   if (error || !project) {
     return (
-      <div className="min-h-screen bg-[#0f0f23]">
+      <div className="min-h-screen bg-slate-50">
         <Header />
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Project not found</h2>
-            <p className="text-[#a1a1aa] mb-6">{error || 'The project you\'re looking for doesn\'t exist or you don\'t have permission to view it.'}</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Project not found</h2>
+            <p className="text-slate-600 mb-6">{error || 'The project you\'re looking for doesn\'t exist or you don\'t have permission to view it.'}</p>
             <button
               onClick={() => navigate('/projects')}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#6366f1]/25 transition-all duration-300"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300"
             >
               Back to Projects
             </button>
@@ -183,16 +183,16 @@ export function LeaseTrackerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f23]">
+    <div className="min-h-screen bg-slate-50">
       <Header>
         <button 
           onClick={handleShareProject}
-          className="flex items-center space-x-2 px-4 py-2 bg-[#1a1a2e] border border-[#27272a] hover:bg-[#16213e] hover:border-[#6366f1] text-[#a1a1aa] hover:text-white rounded-lg transition-all duration-300"
+          className="flex items-center space-x-2 px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 hover:border-indigo-500 text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-300"
         >
           {copySuccess ? (
             <>
-              <Check className="w-4 h-4 text-[#10b981]" />
-              <span className="text-sm text-[#10b981]">Copied!</span>
+              <Check className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm text-emerald-600">Copied!</span>
             </>
           ) : (
             <>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { DivideIcon as LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface FormButtonProps {
   type?: 'button' | 'submit';
@@ -22,8 +22,8 @@ export const FormButton: React.FC<FormButtonProps> = ({
 }) => {
   const baseClasses = "flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300";
   const variantClasses = {
-    primary: "bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white hover:shadow-lg hover:shadow-[#6366f1]/25 hover:-translate-y-0.5 disabled:opacity-50",
-    secondary: "bg-[#1a1a2e] border border-[#27272a] text-[#a1a1aa] hover:bg-[#16213e] hover:border-[#6366f1] hover:text-white"
+    primary: "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/25 hover:-translate-y-0.5 disabled:opacity-50",
+    secondary: "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-indigo-500 hover:text-slate-900"
   };
 
   return (
