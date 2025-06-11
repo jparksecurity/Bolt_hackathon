@@ -11,7 +11,7 @@ export function LandingPage() {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Lease Tracker
+            JIGO Dash
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Streamline your commercial real estate leasing process with our comprehensive tracking and management platform
@@ -63,7 +63,7 @@ export function LandingPage() {
         <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Get Started?</h2>
           <p className="text-gray-600 mb-6">
-            Join thousands of real estate professionals who trust Lease Tracker for their leasing needs
+            Join thousands of real estate professionals who trust JIGO Dash for their leasing needs
           </p>
           <Link
             to="/projects"

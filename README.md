@@ -1,4 +1,4 @@
-# Bolt Hackathon - Lease Tracking System
+# Bolt Hackathon - JIGO Dash
 
 A React + TypeScript lease tracking application with Supabase backend and Clerk authentication.
 

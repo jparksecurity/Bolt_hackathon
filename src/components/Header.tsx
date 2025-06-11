@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({ children }) => {
             alt="Jigo Tenant Logo" 
             className="w-8 h-8"
           />
-          <h1 className="text-xl font-bold">Lease Tracker</h1>
+          <h1 className="text-xl font-bold">JIGO Dash</h1>
         </div>
         <div className="flex items-center space-x-4">
           {children}
