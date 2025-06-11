@@ -10,6 +10,7 @@ export interface BaseProjectData {
   title: string;
   status: ProjectStatus;
   start_date?: string | null;
+  desired_move_in_date?: string | null;
   expected_fee?: number | null;
   broker_commission?: number | null;
   commission_paid_by?: string | null;
@@ -19,4 +20,4 @@ export interface BaseProjectData {
   public_share_id?: string | null;
   created_at: string;
   updated_at: string;
-} 
+}

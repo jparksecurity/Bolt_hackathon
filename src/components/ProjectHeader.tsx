@@ -34,6 +34,7 @@ interface ProjectFormData {
   title: string;
   status: ProjectStatus;
   start_date: string;
+  desired_move_in_date: string;
   expected_fee: string;
   broker_commission: string;
   commission_paid_by: string;
@@ -64,6 +65,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     title: '',
     status: ProjectStatus.ACTIVE,
     start_date: '',
+    desired_move_in_date: '',
     expected_fee: '',
     broker_commission: '',
     commission_paid_by: '',
@@ -110,6 +112,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       title: project.title,
       status: project.status,
       start_date: project.start_date || '',
+      desired_move_in_date: (project as any).desired_move_in_date || '',
       expected_fee: project.expected_fee?.toString() || '',
       broker_commission: project.broker_commission?.toString() || '',
       commission_paid_by: project.commission_paid_by || '',
@@ -133,6 +136,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         title: projectFormData.title.trim(),
         status: projectFormData.status,
         start_date: projectFormData.start_date || null,
+        desired_move_in_date: projectFormData.desired_move_in_date || null,
         expected_fee: projectFormData.expected_fee ? parseFloat(projectFormData.expected_fee) : null,
         broker_commission: projectFormData.broker_commission ? parseFloat(projectFormData.broker_commission) : null,
         commission_paid_by: projectFormData.commission_paid_by.trim() || null,
@@ -235,7 +239,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       </div>
 
       {/* Project metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
@@ -245,6 +249,20 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <p className="text-gray-700 text-sm font-medium">Start Date</p>
               <p className="text-gray-900 font-bold text-lg">
                 {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-blue-700 text-sm font-medium">Desired Move-in</p>
+              <p className="text-blue-900 font-bold text-lg">
+                {(project as any).desired_move_in_date ? new Date((project as any).desired_move_in_date).toLocaleDateString() : 'Not set'}
               </p>
             </div>
           </div>
@@ -400,6 +418,17 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 type="date"
                 value={projectFormData.start_date}
                 onChange={(e) => setProjectFormData({ ...projectFormData, start_date: e.target.value })}
+                className="form-input w-full px-4 py-3 rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Desired Move-in Date
+              </label>
+              <input
+                type="date"
+                value={projectFormData.desired_move_in_date}
+                onChange={(e) => setProjectFormData({ ...projectFormData, desired_move_in_date: e.target.value })}
                 className="form-input w-full px-4 py-3 rounded-lg"
               />
             </div>
