@@ -53,7 +53,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
               className="w-8 h-8"
             />
             <div>
-              <span className="text-gray-900 font-bold text-lg">JIGO</span>
+              <span className="text-gray-900 font-bold text-lg">JIGO Dash</span>
               <div className="text-xs text-gray-500 font-medium -mt-1">CRE Platform</div>
             </div>
           </div>

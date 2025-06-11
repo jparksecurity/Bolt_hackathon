@@ -20,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ children }) => {
             className="w-10 h-10"
           />
           <div>
-            <span className="text-2xl font-bold text-gray-900">JIGO</span>
+            <span className="text-2xl font-bold text-gray-900">JIGO Dash</span>
             <div className="text-sm text-gray-600 font-medium -mt-1">Commercial Real Estate Platform</div>
           </div>
         </div>
