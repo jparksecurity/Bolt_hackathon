@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
-import { Plus, Calendar, DollarSign, Building, User, Trash2, X, TrendingUp, Activity, Search } from 'lucide-react';
+import { Plus, Calendar, DollarSign, Building, User, Trash2, X, TrendingUp, Activity, Search, Filter } from 'lucide-react';
 import { ProjectStatus, BaseProjectData } from '../types/project';
 import { DashboardLayout } from './DashboardLayout';
 
@@ -124,7 +124,7 @@ export function ProjectsListPage() {
       case 'On Hold':
         return 'status-on-hold';
       default:
-        return 'bg-slate-500';
+        return 'bg-gray-500';
     }
   };
 
@@ -153,7 +153,7 @@ export function ProjectsListPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Please sign in to view your projects</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Please sign in to view your projects</h2>
         </div>
       </DashboardLayout>
     );
@@ -170,19 +170,23 @@ export function ProjectsListPage() {
   const headerContent = (
     <div className="flex items-center space-x-4">
       <div className="relative">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+        <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         <input
           type="text"
           placeholder="Search projects..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="form-input pl-10 pr-4 py-2 w-64"
+          className="form-input pl-10 pr-4 py-2.5 w-64 text-sm"
         />
       </div>
+      <button className="btn-secondary flex items-center space-x-2 px-4 py-2.5">
+        <Filter className="w-4 h-4" />
+        <span>Filter</span>
+      </button>
       <button 
         onClick={createEmptyProject}
         disabled={creating}
-        className="btn-primary flex items-center space-x-2"
+        className="btn-primary flex items-center space-x-2 px-6 py-2.5"
       >
         <Plus className="w-4 h-4" />
         <span>{creating ? 'Creating...' : 'New Project'}</span>
@@ -197,10 +201,11 @@ export function ProjectsListPage() {
         <div className="dashboard-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-600 text-sm font-medium">Total Projects</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{projects.length}</p>
+              <p className="text-gray-600 text-sm font-medium mb-1">Total Projects</p>
+              <p className="text-3xl font-bold text-gray-900">{projects.length}</p>
+              <p className="text-xs text-gray-500 mt-1">All time</p>
             </div>
-            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
               <Building className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -209,10 +214,11 @@ export function ProjectsListPage() {
         <div className="dashboard-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-600 text-sm font-medium">Active</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{projects.filter(p => p.status === 'Active').length}</p>
+              <p className="text-gray-600 text-sm font-medium mb-1">Active Projects</p>
+              <p className="text-3xl font-bold text-gray-900">{projects.filter(p => p.status === 'Active').length}</p>
+              <p className="text-xs text-green-600 mt-1">+12% this month</p>
             </div>
-            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
               <Activity className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -221,12 +227,13 @@ export function ProjectsListPage() {
         <div className="dashboard-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-600 text-sm font-medium">Total Value</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">
+              <p className="text-gray-600 text-sm font-medium mb-1">Total Value</p>
+              <p className="text-3xl font-bold text-gray-900">
                 ${projects.reduce((sum, p) => sum + (p.expected_fee || 0), 0).toLocaleString()}
               </p>
+              <p className="text-xs text-blue-600 mt-1">Expected revenue</p>
             </div>
-            <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -235,10 +242,11 @@ export function ProjectsListPage() {
         <div className="dashboard-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-600 text-sm font-medium">Completed</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{projects.filter(p => p.status === 'Completed').length}</p>
+              <p className="text-gray-600 text-sm font-medium mb-1">Completed</p>
+              <p className="text-3xl font-bold text-gray-900">{projects.filter(p => p.status === 'Completed').length}</p>
+              <p className="text-xs text-orange-600 mt-1">Success rate: 94%</p>
             </div>
-            <div className="w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -248,23 +256,23 @@ export function ProjectsListPage() {
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
         <div className="dashboard-card p-12 text-center">
-          <div className="w-16 h-16 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Building className="w-8 h-8 text-white" />
+          <div className="w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Building className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+          <h3 className="text-xl font-bold text-gray-900 mb-3">
             {searchTerm ? 'No projects found' : 'No projects yet'}
           </h3>
-          <p className="text-slate-600 mb-6">
-            {searchTerm ? 'Try adjusting your search terms' : 'Create your first lease tracking project to get started'}
+          <p className="text-gray-600 mb-8 max-w-md mx-auto">
+            {searchTerm ? 'Try adjusting your search terms to find what you\'re looking for' : 'Create your first lease tracking project to get started with managing your commercial real estate deals'}
           </p>
           {!searchTerm && (
             <button 
               onClick={createEmptyProject}
               disabled={creating}
-              className="btn-primary flex items-center space-x-2 mx-auto"
+              className="btn-primary flex items-center space-x-2 mx-auto px-8 py-3"
             >
-              <Plus className="w-4 h-4" />
-              <span>{creating ? 'Creating...' : 'Create Project'}</span>
+              <Plus className="w-5 h-5" />
+              <span>{creating ? 'Creating...' : 'Create Your First Project'}</span>
             </button>
           )}
         </div>
@@ -273,7 +281,7 @@ export function ProjectsListPage() {
           {filteredProjects.map((project) => (
             <div
               key={project.id}
-              className="dashboard-card hover-lift group overflow-hidden relative"
+              className="project-card group"
             >
               {/* Delete button */}
               <button
@@ -290,39 +298,39 @@ export function ProjectsListPage() {
               </button>
 
               {/* Project content */}
-              <Link to={`/projects/${project.id}`} className="block p-6">
+              <Link to={`/projects/${project.id}`} className="block">
                 {/* Status badge */}
                 <div className="flex justify-start mb-4">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full text-white ${getStatusColor(project.status)}`}>
+                  <span className={`px-3 py-1.5 text-xs font-semibold rounded-full text-white ${getStatusColor(project.status)}`}>
                     {project.status}
                   </span>
                 </div>
                 
                 {/* Title and company */}
                 <div className="mb-6 pr-8">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2 line-clamp-2" title={project.title}>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2" title={project.title}>
                     {project.title}
                   </h3>
-                  <p className="text-sm text-slate-600">{project.company_name || 'No company specified'}</p>
+                  <p className="text-sm text-gray-600 font-medium">{project.company_name || 'No company specified'}</p>
                 </div>
 
                 {/* Project details */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-2 text-slate-600">
+                    <div className="flex items-center space-x-2 text-gray-600">
                       <User className="w-4 h-4" />
                       <span>{project.expected_headcount || 'Not specified'}</span>
                     </div>
-                    <div className="flex items-center space-x-2 text-slate-600">
+                    <div className="flex items-center space-x-2 text-gray-600">
                       <Calendar className="w-4 h-4" />
                       <span>{project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
                     </div>
                   </div>
 
                   {/* Fee */}
-                  <div className="pt-3 border-t border-slate-200">
+                  <div className="pt-4 border-t border-gray-100">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">Expected Fee</span>
+                      <span className="text-sm font-medium text-gray-600">Expected Fee</span>
                       <div className="flex items-center space-x-1">
                         <DollarSign className="w-4 h-4 text-green-600" />
                         <span className="text-lg font-bold text-green-600">
@@ -343,32 +351,32 @@ export function ProjectsListPage() {
         <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
           <div className="dashboard-card max-w-md w-full mx-4">
             <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-900">Delete Project</h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Delete Project</h3>
                 <button
                   onClick={handleCancelDelete}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               
-              <p className="text-slate-600 mb-6">
-                Are you sure you want to delete <strong className="text-slate-900">"{deleteConfirmation.projectTitle}"</strong>? 
-                This action cannot be undone.
+              <p className="text-gray-600 mb-8">
+                Are you sure you want to delete <strong className="text-gray-900">"{deleteConfirmation.projectTitle}"</strong>? 
+                This action cannot be undone and all project data will be permanently removed.
               </p>
               
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={handleCancelDelete}
-                  className="btn-secondary"
+                  className="btn-secondary px-6 py-2.5"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirmDelete}
                   disabled={deleting !== null}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
                 >
                   {deleting ? 'Deleting...' : 'Delete Project'}
                 </button>

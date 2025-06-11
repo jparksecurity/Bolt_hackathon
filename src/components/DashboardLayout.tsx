@@ -45,14 +45,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
     <div className="dashboard-layout">
       {/* Sidebar */}
       <div className="sidebar">
-        <div className="p-6 border-b border-slate-700">
+        <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <img 
               src={logoImage}
               alt="Jigo Tenant Logo" 
               className="w-8 h-8"
             />
-            <span className="text-white font-bold text-lg">JIGO Dash</span>
+            <div>
+              <span className="text-gray-900 font-bold text-lg">JIGO</span>
+              <div className="text-xs text-gray-500 font-medium -mt-1">CRE Platform</div>
+            </div>
           </div>
         </div>
         
@@ -70,13 +73,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
         </nav>
         
         <div className="absolute bottom-6 left-6 right-6">
-          <div className="flex items-center space-x-3 p-3 bg-slate-800 rounded-lg">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
+          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">User Account</p>
-              <p className="text-xs text-slate-400 truncate">Manage account</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">User Account</p>
+              <p className="text-xs text-gray-500 truncate">Manage settings</p>
             </div>
           </div>
         </div>
@@ -87,11 +90,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
         {/* Header */}
         <div className="dashboard-header">
           <div className="flex-1">
-            <h1 className="text-xl font-semibold text-slate-900">
+            <h1 className="text-2xl font-bold text-gray-900">
               {location.pathname === '/projects' ? 'Projects' : 
                location.pathname.startsWith('/projects/') ? 'Project Details' : 
                'Dashboard'}
             </h1>
+            <p className="text-gray-600 text-sm mt-1">
+              {location.pathname === '/projects' ? 'Manage your commercial real estate projects' : 
+               location.pathname.startsWith('/projects/') ? 'Track progress and manage project details' : 
+               'Overview of your activities'}
+            </p>
           </div>
           <div className="flex items-center space-x-4">
             {headerContent}

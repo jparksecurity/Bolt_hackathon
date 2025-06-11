@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail } from 'lucide-react';
+import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail, MapPin } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { ProjectStatus, BaseProjectData } from '../types/project';
@@ -43,15 +43,6 @@ interface ProjectFormData {
 interface RequirementFormData {
   category: string;
   requirement_text: string;
-}
-
-interface CompanyInfoFormData {
-  company_name: string;
-  expected_headcount: string;
-  contact_name: string;
-  contact_title: string;
-  contact_phone: string;
-  contact_email: string;
 }
 
 export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ 
@@ -211,64 +202,76 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       case 'On Hold':
         return 'status-on-hold';
       default:
-        return 'bg-slate-500';
+        return 'bg-gray-500';
     }
   };
 
   const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
 
   return (
-    <div className="dashboard-card p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center space-x-3">
-            <span>{project.title}</span>
+    <div className="dashboard-card p-8">
+      <div className="flex items-start justify-between mb-8">
+        <div className="flex-1">
+          <div className="flex items-center space-x-4 mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">{project.title}</h1>
             {!readonly && (
-              <button onClick={openProjectModal}>
-                <Edit3 className="w-5 h-5 text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" />
+              <button onClick={openProjectModal} className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-gray-50">
+                <Edit3 className="w-5 h-5" />
               </button>
             )}
-          </h1>
-          <div className="flex items-center space-x-4 mt-3">
-            <span className={`px-3 py-1 text-white rounded-full font-medium text-sm ${getStatusColor(project.status)}`}>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(project.status)}`}>
               {project.status}
             </span>
+            {project.company_name && (
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Building className="w-4 h-4" />
+                <span className="font-medium">{project.company_name}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Project metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
           <div className="flex items-center space-x-3">
-            <Calendar className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-white" />
+            </div>
             <div>
-              <p className="text-slate-600 text-sm">Start Date</p>
-              <p className="text-slate-900 font-semibold">
+              <p className="text-blue-700 text-sm font-medium">Start Date</p>
+              <p className="text-blue-900 font-bold text-lg">
                 {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
           <div className="flex items-center space-x-3">
-            <DollarSign className="w-5 h-5 text-green-600" />
+            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-white" />
+            </div>
             <div>
-              <p className="text-slate-600 text-sm">Expected Fee</p>
-              <p className="text-slate-900 font-semibold">
+              <p className="text-green-700 text-sm font-medium">Expected Fee</p>
+              <p className="text-green-900 font-bold text-lg">
                 ${project.expected_fee ? project.expected_fee.toLocaleString() : '0'}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 relative">
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200 relative">
           <div className="flex items-center space-x-3">
-            <Info className="w-5 h-5 text-purple-600" />
-            <div>
-              <p className="text-slate-600 text-sm">Commission</p>
-              <p className="text-slate-900 font-semibold">
+            <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+              <Info className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-purple-700 text-sm font-medium">Commission</p>
+              <p className="text-purple-900 font-bold text-lg">
                 ${project.broker_commission ? project.broker_commission.toLocaleString() : '0'}
               </p>
             </div>
@@ -278,98 +281,70 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
               >
-                <Info className="w-4 h-4 text-slate-400 cursor-help hover:text-blue-600 transition-colors" />
+                <Info className="w-4 h-4 text-purple-400 cursor-help hover:text-purple-600 transition-colors" />
                 {showTooltip && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-slate-900 border border-slate-700 text-white text-xs rounded-lg p-3 shadow-lg z-10">
+                  <div className="absolute bottom-full right-0 mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg z-10">
                     <div className="space-y-1">
-                      <div className="font-medium text-blue-400">Commission Breakdown:</div>
-                      <div>• Broker commission: ${project.broker_commission?.toLocaleString() || '0'}</div>
+                      <div className="font-medium text-blue-400">Commission Details:</div>
+                      <div>• Amount: ${project.broker_commission?.toLocaleString() || '0'}</div>
                       <div>• Paid by: {project.commission_paid_by || 'TBD'}</div>
                       <div>• Payment due: {project.payment_due || 'TBD'}</div>
                     </div>
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900"></div>
+                    <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                   </div>
                 )}
               </div>
             )}
           </div>
         </div>
+
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-orange-700 text-sm font-medium">Head Count</p>
+              <p className="text-orange-900 font-bold text-lg">
+                {project.expected_headcount || 'Not set'}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Company Information Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 flex items-center space-x-2">
-              <Building className="w-5 h-5 text-blue-600" />
-              <span>Company Information</span>
-            </h3>
-            {!readonly && (
-              <button onClick={() => {}} title="Edit Company Information">
-                <Edit3 className="w-4 h-4 text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" />
-              </button>
+      {/* Contact Information */}
+      {primaryContact && (
+        <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
+          <h4 className="font-bold text-gray-900 mb-4 flex items-center space-x-2">
+            <User className="w-5 h-5 text-blue-600" />
+            <span>Primary Contact</span>
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{primaryContact.name}</p>
+                {primaryContact.title && <p className="text-sm text-gray-600">{primaryContact.title}</p>}
+              </div>
+            </div>
+            {primaryContact.phone && (
+              <div className="flex items-center space-x-3">
+                <Phone className="w-5 h-5 text-gray-400" />
+                <span className="text-gray-900">{primaryContact.phone}</span>
+              </div>
+            )}
+            {primaryContact.email && (
+              <div className="flex items-center space-x-3">
+                <Mail className="w-5 h-5 text-gray-400" />
+                <span className="text-gray-900">{primaryContact.email}</span>
+              </div>
             )}
           </div>
-          
-          <div className="space-y-3">
-            <div>
-              <span className="text-slate-600 text-sm">Company Name:</span>
-              <span className="ml-2 text-slate-900 font-medium">{project.company_name || 'Not specified'}</span>
-            </div>
-            <div>
-              <span className="text-slate-600 text-sm">Expected Head Count:</span>
-              <span className="ml-2 text-slate-900">{project.expected_headcount || 'Not specified'}</span>
-            </div>
-          </div>
         </div>
-        
-        <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
-          <h4 className="font-semibold text-slate-900 mb-4 flex items-center space-x-2">
-            <User className="w-5 h-5 text-purple-600" />
-            <span>Point of Contact</span>
-          </h4>
-          {loading ? (
-            <div className="text-sm text-slate-600">Loading contact...</div>
-          ) : primaryContact ? (
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4 text-slate-400" />
-                <span className="text-slate-900 font-medium">{primaryContact.name}</span>
-                {primaryContact.title && (
-                  <span className="text-slate-600">- {primaryContact.title}</span>
-                )}
-              </div>
-              {primaryContact.phone && (
-                <div className="flex items-center space-x-2">
-                  <Phone className="w-4 h-4 text-slate-400" />
-                  <span className="text-slate-900">{primaryContact.phone}</span>
-                </div>
-              )}
-              {primaryContact.email && (
-                <div className="flex items-center space-x-2">
-                  <Mail className="w-4 h-4 text-slate-400" />
-                  <span className="text-slate-900">{primaryContact.email}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3 text-slate-600">
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4" />
-                <span>To be added - Contact Person</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4" />
-                <span>To be added</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4" />
-                <span>To be added</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Client Requirements Section */}
       <ClientRequirementsSection
@@ -384,31 +359,31 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       <Modal
         isOpen={isProjectModalOpen}
         onClose={closeProjectModal}
-        title="Edit Project"
+        title="Edit Project Details"
         size="lg"
       >
-        <form onSubmit={(e) => { e.preventDefault(); saveProject(); }} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={(e) => { e.preventDefault(); saveProject(); }} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Project Title
               </label>
               <input
                 type="text"
                 value={projectFormData.title}
                 onChange={(e) => setProjectFormData({ ...projectFormData, title: e.target.value })}
-                className="form-input w-full px-3 py-2 rounded-md"
+                className="form-input w-full px-4 py-3 rounded-lg"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Status
               </label>
               <select
                 value={projectFormData.status}
                 onChange={(e) => setProjectFormData({ ...projectFormData, status: e.target.value as ProjectStatus })}
-                className="form-input w-full px-3 py-2 rounded-md"
+                className="form-input w-full px-4 py-3 rounded-lg"
               >
                 {Object.values(ProjectStatus).map((status) => (
                   <option key={status} value={status}>
@@ -418,67 +393,71 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Start Date
               </label>
               <input
                 type="date"
                 value={projectFormData.start_date}
                 onChange={(e) => setProjectFormData({ ...projectFormData, start_date: e.target.value })}
-                className="form-input w-full px-3 py-2 rounded-md"
+                className="form-input w-full px-4 py-3 rounded-lg"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Expected Fee
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Expected Fee ($)
               </label>
               <input
                 type="number"
                 value={projectFormData.expected_fee}
                 onChange={(e) => setProjectFormData({ ...projectFormData, expected_fee: e.target.value })}
-                className="form-input w-full px-3 py-2 rounded-md"
+                className="form-input w-full px-4 py-3 rounded-lg"
                 min="0"
                 step="0.01"
+                placeholder="0.00"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Broker Commission
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Broker Commission ($)
               </label>
               <input
                 type="number"
                 value={projectFormData.broker_commission}
                 onChange={(e) => setProjectFormData({ ...projectFormData, broker_commission: e.target.value })}
-                className="form-input w-full px-3 py-2 rounded-md"
+                className="form-input w-full px-4 py-3 rounded-lg"
                 min="0"
                 step="0.01"
+                placeholder="0.00"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Commission Paid By
               </label>
               <input
                 type="text"
                 value={projectFormData.commission_paid_by}
                 onChange={(e) => setProjectFormData({ ...projectFormData, commission_paid_by: e.target.value })}
-                className="form-input w-full px-3 py-2 rounded-md"
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="e.g., Landlord, Tenant"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Payment Due
               </label>
               <input
                 type="text"
                 value={projectFormData.payment_due}
                 onChange={(e) => setProjectFormData({ ...projectFormData, payment_due: e.target.value })}
-                className="form-input w-full px-3 py-2 rounded-md"
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="e.g., Upon lease signing, 30 days after closing"
               />
             </div>
           </div>
           
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
             <FormButton variant="secondary" onClick={closeProjectModal}>
               Cancel
             </FormButton>
