@@ -10,9 +10,6 @@ export function LandingPage() {
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="text-center mb-20 animate-fade-in-up">
-          <h1 className="text-6xl font-bold text-slate-900 mb-6 leading-tight">
-            Commercial Real Estate <span className="text-gradient">Management Platform</span>
-          </h1>
           <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             Transform your commercial real estate leasing process with our intelligent tracking and management platform
           </p>
