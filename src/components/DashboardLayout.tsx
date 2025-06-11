@@ -1,0 +1,108 @@
+import React from 'react';
+import { useLocation, Link } from 'react-router-dom';
+import { Building, Home, FileText, Settings, User } from 'lucide-react';
+import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
+
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  headerContent?: React.ReactNode;
+}
+
+const navigationItems = [
+  {
+    name: 'Dashboard',
+    href: '/projects',
+    icon: Home,
+  },
+  {
+    name: 'Projects',
+    href: '/projects',
+    icon: Building,
+  },
+  {
+    name: 'Documents',
+    href: '/documents',
+    icon: FileText,
+  },
+  {
+    name: 'Settings',
+    href: '/settings',
+    icon: Settings,
+  },
+];
+
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, headerContent }) => {
+  const location = useLocation();
+
+  const isActive = (href: string) => {
+    if (href === '/projects') {
+      return location.pathname === '/projects' || location.pathname.startsWith('/projects/');
+    }
+    return location.pathname === href;
+  };
+
+  return (
+    <div className="dashboard-layout">
+      {/* Sidebar */}
+      <div className="sidebar">
+        <div className="p-6 border-b border-slate-700">
+          <div className="flex items-center space-x-3">
+            <img 
+              src={logoImage}
+              alt="Jigo Tenant Logo" 
+              className="w-8 h-8"
+            />
+            <span className="text-white font-bold text-lg">JIGO Dash</span>
+          </div>
+        </div>
+        
+        <nav className="sidebar-nav">
+          {navigationItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={`sidebar-nav-item ${isActive(item.href) ? 'active' : ''}`}
+            >
+              <item.icon />
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+        
+        <div className="absolute bottom-6 left-6 right-6">
+          <div className="flex items-center space-x-3 p-3 bg-slate-800 rounded-lg">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">User Account</p>
+              <p className="text-xs text-slate-400 truncate">Manage account</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="main-content">
+        {/* Header */}
+        <div className="dashboard-header">
+          <div className="flex-1">
+            <h1 className="text-xl font-semibold text-slate-900">
+              {location.pathname === '/projects' ? 'Projects' : 
+               location.pathname.startsWith('/projects/') ? 'Project Details' : 
+               'Dashboard'}
+            </h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            {headerContent}
+          </div>
+        </div>
+
+        {/* Page Content */}
+        <div className="p-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};

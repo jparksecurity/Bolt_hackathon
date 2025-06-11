@@ -4,7 +4,6 @@ import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { ProjectStatus, BaseProjectData } from '../types/project';
 import { useProjectData } from '../hooks/useProjectData';
-import { CompanyInfoSection } from './CompanyInfoSection';
 import { ClientRequirementsSection } from './ClientRequirementsSection';
 import { Modal } from './ui/Modal';
 import { FormButton } from './ui/FormButton';
@@ -166,53 +165,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     }
   };
 
-  const handleCompanyInfoSave = async (formData: CompanyInfoFormData) => {
-    const { error: projectError } = await supabase
-      .from('projects')
-      .update({
-        company_name: formData.company_name,
-        expected_headcount: formData.expected_headcount,
-      })
-      .eq('id', project.id);
-
-    if (projectError) throw projectError;
-
-    const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
-    
-    if (primaryContact) {
-      const { error: contactError } = await supabase
-        .from('project_contacts')
-        .update({
-          name: formData.contact_name,
-          title: formData.contact_title,
-          phone: formData.contact_phone,
-          email: formData.contact_email,
-          is_primary: true,
-        })
-        .eq('id', primaryContact.id);
-
-      if (contactError) throw contactError;
-    } else {
-      const { error: contactError } = await supabase
-        .from('project_contacts')
-        .insert([
-          {
-            project_id: project.id,
-            name: formData.contact_name,
-            title: formData.contact_title,
-            phone: formData.contact_phone,
-            email: formData.contact_email,
-            is_primary: true,
-          }
-        ]);
-
-      if (contactError) throw contactError;
-    }
-
-    await fetchContactsAndRequirements();
-    onProjectUpdate?.();
-  };
-
   const handleRequirementSave = async (formData: RequirementFormData, editingId?: string) => {
     const requirementData = {
       project_id: project.id,
@@ -266,14 +218,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
 
   return (
-    <div className="gradient-card border-b border-slate-200 p-6">
+    <div className="dashboard-card p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center space-x-3">
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center space-x-3">
             <span>{project.title}</span>
             {!readonly && (
               <button onClick={openProjectModal}>
-                <Edit3 className="w-6 h-6 text-slate-400 cursor-pointer hover:text-indigo-600 transition-colors" />
+                <Edit3 className="w-5 h-5 text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" />
               </button>
             )}
           </h1>
@@ -287,9 +239,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
       {/* Project metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
           <div className="flex items-center space-x-3">
-            <Calendar className="w-5 h-5 text-indigo-600" />
+            <Calendar className="w-5 h-5 text-blue-600" />
             <div>
               <p className="text-slate-600 text-sm">Start Date</p>
               <p className="text-slate-900 font-semibold">
@@ -299,9 +251,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
         </div>
 
-        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
           <div className="flex items-center space-x-3">
-            <DollarSign className="w-5 h-5 text-emerald-600" />
+            <DollarSign className="w-5 h-5 text-green-600" />
             <div>
               <p className="text-slate-600 text-sm">Expected Fee</p>
               <p className="text-slate-900 font-semibold">
@@ -311,7 +263,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
         </div>
 
-        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 relative">
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 relative">
           <div className="flex items-center space-x-3">
             <Info className="w-5 h-5 text-purple-600" />
             <div>
@@ -326,11 +278,11 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
               >
-                <Info className="w-4 h-4 text-slate-400 cursor-help hover:text-indigo-600 transition-colors" />
+                <Info className="w-4 h-4 text-slate-400 cursor-help hover:text-blue-600 transition-colors" />
                 {showTooltip && (
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-slate-900 border border-slate-700 text-white text-xs rounded-lg p-3 shadow-lg z-10">
                     <div className="space-y-1">
-                      <div className="font-medium text-indigo-400">Commission Breakdown:</div>
+                      <div className="font-medium text-blue-400">Commission Breakdown:</div>
                       <div>• Broker commission: ${project.broker_commission?.toLocaleString() || '0'}</div>
                       <div>• Paid by: {project.commission_paid_by || 'TBD'}</div>
                       <div>• Payment due: {project.payment_due || 'TBD'}</div>
@@ -346,15 +298,15 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
       {/* Company Information Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+        <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-900 flex items-center space-x-2">
-              <Building className="w-5 h-5 text-indigo-600" />
+              <Building className="w-5 h-5 text-blue-600" />
               <span>Company Information</span>
             </h3>
             {!readonly && (
               <button onClick={() => {}} title="Edit Company Information">
-                <Edit3 className="w-4 h-4 text-slate-400 cursor-pointer hover:text-indigo-600 transition-colors" />
+                <Edit3 className="w-4 h-4 text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" />
               </button>
             )}
           </div>
@@ -371,7 +323,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
         </div>
         
-        <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+        <div className="bg-slate-50 rounded-lg p-6 border border-slate-200">
           <h4 className="font-semibold text-slate-900 mb-4 flex items-center space-x-2">
             <User className="w-5 h-5 text-purple-600" />
             <span>Point of Contact</span>

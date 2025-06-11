@@ -27,7 +27,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div className="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50">
-      <div className={`gradient-card rounded-xl w-full ${sizeClasses[size]} border border-slate-200`}>
+      <div className={`dashboard-card w-full ${sizeClasses[size]}`}>
         <div className="flex items-center justify-between p-6 border-b border-slate-200">
           <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
           <button

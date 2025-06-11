@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
-import { Share, Check } from 'lucide-react';
+import { Share, Check, ArrowLeft } from 'lucide-react';
 import { useSupabaseClient } from '../lib/supabase';
-import { Header } from './Header';
+import { DashboardLayout } from './DashboardLayout';
 import { ProjectHeader } from './ProjectHeader';
 import { ProjectRoadmap } from './ProjectRoadmap';
 import { ProjectDocuments } from './ProjectDocuments';
@@ -137,89 +137,88 @@ export function LeaseTrackerPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">Loading project...</p>
-          </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Please sign in to view this project</h2>
-          </div>
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Please sign in to view this project</h2>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Project not found</h2>
-            <p className="text-slate-600 mb-6">{error || 'The project you\'re looking for doesn\'t exist or you don\'t have permission to view it.'}</p>
-            <button
-              onClick={() => navigate('/projects')}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300"
-            >
-              Back to Projects
-            </button>
-          </div>
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Project not found</h2>
+          <p className="text-slate-600 mb-6">{error || 'The project you\'re looking for doesn\'t exist or you don\'t have permission to view it.'}</p>
+          <button
+            onClick={() => navigate('/projects')}
+            className="btn-primary flex items-center space-x-2 mx-auto"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Projects</span>
+          </button>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
+  const headerContent = (
+    <div className="flex items-center space-x-4">
+      <button
+        onClick={() => navigate('/projects')}
+        className="btn-secondary flex items-center space-x-2"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to Projects</span>
+      </button>
+      <button 
+        onClick={handleShareProject}
+        className="btn-secondary flex items-center space-x-2"
+      >
+        {copySuccess ? (
+          <>
+            <Check className="w-4 h-4 text-green-600" />
+            <span className="text-green-600">Copied!</span>
+          </>
+        ) : (
+          <>
+            <Share className="w-4 h-4" />
+            <span>Share Project</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header>
-        <button 
-          onClick={handleShareProject}
-          className="flex items-center space-x-2 px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 hover:border-indigo-500 text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-300"
-        >
-          {copySuccess ? (
-            <>
-              <Check className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm text-emerald-600">Copied!</span>
-            </>
-          ) : (
-            <>
-              <Share className="w-4 h-4" />
-              <span className="text-sm">Copy Public Link</span>
-            </>
-          )}
-        </button>
-      </Header>
-      
-      <div className="max-w-7xl mx-auto">
+    <DashboardLayout headerContent={headerContent}>
+      <div className="space-y-6">
+        {/* Project Header */}
         <ProjectHeader project={project} onProjectUpdate={fetchProject} />
         
-        <div className="p-6 space-y-6">
-          {/* Recent Updates */}
-          <RecentUpdates projectId={project.id} />
-          
-          {/* Properties Section */}
-          <PropertiesOfInterest projectId={project.id} />
-          
-          {/* Project Roadmap */}
-          <ProjectRoadmap projectId={project.id} />
-          
-          {/* Project Documents */}
-          <ProjectDocuments projectId={project.id} />
-        </div>
+        {/* Recent Updates */}
+        <RecentUpdates projectId={project.id} />
+        
+        {/* Properties Section */}
+        <PropertiesOfInterest projectId={project.id} />
+        
+        {/* Project Roadmap */}
+        <ProjectRoadmap projectId={project.id} />
+        
+        {/* Project Documents */}
+        <ProjectDocuments projectId={project.id} />
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

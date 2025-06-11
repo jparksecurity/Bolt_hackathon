@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Header } from './Header';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
-import { Plus, Calendar, DollarSign, Building, User, Trash2, X, TrendingUp, Activity } from 'lucide-react';
+import { Plus, Calendar, DollarSign, Building, User, Trash2, X, TrendingUp, Activity, Search } from 'lucide-react';
 import { ProjectStatus, BaseProjectData } from '../types/project';
+import { DashboardLayout } from './DashboardLayout';
 
 interface Project extends BaseProjectData {
   deleted_at?: string | null;
@@ -18,6 +18,7 @@ export function ProjectsListPage() {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; projectId: string; projectTitle: string }>({
     show: false,
     projectId: '',
@@ -127,6 +128,11 @@ export function ProjectsListPage() {
     }
   };
 
+  const filteredProjects = projects.filter(project =>
+    project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (project.company_name && project.company_name.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   useEffect(() => {
     if (isLoaded && user) {
       fetchProjects();
@@ -135,210 +141,207 @@ export function ProjectsListPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">Loading projects...</p>
-          </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Please sign in to view your projects</h2>
-          </div>
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Please sign in to view your projects</h2>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center text-red-600">Error: {error}</div>
-        </div>
-      </div>
+      <DashboardLayout>
+        <div className="text-center text-red-600 py-12">Error: {error}</div>
+      </DashboardLayout>
     );
   }
 
+  const headerContent = (
+    <div className="flex items-center space-x-4">
+      <div className="relative">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search projects..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="form-input pl-10 pr-4 py-2 w-64"
+        />
+      </div>
+      <button 
+        onClick={createEmptyProject}
+        disabled={creating}
+        className="btn-primary flex items-center space-x-2"
+      >
+        <Plus className="w-4 h-4" />
+        <span>{creating ? 'Creating...' : 'New Project'}</span>
+      </button>
+    </div>
+  );
+
   return (
-    <>
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Page Header */}
-          <div className="flex items-center justify-between mb-8">
+    <DashboardLayout headerContent={headerContent}>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="dashboard-card p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">My Projects</h1>
-              <p className="text-slate-600">Track and manage your commercial real estate projects</p>
+              <p className="text-slate-600 text-sm font-medium">Total Projects</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{projects.length}</p>
             </div>
+            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+              <Building className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="dashboard-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-600 text-sm font-medium">Active</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{projects.filter(p => p.status === 'Active').length}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+              <Activity className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="dashboard-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-600 text-sm font-medium">Total Value</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">
+                ${projects.reduce((sum, p) => sum + (p.expected_fee || 0), 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="dashboard-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-600 text-sm font-medium">Completed</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{projects.filter(p => p.status === 'Completed').length}</p>
+            </div>
+            <div className="w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Projects Grid */}
+      {filteredProjects.length === 0 ? (
+        <div className="dashboard-card p-12 text-center">
+          <div className="w-16 h-16 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Building className="w-8 h-8 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+            {searchTerm ? 'No projects found' : 'No projects yet'}
+          </h3>
+          <p className="text-slate-600 mb-6">
+            {searchTerm ? 'Try adjusting your search terms' : 'Create your first lease tracking project to get started'}
+          </p>
+          {!searchTerm && (
             <button 
               onClick={createEmptyProject}
               disabled={creating}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary flex items-center space-x-2 mx-auto"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              {creating ? 'Creating...' : 'New Project'}
+              <Plus className="w-4 h-4" />
+              <span>{creating ? 'Creating...' : 'Create Project'}</span>
             </button>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="gradient-card p-6 rounded-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm">Total Projects</p>
-                  <p className="text-2xl font-bold text-slate-900">{projects.length}</p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Building className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="gradient-card p-6 rounded-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm">Active</p>
-                  <p className="text-2xl font-bold text-slate-900">{projects.filter(p => p.status === 'Active').length}</p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="gradient-card p-6 rounded-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm">Total Value</p>
-                  <p className="text-2xl font-bold text-slate-900">
-                    ${projects.reduce((sum, p) => sum + (p.expected_fee || 0), 0).toLocaleString()}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="gradient-card p-6 rounded-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm">Completed</p>
-                  <p className="text-2xl font-bold text-slate-900">{projects.filter(p => p.status === 'Completed').length}</p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-violet-600 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Projects Grid */}
-          {projects.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-20 h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Building className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">No projects yet</h3>
-              <p className="text-slate-600 mb-8">Create your first lease tracking project to get started</p>
-              <button 
-                onClick={createEmptyProject}
-                disabled={creating}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                {creating ? 'Creating...' : 'Create Project'}
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project) => (
-                <div
-                  key={project.id}
-                  className="relative gradient-card rounded-xl hover-lift group overflow-hidden"
-                >
-                  {/* Delete button */}
-                  <button
-                    onClick={(e) => handleDeleteClick(project.id, project.title, e)}
-                    disabled={deleting === project.id}
-                    className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Delete project"
-                  >
-                    {deleting === project.id ? (
-                      <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </button>
-
-                  {/* Project content */}
-                  <Link to={`/projects/${project.id}`} className="block p-6">
-                    {/* Status badge */}
-                    <div className="flex justify-start mb-4">
-                      <span className={`px-3 py-1 text-xs font-semibold rounded-full text-white ${getStatusColor(project.status)}`}>
-                        {project.status}
-                      </span>
-                    </div>
-                    
-                    {/* Title and company */}
-                    <div className="mb-6 pr-8">
-                      <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2" title={project.title}>
-                        {project.title}
-                      </h3>
-                      <p className="text-sm text-slate-600 font-medium">{project.company_name || 'No company specified'}</p>
-                    </div>
-
-                    {/* Project details */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center space-x-2 text-slate-600">
-                          <User className="w-4 h-4" />
-                          <span>{project.expected_headcount || 'Not specified'}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-slate-600">
-                          <Calendar className="w-4 h-4" />
-                          <span>{project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
-                        </div>
-                      </div>
-
-                      {/* Fee prominently displayed */}
-                      <div className="pt-4 border-t border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-slate-600">Expected Fee</span>
-                          <div className="flex items-center space-x-1">
-                            <DollarSign className="w-4 h-4 text-emerald-600" />
-                            <span className="text-lg font-bold text-emerald-600">
-                              {project.expected_fee != null ? `${project.expected_fee.toLocaleString()}` : 'Not set'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              ))}
-            </div>
           )}
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => (
+            <div
+              key={project.id}
+              className="dashboard-card hover-lift group overflow-hidden relative"
+            >
+              {/* Delete button */}
+              <button
+                onClick={(e) => handleDeleteClick(project.id, project.title, e)}
+                disabled={deleting === project.id}
+                className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 disabled:opacity-50"
+                title="Delete project"
+              >
+                {deleting === project.id ? (
+                  <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+              </button>
+
+              {/* Project content */}
+              <Link to={`/projects/${project.id}`} className="block p-6">
+                {/* Status badge */}
+                <div className="flex justify-start mb-4">
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-full text-white ${getStatusColor(project.status)}`}>
+                    {project.status}
+                  </span>
+                </div>
+                
+                {/* Title and company */}
+                <div className="mb-6 pr-8">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2 line-clamp-2" title={project.title}>
+                    {project.title}
+                  </h3>
+                  <p className="text-sm text-slate-600">{project.company_name || 'No company specified'}</p>
+                </div>
+
+                {/* Project details */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-2 text-slate-600">
+                      <User className="w-4 h-4" />
+                      <span>{project.expected_headcount || 'Not specified'}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-slate-600">
+                      <Calendar className="w-4 h-4" />
+                      <span>{project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
+                    </div>
+                  </div>
+
+                  {/* Fee */}
+                  <div className="pt-3 border-t border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-600">Expected Fee</span>
+                      <div className="flex items-center space-x-1">
+                        <DollarSign className="w-4 h-4 text-green-600" />
+                        <span className="text-lg font-bold text-green-600">
+                          {project.expected_fee != null ? `${project.expected_fee.toLocaleString()}` : 'Not set'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmation.show && (
         <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
-          <div className="gradient-card rounded-xl shadow-2xl max-w-md w-full mx-4 border border-slate-200">
+          <div className="dashboard-card max-w-md w-full mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-slate-900">Delete Project</h3>
@@ -358,14 +361,14 @@ export function ProjectsListPage() {
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={handleCancelDelete}
-                  className="px-4 py-2 text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 hover:border-indigo-500 rounded-lg transition-all duration-300"
+                  className="btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirmDelete}
                   disabled={deleting !== null}
-                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg hover:shadow-red-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
                   {deleting ? 'Deleting...' : 'Delete Project'}
                 </button>
@@ -374,6 +377,6 @@ export function ProjectsListPage() {
           </div>
         </div>
       )}
-    </>
+    </DashboardLayout>
   );
 }
