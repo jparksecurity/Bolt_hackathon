@@ -3,38 +3,31 @@
 
 -- Insert the main project
 INSERT INTO projects (
-  id, clerk_user_id, title, status, start_date, expected_fee,
+  id, clerk_user_id, title, status, start_date, desired_move_in_date, expected_fee,
   broker_commission, commission_paid_by, payment_due,
-  company_name, expected_headcount, created_at, updated_at
+  company_name, expected_headcount, contact_name, contact_title, contact_phone, contact_email,
+  created_at, updated_at
 ) VALUES (
   '550e8400-e29b-41d4-a716-446655440000',
   'user_2yLAix46qETyVjrJ3TBdv9y8TrV',
   'Downtown Tech Hub - Office Lease',
   'Active',
   '2024-01-15',
+  '2024-03-01',
   0.00,
   15000.00,
   'Landlord',
   'Upon lease signing',
   'TechFlow Innovations',
   '75-100 employees',
-  NOW(),
-  NOW()
-);
-
--- Insert project contact
-INSERT INTO project_contacts (
-  id, project_id, name, title, phone, email, is_primary, created_at
-) VALUES (
-  '550e8400-e29b-41d4-a716-446655440001',
-  '550e8400-e29b-41d4-a716-446655440000',
   'Sarah Chen',
   'Head of Operations',
   '(555) 123-4567',
   'sarah.chen@techflow.com',
-  true,
+  NOW(),
   NOW()
 );
+
 
 -- Insert client requirements - Space Requirements
 INSERT INTO client_requirements (project_id, category, requirement_text) VALUES
@@ -94,20 +87,28 @@ INSERT INTO project_roadmap (
 
 -- Insert properties
 INSERT INTO properties (
-  id, project_id, name, size, rent, availability, description,
-  status, lease_type, service_type, order_index, created_at, updated_at
+  id, project_id, name, address, sf, people_capacity, price_per_sf, monthly_cost,
+  contract_term, availability, lease_type, current_state, misc_notes,
+  virtual_tour_url, suggestion, flier_url, status, order_index, created_at, updated_at
 ) VALUES
 (
   '550e8400-e29b-41d4-a716-446655440020',
   '550e8400-e29b-41d4-a716-446655440000',
   'Downtown Tech Tower - 5th Street',
-  '18,500 sq ft',
-  '$24/sq ft',
+  '123 Tech Boulevard, Downtown',
+  '18,500',
+  '90-110',
+  '$24',
+  '$37,000',
+  '3-5 years',
   'Available March 2024',
-  'Modern Class A office space with exposed brick, high ceilings, and floor-to-ceiling windows. Fiber internet ready, flexible open floor plan perfect for collaborative workspaces. 2 blocks from metro station.',
-  'active',
   'Direct Lease',
-  'Full Service',
+  'Available',
+  'Modern Class A office space with exposed brick, high ceilings, and floor-to-ceiling windows. Fiber internet ready, flexible open floor plan perfect for collaborative workspaces. 2 blocks from metro station.',
+  'https://drive.google.com/file/d/1example-virtual-tour-tech-tower',
+  'Highly recommended - perfect location and modern infrastructure',
+  'https://drive.google.com/file/d/1example-flier-tech-tower',
+  'active',
   0,
   NOW(),
   NOW()
@@ -116,13 +117,20 @@ INSERT INTO properties (
   '550e8400-e29b-41d4-a716-446655440021',
   '550e8400-e29b-41d4-a716-446655440000',
   'Innovation District Plaza',
-  '16,200 sq ft',
-  '$32/sq ft',
+  '456 Innovation Way, Innovation District',
+  '16,200',
+  '75-95',
+  '$32',
+  '$43,200',
+  '5-7 years',
   'Available April 2024',
-  'Brand new construction in the Innovation District. Features include rooftop terrace, bike storage, and state-of-the-art HVAC. One block south from light rail with incredible views for maximum flexibility.',
-  'new',
   'Direct Lease',
-  'NNN',
+  'Under Review',
+  'Brand new construction in the Innovation District. Features include rooftop terrace, bike storage, and state-of-the-art HVAC. One block south from light rail with incredible views for maximum flexibility.',
+  'https://drive.google.com/file/d/1example-virtual-tour-innovation',
+  'Great amenities but higher cost - consider if budget allows',
+  'https://drive.google.com/file/d/1example-flier-innovation',
+  'new',
   1,
   NOW(),
   NOW()
@@ -131,13 +139,20 @@ INSERT INTO properties (
   '550e8400-e29b-41d4-a716-446655440022',
   '550e8400-e29b-41d4-a716-446655440000',
   'Historic Warehouse Conversion',
-  '22,000 sq ft',
-  '$24/sq ft',
+  '789 Industrial Avenue, Warehouse District',
+  '22,000',
+  '100-130',
+  '$24',
+  '$44,000',
+  '3-4 years',
   'Available February 2024',
-  'Converted warehouse with industrial charm. High ceilings, polished concrete floors, and abundant natural light. Includes parking garage and loading dock. Great for companies wanting unique character.',
-  'declined',
   'Sublease',
-  'Modified Gross',
+  'Declined',
+  'Converted warehouse with industrial charm. High ceilings, polished concrete floors, and abundant natural light. Includes parking garage and loading dock. Great for companies wanting unique character.',
+  NULL,
+  'Consider for future if noise concerns can be addressed',
+  'https://drive.google.com/file/d/1example-flier-warehouse',
+  'declined',
   2,
   NOW(),
   NOW()
@@ -148,24 +163,16 @@ UPDATE properties
 SET decline_reason = 'Client concerned about noise levels from nearby construction and lack of modern HVAC system.'
 WHERE id = '550e8400-e29b-41d4-a716-446655440022';
 
--- Insert property features
-INSERT INTO property_features (property_id, feature) VALUES
-('550e8400-e29b-41d4-a716-446655440020', 'Virtual Tour'),
-('550e8400-e29b-41d4-a716-446655440020', 'Brochure'),
-('550e8400-e29b-41d4-a716-446655440021', 'Virtual Tour'),
-('550e8400-e29b-41d4-a716-446655440021', 'Brochure Coming Soon'),
-('550e8400-e29b-41d4-a716-446655440022', 'Virtual Tour Pending'),
-('550e8400-e29b-41d4-a716-446655440022', 'Brochure');
 
 -- Insert project documents
 INSERT INTO project_documents (
-  id, project_id, name, file_type, order_index, created_at
+  id, project_id, name, file_type, document_url, source_type, order_index, created_at
 ) VALUES
-('550e8400-e29b-41d4-a716-446655440030', '550e8400-e29b-41d4-a716-446655440000', 'Client Requirements.pdf', 'pdf', 0, NOW()),
-('550e8400-e29b-41d4-a716-446655440031', '550e8400-e29b-41d4-a716-446655440000', 'Market Analysis.xlsx', 'xlsx', 1, NOW()),
-('550e8400-e29b-41d4-a716-446655440032', '550e8400-e29b-41d4-a716-446655440000', 'Property Photos.zip', 'zip', 2, NOW()),
-('550e8400-e29b-41d4-a716-446655440033', '550e8400-e29b-41d4-a716-446655440000', 'Lease Template.docx', 'docx', 3, NOW()),
-('550e8400-e29b-41d4-a716-446655440034', '550e8400-e29b-41d4-a716-446655440000', 'Financial Projections.pdf', 'pdf', 4, NOW());
+('550e8400-e29b-41d4-a716-446655440030', '550e8400-e29b-41d4-a716-446655440000', 'Client Requirements.pdf', 'pdf', 'https://drive.google.com/file/d/1example-client-requirements-doc', 'google_drive', 0, NOW()),
+('550e8400-e29b-41d4-a716-446655440031', '550e8400-e29b-41d4-a716-446655440000', 'Market Analysis.xlsx', 'xlsx', 'https://docs.google.com/spreadsheets/d/1example-market-analysis-sheet', 'google_drive', 1, NOW()),
+('550e8400-e29b-41d4-a716-446655440032', '550e8400-e29b-41d4-a716-446655440000', 'Property Photos.zip', 'zip', 'https://drive.google.com/file/d/1example-property-photos-zip', 'google_drive', 2, NOW()),
+('550e8400-e29b-41d4-a716-446655440033', '550e8400-e29b-41d4-a716-446655440000', 'Lease Template.docx', 'docx', 'https://1drv.ms/w/example-lease-template-onedrive', 'onedrive', 3, NOW()),
+('550e8400-e29b-41d4-a716-446655440034', '550e8400-e29b-41d4-a716-446655440000', 'Financial Projections.pdf', 'pdf', 'https://drive.google.com/file/d/1example-financial-projections', 'google_drive', 4, NOW());
 
 -- Insert project updates
 INSERT INTO project_updates (

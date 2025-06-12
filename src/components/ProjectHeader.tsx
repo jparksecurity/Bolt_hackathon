@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail, MapPin } from 'lucide-react';
+import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail, MapPin, X } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { ProjectStatus, BaseProjectData } from '../types/project';
@@ -15,13 +15,11 @@ interface ProjectHeaderProps {
   shareId?: string;
 }
 
-interface Contact {
-  id: string;
+interface ContactFormData {
   name: string;
-  title?: string | null;
-  phone?: string | null;
-  email?: string | null;
-  is_primary: boolean;
+  title: string;
+  phone: string;
+  email: string;
 }
 
 interface Requirement {
@@ -35,6 +33,8 @@ interface ProjectFormData {
   status: ProjectStatus;
   start_date: string;
   desired_move_in_date: string;
+  company_name: string;
+  expected_headcount: string;
   expected_fee: string;
   broker_commission: string;
   commission_paid_by: string;
@@ -55,7 +55,13 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const { user } = useUser();
   const supabase = useSupabaseClient();
   const [showTooltip, setShowTooltip] = useState(false);
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactFormData, setContactFormData] = useState<ContactFormData>({
+    name: '',
+    title: '',
+    phone: '',
+    email: ''
+  });
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -66,20 +72,15 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     status: ProjectStatus.ACTIVE,
     start_date: '',
     desired_move_in_date: '',
+    company_name: '',
+    expected_headcount: '',
     expected_fee: '',
     broker_commission: '',
     commission_paid_by: '',
     payment_due: ''
   });
 
-  const { 
-    data: publicContacts, 
-    loading: publicContactsLoading 
-  } = useProjectData<Contact>({ 
-    shareId: readonly && shareId ? shareId : undefined,
-    projectId: !readonly ? project.id : undefined,
-    dataType: 'contacts' 
-  });
+  // Contact data is now directly in project object
 
   const { 
     data: publicRequirements, 
@@ -91,28 +92,29 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     dataType: 'requirements' 
   });
 
-  const fetchContactsAndRequirements = useCallback(async () => {
+  const fetchRequirements = useCallback(async () => {
     try {
-      setContacts(publicContacts);
       setRequirements(publicRequirements);
-      setLoading(publicContactsLoading || publicRequirementsLoading);
+      setLoading(publicRequirementsLoading);
     } catch {
-      // Error fetching contacts and requirements - use empty arrays
+      // Error fetching requirements - use empty array
     }
-  }, [publicContacts, publicRequirements, publicContactsLoading, publicRequirementsLoading]);
+  }, [publicRequirements, publicRequirementsLoading]);
 
   useEffect(() => {
     if (readonly || (user && project.id)) {
-      fetchContactsAndRequirements();
+      fetchRequirements();
     }
-  }, [user, project.id, fetchContactsAndRequirements, readonly]);
+  }, [user, project.id, fetchRequirements, readonly]);
 
   const resetProjectForm = () => {
     setProjectFormData({
       title: project.title,
       status: project.status,
       start_date: project.start_date || '',
-      desired_move_in_date: (project as any).desired_move_in_date || '',
+      desired_move_in_date: project.desired_move_in_date || '',
+      company_name: project.company_name || '',
+      expected_headcount: project.expected_headcount || '',
       expected_fee: project.expected_fee?.toString() || '',
       broker_commission: project.broker_commission?.toString() || '',
       commission_paid_by: project.commission_paid_by || '',
@@ -137,6 +139,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         status: projectFormData.status,
         start_date: projectFormData.start_date || null,
         desired_move_in_date: projectFormData.desired_move_in_date || null,
+        company_name: projectFormData.company_name.trim() || null,
+        expected_headcount: projectFormData.expected_headcount.trim() || null,
         expected_fee: projectFormData.expected_fee ? parseFloat(projectFormData.expected_fee) : null,
         broker_commission: projectFormData.broker_commission ? parseFloat(projectFormData.broker_commission) : null,
         commission_paid_by: projectFormData.commission_paid_by.trim() || null,
@@ -210,7 +214,81 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     }
   };
 
-  const primaryContact = contacts.find(contact => contact.is_primary) || contacts[0];
+  const hasContact = project.contact_name;
+
+  const resetContactForm = () => {
+    setContactFormData({
+      name: project.contact_name || '',
+      title: project.contact_title || '',
+      phone: project.contact_phone || '',
+      email: project.contact_email || ''
+    });
+  };
+
+  const openContactModal = () => {
+    resetContactForm();
+    setIsContactModalOpen(true);
+  };
+
+  const closeContactModal = () => {
+    setIsContactModalOpen(false);
+  };
+
+  const saveContact = async () => {
+    if (!contactFormData.name.trim()) return;
+    
+    setSaving(true);
+    try {
+      const updateData = {
+        contact_name: contactFormData.name.trim(),
+        contact_title: contactFormData.title.trim() || null,
+        contact_phone: contactFormData.phone.trim() || null,
+        contact_email: contactFormData.email.trim() || null,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('projects')
+        .update(updateData)
+        .eq('id', project.id);
+
+      if (error) throw error;
+
+      setIsContactModalOpen(false);
+      onProjectUpdate?.();
+    } catch {
+      alert('Error saving contact. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteContact = async () => {
+    if (!confirm('Are you sure you want to remove this contact?')) return;
+    
+    setSaving(true);
+    try {
+      const updateData = {
+        contact_name: null,
+        contact_title: null,
+        contact_phone: null,
+        contact_email: null,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('projects')
+        .update(updateData)
+        .eq('id', project.id);
+
+      if (error) throw error;
+      onProjectUpdate?.();
+    } catch {
+      alert('Error removing contact. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="dashboard-card p-8">
@@ -262,7 +340,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <div>
               <p className="text-blue-700 text-sm font-medium">Desired Move-in</p>
               <p className="text-blue-900 font-bold text-lg">
-                {(project as any).desired_move_in_date ? new Date((project as any).desired_move_in_date).toLocaleDateString() : 'Not set'}
+                {project.desired_move_in_date ? new Date(project.desired_move_in_date).toLocaleDateString() : 'Not set'}
               </p>
             </div>
           </div>
@@ -332,37 +410,74 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       </div>
 
       {/* Contact Information */}
-      {primaryContact && (
-        <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
-          <h4 className="font-bold text-gray-900 mb-4 flex items-center space-x-2">
+      <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-bold text-gray-900 flex items-center space-x-2">
             <User className="w-5 h-5 text-gray-800" />
             <span>Primary Contact</span>
           </h4>
+          {!readonly && (
+            <div className="flex items-center space-x-2">
+              {hasContact && (
+                <button
+                  onClick={deleteContact}
+                  className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                  title="Remove contact"
+                  disabled={saving}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={openContactModal}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+                title={hasContact ? "Edit contact" : "Add contact"}
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+        
+        {hasContact ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{primaryContact.name}</p>
-                {primaryContact.title && <p className="text-sm text-gray-600">{primaryContact.title}</p>}
+                <p className="font-semibold text-gray-900">{project.contact_name}</p>
+                {project.contact_title && <p className="text-sm text-gray-600">{project.contact_title}</p>}
               </div>
             </div>
-            {primaryContact.phone && (
+            {project.contact_phone && (
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-gray-400" />
-                <span className="text-gray-900">{primaryContact.phone}</span>
+                <span className="text-gray-900">{project.contact_phone}</span>
               </div>
             )}
-            {primaryContact.email && (
+            {project.contact_email && (
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-gray-400" />
-                <span className="text-gray-900">{primaryContact.email}</span>
+                <span className="text-gray-900">{project.contact_email}</span>
               </div>
             )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="text-center py-6">
+            <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 mb-4">No contact information added yet</p>
+            {!readonly && (
+              <button
+                onClick={openContactModal}
+                className="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                Add Contact
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Client Requirements Section */}
       <ClientRequirementsSection
@@ -434,6 +549,30 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Company Name
+              </label>
+              <input
+                type="text"
+                value={projectFormData.company_name}
+                onChange={(e) => setProjectFormData({ ...projectFormData, company_name: e.target.value })}
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="Enter company name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Expected Headcount
+              </label>
+              <input
+                type="text"
+                value={projectFormData.expected_headcount}
+                onChange={(e) => setProjectFormData({ ...projectFormData, expected_headcount: e.target.value })}
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="e.g., 75-100 employees"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Expected Fee ($)
               </label>
               <input
@@ -496,6 +635,82 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               disabled={!projectFormData.title.trim()}
             >
               Save Changes
+            </FormButton>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Contact Edit Modal */}
+      <Modal
+        isOpen={isContactModalOpen}
+        onClose={closeContactModal}
+        title={hasContact ? "Edit Contact" : "Add Contact"}
+        size="md"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); saveContact(); }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Contact Name *
+            </label>
+            <input
+              type="text"
+              value={contactFormData.name}
+              onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter contact name"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Title
+            </label>
+            <input
+              type="text"
+              value={contactFormData.title}
+              onChange={(e) => setContactFormData({ ...contactFormData, title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., Head of Operations"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone
+            </label>
+            <input
+              type="tel"
+              value={contactFormData.phone}
+              onChange={(e) => setContactFormData({ ...contactFormData, phone: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="(555) 123-4567"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              value={contactFormData.email}
+              onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="contact@company.com"
+            />
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <FormButton variant="secondary" onClick={closeContactModal}>
+              Cancel
+            </FormButton>
+            <FormButton 
+              type="submit" 
+              loading={saving}
+              disabled={!contactFormData.name.trim()}
+            >
+              {hasContact ? "Update Contact" : "Add Contact"}
             </FormButton>
           </div>
         </form>

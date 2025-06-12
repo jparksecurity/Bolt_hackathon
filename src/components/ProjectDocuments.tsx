@@ -505,7 +505,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                 </label>
                 <select
                   value={documentForm.sourceType}
-                  onChange={(e) => setDocumentForm({ ...documentForm, sourceType: e.target.value as any })}
+                  onChange={(e) => setDocumentForm({ ...documentForm, sourceType: e.target.value as 'google_drive' | 'onedrive' | 'url' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   disabled={saving}
                 >

@@ -51,7 +51,7 @@ export function SettingsPage() {
       
       // Note: Email and phone updates would require verification through Clerk
       alert('Profile updated successfully!');
-    } catch (error) {
+    } catch {
       alert('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
@@ -65,7 +65,7 @@ export function SettingsPage() {
       // For now, we'll just simulate the save
       await new Promise(resolve => setTimeout(resolve, 1000));
       alert('Notification preferences updated!');
-    } catch (error) {
+    } catch {
       alert('Failed to update notifications. Please try again.');
     } finally {
       setSaving(false);
@@ -89,7 +89,7 @@ export function SettingsPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       alert('Password updated successfully!');
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (error) {
+    } catch {
       alert('Failed to update password. Please try again.');
     } finally {
       setSaving(false);
@@ -106,7 +106,7 @@ export function SettingsPage() {
       // In a real app, you'd handle account deletion through Clerk
       await user?.delete();
       alert('Account deleted successfully.');
-    } catch (error) {
+    } catch {
       alert('Failed to delete account. Please contact support.');
     }
   };

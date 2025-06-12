@@ -40,13 +40,6 @@ export interface PublicProperty {
   updated_at: string;
 }
 
-export interface PublicPropertyFeature {
-  id: string;
-  property_id: string;
-  feature: string;
-  created_at: string;
-}
-
 export interface PublicRoadmapItem {
   id: string;
   project_id: string;
@@ -97,17 +90,6 @@ export class PublicProjectAPI {
   async getProperties(shareId: string): Promise<PublicProperty[]> {
     const { data, error } = await this.supabase
       .rpc('get_public_properties', { share_id: shareId });
-
-    if (error) {
-      return [];
-    }
-
-    return data || [];
-  }
-
-  async getPropertyFeatures(shareId: string): Promise<PublicPropertyFeature[]> {
-    const { data, error } = await this.supabase
-      .rpc('get_public_property_features', { share_id: shareId });
 
     if (error) {
       return [];

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Calendar, Plus, Edit3, X, DollarSign, Trash2, Save, MapPin, Users, FileText, ExternalLink, Eye, Link } from 'lucide-react';
+import { Building2, Calendar, Plus, Edit3, X, DollarSign, Trash2, Save, MapPin, Users, FileText, ExternalLink, Eye } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { DragDropList } from './DragDropList';
@@ -26,12 +26,6 @@ interface Property {
   created_at: string;
   updated_at: string;
   order_index?: number | null;
-}
-
-interface PropertyFeature {
-  id: string;
-  property_id: string;
-  feature: string;
 }
 
 interface PropertyFormData {
@@ -97,41 +91,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     dataType: 'properties' 
   });
 
-  // Get property features if needed (for public mode we need to implement this separately)
-  const [features, setFeatures] = useState<PropertyFeature[]>([]);
-
-  // For public mode, we need to fetch features separately since our hook doesn't handle this yet
-  React.useEffect(() => {
-    const fetchFeatures = async () => {
-      if (shareId) {
-        try {
-          const { data, error } = await supabase
-            .rpc('get_public_property_features', { share_id: shareId });
-          if (!error) {
-            setFeatures(data || []);
-          }
-        } catch {
-          // Error fetching features - use empty array
-        }
-      } else if (projectId && properties.length > 0) {
-        // For authenticated mode, fetch features
-        try {
-          const propertyIds = properties.map(p => p.id);
-          const { data, error } = await supabase
-            .from('property_features')
-            .select('*')
-            .in('property_id', propertyIds);
-          if (!error) {
-            setFeatures(data || []);
-          }
-        } catch {
-          // Error fetching features - use empty array
-        }
-      }
-    };
-
-    fetchFeatures();
-  }, [shareId, projectId, properties, supabase]);
 
   const loading = propertiesLoading;
 
@@ -165,10 +124,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       default:
         return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const getPropertyFeatures = (propertyId: string) => {
-    return features.filter(feature => feature.property_id === propertyId);
   };
 
   const resetForm = () => {
@@ -349,7 +304,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   };
 
   const renderProperty = (property: Property) => {
-    const propertyFeatures = getPropertyFeatures(property.id);
     
     return (
       <div className="border border-gray-200 rounded-xl p-6 bg-white hover:shadow-lg transition-shadow">
@@ -521,23 +475,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
             </button>
           )}
         </div>
-
-        {/* Features */}
-        {propertyFeatures.length > 0 && (
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 font-medium mb-2">Features</p>
-            <div className="flex flex-wrap gap-2">
-              {propertyFeatures.map((feature) => (
-                <span
-                  key={feature.id}
-                  className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                >
-                  {feature.feature}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Decline Reason */}
         {property.status === 'declined' && property.decline_reason && (
@@ -754,7 +691,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </label>
                     <select
                       value={formData.lease_type}
-                      onChange={(e) => setFormData({ ...formData, lease_type: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, lease_type: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select lease type</option>
@@ -769,7 +706,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </label>
                     <select
                       value={formData.current_state}
-                      onChange={(e) => setFormData({ ...formData, current_state: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, current_state: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select current state</option>
@@ -786,7 +723,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </label>
                     <select
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="new">New</option>
