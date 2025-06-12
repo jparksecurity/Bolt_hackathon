@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import { DivideIcon as LucideIcon } from 'lucide-react';
 
 interface FormButtonProps {
   type?: 'button' | 'submit';
@@ -20,10 +20,10 @@ export const FormButton: React.FC<FormButtonProps> = ({
   icon: Icon,
   children
 }) => {
-  const baseClasses = "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors";
+  const baseClasses = "flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200";
   const variantClasses = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50",
-    secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200"
+    primary: "btn-primary",
+    secondary: "btn-secondary"
   };
 
   return (
@@ -31,7 +31,7 @@ export const FormButton: React.FC<FormButtonProps> = ({
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
-      className={`${baseClasses} ${variantClasses[variant]}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${disabled || loading ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {loading ? (
         <>
@@ -46,4 +46,4 @@ export const FormButton: React.FC<FormButtonProps> = ({
       )}
     </button>
   );
-}; 
+};

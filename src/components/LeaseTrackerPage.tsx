@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
-import { Share, Check } from 'lucide-react';
+import { Share, Check, ArrowLeft } from 'lucide-react';
 import { useSupabaseClient } from '../lib/supabase';
-import { Header } from './Header';
+import { DashboardLayout } from './DashboardLayout';
 import { ProjectHeader } from './ProjectHeader';
 import { ProjectRoadmap } from './ProjectRoadmap';
 import { ProjectDocuments } from './ProjectDocuments';
@@ -33,7 +33,7 @@ export function LeaseTrackerPage() {
         .from('projects')
         .select('*')
         .eq('id', id)
-        .is('deleted_at', null) // Explicitly exclude soft-deleted projects
+        .is('deleted_at', null)
         .single();
 
       if (error) {
@@ -50,17 +50,15 @@ export function LeaseTrackerPage() {
   }, [id, supabase]);
 
   const copyToClipboard = async (text: string): Promise<boolean> => {
-    // Try modern Clipboard API first
     if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(text);
         return true;
       } catch {
-        // Fallback to execCommand if Clipboard API fails
+        // Fallback to execCommand
       }
     }
 
-    // Fallback to execCommand for older browsers or when Clipboard API fails
     try {
       const textArea = document.createElement('textarea');
       textArea.value = text;
@@ -86,7 +84,6 @@ export function LeaseTrackerPage() {
       let shareId = project.public_share_id;
       let publicUrl: string;
 
-      // If shareId exists, just copy it immediately
       if (shareId) {
         publicUrl = `${window.location.origin}/share/${shareId}`;
         const success = await copyToClipboard(publicUrl);
@@ -100,32 +97,25 @@ export function LeaseTrackerPage() {
         return;
       }
 
-      // No shareId exists - use copy-first approach to preserve user activation
       shareId = crypto.randomUUID();
       publicUrl = `${window.location.origin}/share/${shareId}`;
 
-      // Step 1: Copy to clipboard FIRST (while user activation is still valid)
       const success = await copyToClipboard(publicUrl);
       if (!success) {
         alert('Failed to copy link to clipboard. Please try again.');
         return;
       }
 
-      // Step 2: Show immediate success feedback
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
 
-      // Step 3: Update database in background (after clipboard copy is complete)
       try {
         const { error } = await supabase
           .from('projects')
           .update({ public_share_id: shareId })
           .eq('id', project.id);
 
-        if (error) {
-          // Link still works since we copied it first
-        } else {
-          // Update local state on successful DB update
+        if (!error) {
           setProject({ ...project, public_share_id: shareId });
         }
       } catch {
@@ -147,94 +137,88 @@ export function LeaseTrackerPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center">Loading project...</div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Please sign in to view this project</h2>
-          </div>
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Please sign in to view this project</h2>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Project not found</h2>
-            <p className="text-gray-600 mb-6">{error || 'The project you\'re looking for doesn\'t exist or you don\'t have permission to view it.'}</p>
-            <button
-              onClick={() => navigate('/projects')}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Back to Projects
-            </button>
-          </div>
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Project not found</h2>
+          <p className="text-slate-600 mb-6">{error || 'The project you\'re looking for doesn\'t exist or you don\'t have permission to view it.'}</p>
+          <button
+            onClick={() => navigate('/projects')}
+            className="btn-primary flex items-center space-x-2 mx-auto"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Projects</span>
+          </button>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
+  const headerContent = (
+    <div className="flex items-center space-x-4">
+      <button
+        onClick={() => navigate('/projects')}
+        className="btn-secondary flex items-center space-x-2"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to Projects</span>
+      </button>
+      <button 
+        onClick={handleShareProject}
+        className="btn-secondary flex items-center space-x-2"
+      >
+        {copySuccess ? (
+          <>
+            <Check className="w-4 h-4 text-green-600" />
+            <span className="text-green-600">Copied!</span>
+          </>
+        ) : (
+          <>
+            <Share className="w-4 h-4" />
+            <span>Share Project</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header>
-        <button 
-          onClick={handleShareProject}
-          className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-        >
-          {copySuccess ? (
-            <>
-              <Check className="w-4 h-4 text-green-600" />
-              <span className="text-sm text-green-600">Copied!</span>
-            </>
-          ) : (
-            <>
-              <Share className="w-4 h-4" />
-              <span className="text-sm">Copy Public Link</span>
-            </>
-          )}
-        </button>
-      </Header>
-      
-      <div className="max-w-7xl mx-auto">
+    <DashboardLayout headerContent={headerContent}>
+      <div className="space-y-6">
+        {/* Project Header */}
         <ProjectHeader project={project} onProjectUpdate={fetchProject} />
         
-        <div className="p-6">
-          {/* Recent Updates - Full Width */}
-          <div className="mb-6">
-            <RecentUpdates projectId={project.id} />
-          </div>
-        </div>
+        {/* Recent Updates */}
+        <RecentUpdates projectId={project.id} />
         
-        {/* Properties Section - Full Width */}
-        <div className="px-6 pb-6">
-          <PropertiesOfInterest projectId={project.id} />
-        </div>
+        {/* Properties Section */}
+        <PropertiesOfInterest projectId={project.id} />
         
-        {/* Project Roadmap - Full Width */}
-        <div className="px-6 pb-6">
-          <ProjectRoadmap projectId={project.id} />
-        </div>
+        {/* Project Roadmap */}
+        <ProjectRoadmap projectId={project.id} />
         
-        {/* Project Documents - Full Width at Bottom */}
-        <div className="px-6 pb-6">
-          <ProjectDocuments projectId={project.id} />
-        </div>
+        {/* Project Documents */}
+        <ProjectDocuments projectId={project.id} />
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

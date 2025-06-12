@@ -107,18 +107,18 @@ export const ClientRequirementsSection: React.FC<ClientRequirementsSectionProps>
 
   return (
     <>
-      <div className="bg-gray-50 rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-900">Client Requirements</h3>
+      <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-900">Client Requirements</h3>
           {!readonly && (
             <button onClick={openAddModal} title="Add Requirement">
-              <Plus className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+              <Plus className="w-4 h-4 text-slate-400 cursor-pointer hover:text-indigo-600 transition-colors" />
             </button>
           )}
         </div>
         
         {loading ? (
-          <div className="text-sm text-gray-500">Loading requirements...</div>
+          <div className="text-sm text-slate-600">Loading requirements...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {requirementCategories.map((category) => {
@@ -126,24 +126,24 @@ export const ClientRequirementsSection: React.FC<ClientRequirementsSectionProps>
               return (
                 <div key={category.id}>
                   <div className="flex items-center space-x-2 mb-3">
-                    <category.icon className="w-4 h-4 text-blue-600" />
-                    <h4 className="font-medium text-gray-900 text-sm">{category.title}</h4>
+                    <category.icon className="w-4 h-4 text-indigo-600" />
+                    <h4 className="font-medium text-slate-900 text-sm">{category.title}</h4>
                   </div>
                   <div className="space-y-2 ml-6">
                     {categoryRequirements.length > 0 ? (
                       categoryRequirements.map((req) => (
                         <div key={req.id} className="flex items-center justify-between group">
                           <div className="flex items-center space-x-2">
-                            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
-                            <span className="text-sm text-gray-700">{req.requirement_text}</span>
+                            <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
+                            <span className="text-sm text-slate-700">{req.requirement_text}</span>
                           </div>
                           {!readonly && (
                             <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => openEditModal(req)}>
-                                <Edit3 className="w-3 h-3 text-gray-400 hover:text-gray-600" />
+                                <Edit3 className="w-3 h-3 text-slate-400 hover:text-indigo-600" />
                               </button>
                               <button onClick={() => handleDelete(req.id)}>
-                                <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-600" />
+                                <Trash2 className="w-3 h-3 text-slate-400 hover:text-red-600" />
                               </button>
                             </div>
                           )}
@@ -151,8 +151,8 @@ export const ClientRequirementsSection: React.FC<ClientRequirementsSectionProps>
                       ))
                     ) : (
                       <div className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-                        <span className="text-sm text-gray-700">To be defined</span>
+                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+                        <span className="text-sm text-slate-500">To be defined</span>
                       </div>
                     )}
                   </div>
@@ -171,13 +171,13 @@ export const ClientRequirementsSection: React.FC<ClientRequirementsSectionProps>
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Category
             </label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="form-input w-full px-3 py-2 rounded-md"
             >
               {requirementCategories.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -188,7 +188,7 @@ export const ClientRequirementsSection: React.FC<ClientRequirementsSectionProps>
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Requirement
             </label>
             <textarea
@@ -196,7 +196,7 @@ export const ClientRequirementsSection: React.FC<ClientRequirementsSectionProps>
               onChange={(e) => setFormData({ ...formData, requirement_text: e.target.value })}
               placeholder="Enter requirement details..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="form-input w-full px-3 py-2 rounded-md"
               required
             />
           </div>
@@ -217,4 +217,4 @@ export const ClientRequirementsSection: React.FC<ClientRequirementsSectionProps>
       </Modal>
     </>
   );
-}; 
+};

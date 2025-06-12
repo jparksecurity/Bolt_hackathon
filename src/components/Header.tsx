@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/clerk-react';
 import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
 
 interface HeaderProps {
@@ -11,34 +11,37 @@ export const Header: React.FC<HeaderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white text-gray-900 px-6 py-4 border-b border-gray-200">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
+    <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="flex items-center space-x-4 cursor-pointer" onClick={() => navigate('/')}>
           <img 
             src={logoImage}
             alt="Jigo Tenant Logo" 
-            className="w-8 h-8"
+            className="w-10 h-10"
           />
-          <h1 className="text-xl font-bold">Lease Tracker</h1>
+          <div>
+            <span className="text-2xl font-bold text-gray-900">JIGO Dash</span>
+            <div className="text-sm text-gray-600 font-medium -mt-1">Commercial Real Estate Platform</div>
+          </div>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-6">
           {children}
           <SignedOut>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <SignInButton mode="modal">
-                <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
                   Sign In
                 </button>
               </SignInButton>
               <SignUpButton mode="modal">
-                <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                  Sign Up
+                <button className="btn-primary">
+                  Get Started
                 </button>
               </SignUpButton>
             </div>
           </SignedOut>
           <SignedIn>
-            <UserButton />
+            {/* Account management is now only available in the dashboard sidebar */}
           </SignedIn>
         </div>
       </div>

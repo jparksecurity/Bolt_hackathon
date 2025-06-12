@@ -7,11 +7,12 @@ import {
   File,
   Plus,
   ExternalLink,
-  Upload,
   X,
   Trash2,
   Edit3,
   Save,
+  Link,
+  Globe,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../lib/supabase";
@@ -29,12 +30,26 @@ interface Document {
   id: string;
   name: string;
   file_type: string;
-  storage_path: string;
+  storage_path?: string | null;
+  document_url?: string | null;
+  source_type: 'upload' | 'google_drive' | 'onedrive' | 'url';
   created_at: string;
   order_index?: number | null;
 }
 
-const getFileIcon = (fileType: string) => {
+const getFileIcon = (fileType: string, sourceType: string) => {
+  // Show different icons based on source
+  if (sourceType === 'google_drive') {
+    return { icon: Globe, color: "text-blue-500" };
+  }
+  if (sourceType === 'onedrive') {
+    return { icon: Globe, color: "text-blue-600" };
+  }
+  if (sourceType === 'url') {
+    return { icon: Link, color: "text-purple-500" };
+  }
+
+  // Default file type icons for uploads
   switch (fileType.toLowerCase()) {
     case "pdf":
       return { icon: FileText, color: "text-red-500" };
@@ -57,6 +72,20 @@ const getFileIcon = (fileType: string) => {
   }
 };
 
+const getSourceLabel = (sourceType: string) => {
+  switch (sourceType) {
+    case 'google_drive':
+      return 'Google Drive';
+    case 'onedrive':
+      return 'OneDrive';
+    case 'url':
+      return 'External Link';
+    case 'upload':
+    default:
+      return 'Uploaded';
+  }
+};
+
 export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   projectId,
   shareId,
@@ -75,48 +104,52 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     shareId, 
     dataType: 'documents' 
   });
-  const [uploading, setUploading] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [renamingDocument, setRenamingDocument] = useState<Document | null>(null);
   const [newDocumentName, setNewDocumentName] = useState("");
   const [renaming, setRenaming] = useState(false);
+  const [saving, setSaving] = useState(false);
 
+  // Form state for adding documents
+  const [documentForm, setDocumentForm] = useState({
+    name: '',
+    url: '',
+    sourceType: 'google_drive' as 'google_drive' | 'onedrive' | 'url'
+  });
 
-
-  const uploadFile = async (file: File) => {
+  const addDocumentByUrl = async () => {
     try {
-      if (!user || readonly) throw new Error("User not authenticated or in readonly mode");
+      if (!user || readonly || !documentForm.name.trim() || !documentForm.url.trim()) {
+        return;
+      }
 
-      setUploading(true);
-      setUploadProgress(0);
+      setSaving(true);
 
-      // Create unique filename
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${file.name}`;
-      const filePath = `${user.id}/${projectId}/${fileName}`;
+      // Validate URL format
+      try {
+        new URL(documentForm.url);
+      } catch {
+        alert('Please enter a valid URL');
+        return;
+      }
 
-      // Upload file to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from("project-documents")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
+      // Determine file type from URL or name
+      const urlPath = new URL(documentForm.url).pathname;
+      const extension = urlPath.split('.').pop()?.toLowerCase() || 
+                      documentForm.name.split('.').pop()?.toLowerCase() || 
+                      'unknown';
 
-      if (uploadError) throw uploadError;
-
-      // Get public URL
       // Save document metadata to database
       const { error: dbError } = await supabase
         .from("project_documents")
         .insert({
           project_id: projectId,
-          name: file.name,
-          file_type: fileExt || "unknown",
-          storage_path: filePath,
+          name: documentForm.name.trim(),
+          file_type: extension,
+          document_url: documentForm.url.trim(),
+          source_type: documentForm.sourceType,
           order_index: documents.length,
         });
 
@@ -124,12 +157,13 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
       // Refresh documents list
       await fetchDocuments();
-      setShowUploadModal(false);
-    } catch {
-      alert("Failed to upload file. Please try again.");
+      setShowAddModal(false);
+      setDocumentForm({ name: '', url: '', sourceType: 'google_drive' });
+    } catch (error) {
+      console.error('Error adding document:', error);
+      alert("Failed to add document. Please try again.");
     } finally {
-      setUploading(false);
-      setUploadProgress(0);
+      setSaving(false);
     }
   };
 
@@ -141,14 +175,15 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     try {
       if (!user) return;
 
-      // Delete from storage using the correct path
-      if (doc.storage_path) {
+      // For uploaded files, also delete from storage
+      if (doc.source_type === 'upload' && doc.storage_path) {
         const { error: storageError } = await supabase.storage
           .from("project-documents")
           .remove([doc.storage_path]);
 
         if (storageError) {
           // Storage deletion failed, but continue with database deletion
+          console.warn('Storage deletion failed:', storageError);
         }
       }
 
@@ -162,7 +197,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
       // Refresh documents list
       await fetchDocuments();
-    } catch {
+    } catch (error) {
+      console.error('Error deleting document:', error);
       alert("Failed to delete document. Please try again.");
     }
   };
@@ -184,7 +220,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       setShowRenameModal(false);
       setRenamingDocument(null);
       setNewDocumentName("");
-    } catch {
+    } catch (error) {
+      console.error('Error renaming document:', error);
       alert("Failed to rename document. Please try again.");
     } finally {
       setRenaming(false);
@@ -236,105 +273,80 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
       // Refresh the data
       await fetchDocuments();
-    } catch {
+    } catch (error) {
+      console.error('Error reordering documents:', error);
       alert('Error reordering documents. Please try again.');
       // Refresh on error to revert optimistic update
       await fetchDocuments();
     }
   };
 
-  const downloadDocument = async (doc: Document) => {
+  const openDocument = async (doc: Document) => {
     try {
-      if (!doc.storage_path) return;
+      let url: string | null = null;
 
-      let signedUrl: string | null = null;
+      if (doc.source_type === 'upload' && doc.storage_path) {
+        // Handle uploaded files
+        if (shareId && readonly) {
+          // For public users, check if this is a real document or seeded data
+          if (!doc.storage_path) {
+            alert("This document is not available for download (demo data).");
+            return;
+          }
 
-      if (shareId && readonly) {
-        // For public users, check if this is a real document or seeded data
-        if (!doc.storage_path) {
-          alert("This document is not available for download (demo data).");
-          return;
-        }
+          // For public users, use the PublicProjectAPI to verify access
+          const publicAPI = new PublicProjectAPI(supabase);
+          const result = await publicAPI.getDocumentDownloadInfo(shareId, doc.id);
+          
+          if (result.error || !result.documentInfo) {
+            alert("Failed to access document. Please try again.");
+            return;
+          }
 
-        // For public users, use the PublicProjectAPI to verify access
-        const publicAPI = new PublicProjectAPI(supabase);
-        const result = await publicAPI.getDocumentDownloadInfo(shareId, doc.id);
-        
-        if (result.error || !result.documentInfo) {
-          alert("Failed to download document. Please try again.");
-          return;
-        }
-
-        // Try to get public URL directly (this works if bucket is public)
-        const { data: publicUrlData } = supabase.storage
-          .from("project-documents")
-          .getPublicUrl(result.documentInfo.storage_path);
-        
-        if (publicUrlData?.publicUrl) {
-          signedUrl = publicUrlData.publicUrl;
+          // Try to get public URL directly (this works if bucket is public)
+          const { data: publicUrlData } = supabase.storage
+            .from("project-documents")
+            .getPublicUrl(result.documentInfo.storage_path);
+          
+          if (publicUrlData?.publicUrl) {
+            url = publicUrlData.publicUrl;
+          } else {
+            alert("Document access is not available in public view.");
+            return;
+          }
         } else {
-          alert("Document download is not available in public view.");
-          return;
+          // For authenticated users, check if this is a real document or seeded data
+          if (!doc.storage_path) {
+            alert("This document is not available for download (demo data).");
+            return;
+          }
+
+          // For authenticated users, use the standard approach
+          const { data, error } = await supabase.storage
+            .from("project-documents")
+            .createSignedUrl(doc.storage_path, 60); // 60 seconds expiry
+
+          if (error) {
+            alert("Failed to access document. Please try again.");
+            return;
+          }
+
+          url = data?.signedUrl || null;
         }
+      } else if (doc.document_url) {
+        // Handle URL-based documents (Google Drive, OneDrive, etc.)
+        url = doc.document_url;
+      }
+
+      if (url) {
+        // Open the document in a new tab
+        window.open(url, '_blank', 'noopener,noreferrer');
       } else {
-        // For authenticated users, check if this is a real document or seeded data
-        if (!doc.storage_path) {
-          alert("This document is not available for download (demo data).");
-          return;
-        }
-
-        // For authenticated users, use the standard approach
-        const { data, error } = await supabase.storage
-          .from("project-documents")
-          .createSignedUrl(doc.storage_path, 60); // 60 seconds expiry
-
-        if (error) {
-          alert("Failed to download document. Please try again.");
-          return;
-        }
-
-        signedUrl = data?.signedUrl || null;
+        alert("Document URL is not available.");
       }
-
-      if (signedUrl) {
-        // Create a temporary link to trigger download
-        const link = document.createElement("a");
-        link.href = signedUrl;
-        link.download = doc.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    } catch {
-      alert("Failed to download document. Please try again.");
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      uploadFile(file);
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      uploadFile(file);
+    } catch (error) {
+      console.error('Error opening document:', error);
+      alert("Failed to open document. Please try again.");
     }
   };
 
@@ -354,11 +366,11 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         </h3>
         {!readonly && (
           <button
-            onClick={() => setShowUploadModal(true)}
+            onClick={() => setShowAddModal(true)}
             className="flex items-center space-x-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>Upload Document</span>
+            <span>Connect Document</span>
           </button>
         )}
       </div>
@@ -370,15 +382,15 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
             No documents yet
           </h4>
           <p className="text-gray-600 mb-6">
-            {readonly ? "No documents have been uploaded for this project" : "Upload documents related to this project"}
+            {readonly ? "No documents have been connected for this project" : "Connect documents from Google Drive, OneDrive, or add external links"}
           </p>
           {!readonly && (
             <button
-              onClick={() => setShowUploadModal(true)}
+              onClick={() => setShowAddModal(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto"
             >
               <Plus className="w-4 h-4" />
-              <span>Upload First Document</span>
+              <span>Connect First Document</span>
             </button>
           )}
         </div>
@@ -386,7 +398,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         // Static view for readonly mode
         <div className="space-y-3">
           {documents.map((doc) => {
-            const { icon: IconComponent, color } = getFileIcon(doc.file_type);
+            const { icon: IconComponent, color } = getFileIcon(doc.file_type, doc.source_type);
             return (
               <div
                 key={doc.id}
@@ -399,16 +411,15 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                       {doc.name}
                     </span>
                     <div className="text-xs text-gray-500">
-                      {doc.file_type.toUpperCase()} •{" "}
-                      {new Date(doc.created_at).toLocaleDateString()}
+                      {getSourceLabel(doc.source_type)} • {new Date(doc.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => downloadDocument(doc)}
+                    onClick={() => openDocument(doc)}
                     className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Download"
+                    title="Open document"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </button>
@@ -424,7 +435,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
           onReorder={handleReorder}
         >
           {(doc) => {
-            const { icon: IconComponent, color } = getFileIcon(doc.file_type);
+            const { icon: IconComponent, color } = getFileIcon(doc.file_type, doc.source_type);
             return (
               <div
                 key={doc.id}
@@ -437,37 +448,32 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                       {doc.name}
                     </span>
                     <div className="text-xs text-gray-500">
-                      {doc.file_type.toUpperCase()} •{" "}
-                      {new Date(doc.created_at).toLocaleDateString()}
+                      {getSourceLabel(doc.source_type)} • {new Date(doc.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={() => downloadDocument(doc)}
+                    onClick={() => openDocument(doc)}
                     className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Download"
+                    title="Open document"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </button>
-                  {!readonly && (
-                    <>
-                      <button
-                        onClick={() => openRenameModal(doc)}
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Rename"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteDocument(doc)}
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
+                  <button
+                    onClick={() => openRenameModal(doc)}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Rename"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteDocument(doc)}
+                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             );
@@ -475,68 +481,115 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         </DragDropList>
       )}
 
-      {/* Upload Modal - only show if not readonly */}
-      {showUploadModal && !readonly && (
+      {/* Add Document Modal - only show if not readonly */}
+      {showAddModal && !readonly && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 max-w-90vw">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                Upload Document
+                Connect Document
               </h3>
               <button
-                onClick={() => setShowUploadModal(false)}
+                onClick={() => setShowAddModal(false)}
                 className="text-gray-400 hover:text-gray-600"
-                disabled={uploading}
+                disabled={saving}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {uploading ? (
-              <div className="text-center py-8">
-                <Upload className="w-8 h-8 text-blue-600 mx-auto mb-4 animate-bounce" />
-                <p className="text-gray-600 mb-4">Uploading document...</p>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragActive ? "border-blue-400 bg-blue-50" : "border-gray-300"
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">
-                  Drag and drop a file here, or click to select
-                </p>
-                <input
-                  type="file"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="file-upload"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg,.gif,.txt"
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors cursor-pointer"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Select File
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Document Source
                 </label>
-                <p className="text-xs text-gray-500 mt-2">
-                  Supported: PDF, DOC, DOCX, XLS, XLSX, ZIP, Images, TXT (Max
-                  50MB)
-                </p>
+                <select
+                  value={documentForm.sourceType}
+                  onChange={(e) => setDocumentForm({ ...documentForm, sourceType: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  disabled={saving}
+                >
+                  <option value="google_drive">Google Drive</option>
+                  <option value="onedrive">OneDrive</option>
+                  <option value="url">External Link</option>
+                </select>
               </div>
-            )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Document Name
+                </label>
+                <input
+                  type="text"
+                  value={documentForm.name}
+                  onChange={(e) => setDocumentForm({ ...documentForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  placeholder="Enter document name"
+                  disabled={saving}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Document URL
+                </label>
+                <input
+                  type="url"
+                  value={documentForm.url}
+                  onChange={(e) => setDocumentForm({ ...documentForm, url: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  placeholder={
+                    documentForm.sourceType === 'google_drive' 
+                      ? "https://drive.google.com/file/d/..." 
+                      : documentForm.sourceType === 'onedrive'
+                      ? "https://1drv.ms/..."
+                      : "https://example.com/document.pdf"
+                  }
+                  disabled={saving}
+                  required
+                />
+              </div>
+
+              <div className="text-xs text-gray-500">
+                {documentForm.sourceType === 'google_drive' && (
+                  <p>Make sure the Google Drive document is shared with "Anyone with the link can view"</p>
+                )}
+                {documentForm.sourceType === 'onedrive' && (
+                  <p>Make sure the OneDrive document is shared with "Anyone with the link can view"</p>
+                )}
+                {documentForm.sourceType === 'url' && (
+                  <p>Enter any publicly accessible document URL</p>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={addDocumentByUrl}
+                  disabled={saving || !documentForm.name.trim() || !documentForm.url.trim()}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Connecting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Link className="w-4 h-4" />
+                      <span>Connect Document</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

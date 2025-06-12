@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Calendar, Plus, Edit3, X, DollarSign, Trash2, Save, MapPin } from 'lucide-react';
+import { Building2, Calendar, Plus, Edit3, X, DollarSign, Trash2, Save, MapPin, Users, FileText, ExternalLink, Eye, Link } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { DragDropList } from './DragDropList';
@@ -8,14 +8,21 @@ import { useProjectData } from '../hooks/useProjectData';
 interface Property {
   id: string;
   name: string;
-  size?: string | null;
-  rent?: string | null;
+  address?: string | null;
+  sf?: string | null;
+  people_capacity?: string | null;
+  price_per_sf?: string | null;
+  monthly_cost?: string | null;
+  contract_term?: string | null;
   availability?: string | null;
-  description?: string | null;
+  lease_type?: 'Direct Lease' | 'Sublease' | 'Sub-sublease' | null;
+  current_state?: 'Available' | 'Under Review' | 'Negotiating' | 'On Hold' | 'Declined' | null;
+  misc_notes?: string | null;
+  virtual_tour_url?: string | null;
+  suggestion?: string | null;
+  flier_url?: string | null;
   status: 'active' | 'new' | 'pending' | 'declined';
   decline_reason?: string | null;
-  lease_type?: 'Direct Lease' | 'Sublease' | 'Sub-sublease' | null;
-  service_type?: 'Full Service' | 'NNN' | 'Modified Gross' | null;
   created_at: string;
   updated_at: string;
   order_index?: number | null;
@@ -29,13 +36,20 @@ interface PropertyFeature {
 
 interface PropertyFormData {
   name: string;
-  size: string;
-  rent: string;
+  address: string;
+  sf: string;
+  people_capacity: string;
+  price_per_sf: string;
+  monthly_cost: string;
+  contract_term: string;
   availability: string;
-  description: string;
-  status: 'active' | 'new' | 'pending' | 'declined';
   lease_type: 'Direct Lease' | 'Sublease' | 'Sub-sublease' | '';
-  service_type: 'Full Service' | 'NNN' | 'Modified Gross' | '';
+  current_state: 'Available' | 'Under Review' | 'Negotiating' | 'On Hold' | 'Declined' | '';
+  misc_notes: string;
+  virtual_tour_url: string;
+  suggestion: string;
+  flier_url: string;
+  status: 'active' | 'new' | 'pending' | 'declined';
 }
 
 interface PropertiesOfInterestProps {
@@ -55,13 +69,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [formData, setFormData] = useState<PropertyFormData>({
     name: '',
-    size: '',
-    rent: '',
+    address: '',
+    sf: '',
+    people_capacity: '',
+    price_per_sf: '',
+    monthly_cost: '',
+    contract_term: '',
     availability: '',
-    description: '',
-    status: 'new',
     lease_type: '',
-    service_type: ''
+    current_state: '',
+    misc_notes: '',
+    virtual_tour_url: '',
+    suggestion: '',
+    flier_url: '',
+    status: 'new'
   });
   const [saving, setSaving] = useState(false);
 
@@ -129,6 +150,23 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
+  const getCurrentStateColor = (state: string) => {
+    switch (state) {
+      case 'Available':
+        return 'bg-green-100 text-green-800';
+      case 'Under Review':
+        return 'bg-blue-100 text-blue-800';
+      case 'Negotiating':
+        return 'bg-orange-100 text-orange-800';
+      case 'On Hold':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Declined':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const getPropertyFeatures = (propertyId: string) => {
     return features.filter(feature => feature.property_id === propertyId);
   };
@@ -136,13 +174,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const resetForm = () => {
     setFormData({
       name: '',
-      size: '',
-      rent: '',
+      address: '',
+      sf: '',
+      people_capacity: '',
+      price_per_sf: '',
+      monthly_cost: '',
+      contract_term: '',
       availability: '',
-      description: '',
-      status: 'new',
       lease_type: '',
-      service_type: ''
+      current_state: '',
+      misc_notes: '',
+      virtual_tour_url: '',
+      suggestion: '',
+      flier_url: '',
+      status: 'new'
     });
     setEditingProperty(null);
   };
@@ -155,13 +200,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const openEditModal = (property: Property) => {
     setFormData({
       name: property.name,
-      size: property.size || '',
-      rent: property.rent || '',
+      address: property.address || '',
+      sf: property.sf || '',
+      people_capacity: property.people_capacity || '',
+      price_per_sf: property.price_per_sf || '',
+      monthly_cost: property.monthly_cost || '',
+      contract_term: property.contract_term || '',
       availability: property.availability || '',
-      description: property.description || '',
-      status: property.status,
       lease_type: property.lease_type || '',
-      service_type: property.service_type || ''
+      current_state: property.current_state || '',
+      misc_notes: property.misc_notes || '',
+      virtual_tour_url: property.virtual_tour_url || '',
+      suggestion: property.suggestion || '',
+      flier_url: property.flier_url || '',
+      status: property.status
     });
     setEditingProperty(property);
     setIsModalOpen(true);
@@ -181,13 +233,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       const propertyData = {
         project_id: projectId,
         name: formData.name.trim(),
-        size: formData.size.trim() || null,
-        rent: formData.rent.trim() || null,
+        address: formData.address.trim() || null,
+        sf: formData.sf.trim() || null,
+        people_capacity: formData.people_capacity.trim() || null,
+        price_per_sf: formData.price_per_sf.trim() || null,
+        monthly_cost: formData.monthly_cost.trim() || null,
+        contract_term: formData.contract_term.trim() || null,
         availability: formData.availability.trim() || null,
-        description: formData.description.trim() || null,
-        status: formData.status,
         lease_type: formData.lease_type || null,
-        service_type: formData.service_type || null,
+        current_state: formData.current_state || null,
+        misc_notes: formData.misc_notes.trim() || null,
+        virtual_tour_url: formData.virtual_tour_url.trim() || null,
+        suggestion: formData.suggestion.trim() || null,
+        flier_url: formData.flier_url.trim() || null,
+        status: formData.status,
         updated_at: new Date().toISOString(),
         order_index: editingProperty ? editingProperty.order_index : properties.length
       };
@@ -274,32 +333,64 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
+  const openGoogleMaps = (address: string) => {
+    if (address) {
+      const encodedAddress = encodeURIComponent(address);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
+    }
+  };
+
+  const openUrl = (url: string) => {
+    if (url) {
+      // Add https:// if no protocol is specified
+      const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+      window.open(fullUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const renderProperty = (property: Property) => {
     const propertyFeatures = getPropertyFeatures(property.id);
     
     return (
-      <div className="border border-gray-200 rounded-lg p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      <div className="border border-gray-200 rounded-xl p-6 bg-white hover:shadow-lg transition-shadow">
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
               {property.name}
             </h3>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(property.status)}`}>
-              {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
-            </span>
+            <div className="flex items-center space-x-3 mb-3">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(property.status)}`}>
+                {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
+              </span>
+              {property.current_state && (
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCurrentStateColor(property.current_state)}`}>
+                  {property.current_state}
+                </span>
+              )}
+            </div>
+            {property.address && (
+              <button
+                onClick={() => openGoogleMaps(property.address!)}
+                className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors mb-4"
+              >
+                <MapPin className="w-4 h-4" />
+                <span className="text-sm font-medium">{property.address}</span>
+                <ExternalLink className="w-3 h-3" />
+              </button>
+            )}
           </div>
           {!readonly && (
-            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => openEditModal(property)}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-50"
                 title="Edit property"
               >
                 <Edit3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => handleDelete(property.id)}
-                className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
                 title="Delete property"
               >
                 <Trash2 className="w-4 h-4" />
@@ -309,72 +400,137 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         </div>
 
         {/* Property Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          {property.size && (
-            <div className="flex items-center space-x-2">
-              <MapPin className="w-4 h-4 text-gray-400" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          {property.sf && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-blue-600" />
+              </div>
               <div>
-                <p className="text-xs text-gray-500">Size</p>
-                <p className="text-sm text-gray-900">{property.size}</p>
+                <p className="text-xs text-gray-500 font-medium">Square Feet</p>
+                <p className="text-sm text-gray-900 font-semibold">{property.sf}</p>
               </div>
             </div>
           )}
 
-          {property.rent && (
-            <div className="flex items-center space-x-2">
-              <DollarSign className="w-4 h-4 text-gray-400" />
+          {property.people_capacity && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <Users className="w-4 h-4 text-green-600" />
+              </div>
               <div>
-                <p className="text-xs text-gray-500">Rent</p>
-                <p className="text-sm text-gray-900">{property.rent}</p>
+                <p className="text-xs text-gray-500 font-medium"># of People</p>
+                <p className="text-sm text-gray-900 font-semibold">{property.people_capacity}</p>
+              </div>
+            </div>
+          )}
+
+          {property.price_per_sf && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">$ / SF</p>
+                <p className="text-sm text-gray-900 font-semibold">{property.price_per_sf}</p>
+              </div>
+            </div>
+          )}
+
+          {property.monthly_cost && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">$$ / Month</p>
+                <p className="text-sm text-gray-900 font-semibold">{property.monthly_cost}</p>
+              </div>
+            </div>
+          )}
+
+          {property.contract_term && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <FileText className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Contract Term</p>
+                <p className="text-sm text-gray-900 font-semibold">{property.contract_term}</p>
               </div>
             </div>
           )}
 
           {property.availability && (
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500">Availability</p>
-                <p className="text-sm text-gray-900">{property.availability}</p>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-cyan-600" />
               </div>
-            </div>
-          )}
-
-          {property.lease_type && (
-            <div>
-              <p className="text-xs text-gray-500">Lease Type</p>
-              <p className="text-sm text-gray-900">{property.lease_type}</p>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Availability</p>
+                <p className="text-sm text-gray-900 font-semibold">{property.availability}</p>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Service Type and Description */}
-        {(property.service_type || property.description) && (
-          <div className="space-y-3 mb-4">
-            {property.service_type && (
-              <div>
-                <p className="text-xs text-gray-500">Service Type</p>
-                <p className="text-sm text-gray-900">{property.service_type}</p>
-              </div>
-            )}
-            {property.description && (
-              <div>
-                <p className="text-xs text-gray-500">Description</p>
-                <p className="text-sm text-gray-900">{property.description}</p>
-              </div>
-            )}
+        {/* Lease Type */}
+        {property.lease_type && (
+          <div className="mb-4">
+            <p className="text-xs text-gray-500 font-medium mb-1">Lease Type</p>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+              {property.lease_type}
+            </span>
           </div>
         )}
 
+        {/* Misc Notes */}
+        {property.misc_notes && (
+          <div className="mb-4">
+            <p className="text-xs text-gray-500 font-medium mb-2">Notes</p>
+            <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{property.misc_notes}</p>
+          </div>
+        )}
+
+        {/* Suggestion */}
+        {property.suggestion && (
+          <div className="mb-4">
+            <p className="text-xs text-gray-500 font-medium mb-2">Suggestion</p>
+            <p className="text-sm text-gray-700 bg-blue-50 rounded-lg p-3 border-l-4 border-blue-400">{property.suggestion}</p>
+          </div>
+        )}
+
+        {/* Action Links */}
+        <div className="flex items-center space-x-4 mb-4">
+          {property.virtual_tour_url && (
+            <button
+              onClick={() => openUrl(property.virtual_tour_url!)}
+              className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <Eye className="w-4 h-4" />
+              <span className="text-sm font-medium">Virtual Tour</span>
+            </button>
+          )}
+          {property.flier_url && (
+            <button
+              onClick={() => openUrl(property.flier_url!)}
+              className="flex items-center space-x-2 text-green-600 hover:text-green-800 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="text-sm font-medium">Flier</span>
+            </button>
+          )}
+        </div>
+
         {/* Features */}
         {propertyFeatures.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-500 mb-2">Features</p>
+          <div className="mb-4">
+            <p className="text-xs text-gray-500 font-medium mb-2">Features</p>
             <div className="flex flex-wrap gap-2">
               {propertyFeatures.map((feature) => (
                 <span
                   key={feature.id}
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                  className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                 >
                   {feature.feature}
                 </span>
@@ -385,8 +541,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
         {/* Decline Reason */}
         {property.status === 'declined' && property.decline_reason && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-xs text-red-600 font-medium">Decline Reason</p>
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-xs text-red-600 font-medium mb-1">Decline Reason</p>
             <p className="text-sm text-red-700">{property.decline_reason}</p>
           </div>
         )}
@@ -416,22 +572,22 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           {!readonly && (
             <button
               onClick={openAddModal}
-              className="flex items-center space-x-1 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-              title="Add property"
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
             >
               <Plus className="w-4 h-4" />
+              <span>Add Property</span>
             </button>
           )}
         </div>
 
         {properties.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="text-center py-12">
             <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No properties added yet</p>
+            <p className="text-gray-500 mb-4">No properties added yet</p>
             {!readonly && (
               <button
                 onClick={openAddModal}
-                className="mt-3 flex items-center space-x-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto"
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add First Property</span>
@@ -463,7 +619,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       {/* Add/Edit Modal - only show if not readonly */}
       {isModalOpen && !readonly && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
                 {editingProperty ? 'Edit Property' : 'Add Property'}
@@ -476,23 +632,235 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Form fields - simplified for brevity */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Basic Information */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Property Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter property name"
-                  required
-                />
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Basic Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Property Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter property name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter property address"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Property Details */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Property Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Square Feet (SF)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.sf}
+                      onChange={(e) => setFormData({ ...formData, sf: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., 15,000 sq ft"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      # of People
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.people_capacity}
+                      onChange={(e) => setFormData({ ...formData, people_capacity: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., 75-100 people"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      $ / SF
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.price_per_sf}
+                      onChange={(e) => setFormData({ ...formData, price_per_sf: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., $24/sq ft"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      $$ / Month
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.monthly_cost}
+                      onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., $30,000/month"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Contract Term
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.contract_term}
+                      onChange={(e) => setFormData({ ...formData, contract_term: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., 3-5 years"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Availability
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.availability}
+                      onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Available March 2024"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Status and Type */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Status & Type</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lease Type
+                    </label>
+                    <select
+                      value={formData.lease_type}
+                      onChange={(e) => setFormData({ ...formData, lease_type: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select lease type</option>
+                      <option value="Direct Lease">Direct Lease</option>
+                      <option value="Sublease">Sublease</option>
+                      <option value="Sub-sublease">Sub-sublease</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current State
+                    </label>
+                    <select
+                      value={formData.current_state}
+                      onChange={(e) => setFormData({ ...formData, current_state: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select current state</option>
+                      <option value="Available">Available</option>
+                      <option value="Under Review">Under Review</option>
+                      <option value="Negotiating">Negotiating</option>
+                      <option value="On Hold">On Hold</option>
+                      <option value="Declined">Declined</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="new">New</option>
+                      <option value="active">Active</option>
+                      <option value="pending">Pending</option>
+                      <option value="declined">Declined</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Links and Resources */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Links & Resources</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Virtual Tour URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.virtual_tour_url}
+                      onChange={(e) => setFormData({ ...formData, virtual_tour_url: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://example.com/virtual-tour"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Flier URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.flier_url}
+                      onChange={(e) => setFormData({ ...formData, flier_url: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://example.com/property-flier.pdf"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes and Suggestions */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Additional Information</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Misc Notes
+                    </label>
+                    <textarea
+                      value={formData.misc_notes}
+                      onChange={(e) => setFormData({ ...formData, misc_notes: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows={3}
+                      placeholder="Any additional notes about this property..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Suggestion
+                    </label>
+                    <textarea
+                      value={formData.suggestion}
+                      onChange={(e) => setFormData({ ...formData, suggestion: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows={3}
+                      placeholder="Recommendations or suggestions for this property..."
+                    />
+                  </div>
+                </div>
               </div>
               
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={closeModal}
@@ -524,4 +892,4 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       )}
     </div>
   );
-}; 
+};
