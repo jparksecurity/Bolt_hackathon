@@ -360,7 +360,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const formatTourDateTime = (date: string, time: string) => {
     if (!date) return null;
     
-    const tourDate = new Date(date);
+    // Parse the date as a local date by appending time component
+    const tourDate = new Date(date + 'T00:00:00');
     const dateStr = tourDate.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
