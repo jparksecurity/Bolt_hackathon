@@ -1,9 +1,27 @@
-import React, { useState } from 'react';
-import { Building2, Calendar, Plus, Edit3, X, DollarSign, Trash2, Save, MapPin, Users, FileText, ExternalLink, Eye, Clock, CheckCircle, AlertCircle, XCircle, RotateCcw } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
-import { useSupabaseClient } from '../lib/supabase';
-import { DragDropList } from './DragDropList';
-import { useProjectData } from '../hooks/useProjectData';
+import React, { useState } from "react";
+import {
+  Building2,
+  Calendar,
+  Plus,
+  Edit3,
+  X,
+  Trash2,
+  Save,
+  MapPin,
+  Users,
+  FileText,
+  ExternalLink,
+  Eye,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  XCircle,
+  RotateCcw,
+} from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
+import { useSupabaseClient } from "../lib/supabase";
+import { DragDropList } from "./DragDropList";
+import { useProjectData } from "../hooks/useProjectData";
 
 interface Property {
   id: string;
@@ -15,8 +33,14 @@ interface Property {
   monthly_cost?: string | null;
   contract_term?: string | null;
   availability?: string | null;
-  lease_type?: 'Direct Lease' | 'Sublease' | 'Sub-sublease' | null;
-  current_state?: 'Available' | 'Under Review' | 'Negotiating' | 'On Hold' | 'Declined' | null;
+  lease_type?: "Direct Lease" | "Sublease" | "Sub-sublease" | null;
+  current_state?:
+    | "Available"
+    | "Under Review"
+    | "Negotiating"
+    | "On Hold"
+    | "Declined"
+    | null;
   misc_notes?: string | null;
   virtual_tour_url?: string | null;
   suggestion?: string | null;
@@ -24,8 +48,8 @@ interface Property {
   tour_date?: string | null;
   tour_time?: string | null;
   tour_location?: string | null;
-  tour_status?: 'Scheduled' | 'Completed' | 'Cancelled' | 'Rescheduled' | null;
-  status: 'active' | 'new' | 'pending' | 'declined';
+  tour_status?: "Scheduled" | "Completed" | "Cancelled" | "Rescheduled" | null;
+  status: "active" | "new" | "pending" | "declined";
   decline_reason?: string | null;
   created_at: string;
   updated_at: string;
@@ -41,8 +65,14 @@ interface PropertyFormData {
   monthly_cost: string;
   contract_term: string;
   availability: string;
-  lease_type: 'Direct Lease' | 'Sublease' | 'Sub-sublease' | '';
-  current_state: 'Available' | 'Under Review' | 'Negotiating' | 'On Hold' | 'Declined' | '';
+  lease_type: "Direct Lease" | "Sublease" | "Sub-sublease" | "";
+  current_state:
+    | "Available"
+    | "Under Review"
+    | "Negotiating"
+    | "On Hold"
+    | "Declined"
+    | "";
   misc_notes: string;
   virtual_tour_url: string;
   suggestion: string;
@@ -50,8 +80,8 @@ interface PropertyFormData {
   tour_date: string;
   tour_time: string;
   tour_location: string;
-  tour_status: 'Scheduled' | 'Completed' | 'Cancelled' | 'Rescheduled' | '';
-  status: 'active' | 'new' | 'pending' | 'declined';
+  tour_status: "Scheduled" | "Completed" | "Cancelled" | "Rescheduled" | "";
+  status: "active" | "new" | "pending" | "declined";
 }
 
 interface PropertiesOfInterestProps {
@@ -60,108 +90,107 @@ interface PropertiesOfInterestProps {
   readonly?: boolean;
 }
 
-export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({ 
-  projectId, 
-  shareId, 
-  readonly = false 
+export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
+  projectId,
+  shareId,
+  readonly = false,
 }) => {
   const { user } = useUser();
   const supabase = useSupabaseClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [formData, setFormData] = useState<PropertyFormData>({
-    name: '',
-    address: '',
-    sf: '',
-    people_capacity: '',
-    price_per_sf: '',
-    monthly_cost: '',
-    contract_term: '',
-    availability: '',
-    lease_type: '',
-    current_state: '',
-    misc_notes: '',
-    virtual_tour_url: '',
-    suggestion: '',
-    flier_url: '',
-    tour_date: '',
-    tour_time: '',
-    tour_location: '',
-    tour_status: '',
-    status: 'new'
+    name: "",
+    address: "",
+    sf: "",
+    people_capacity: "",
+    price_per_sf: "",
+    monthly_cost: "",
+    contract_term: "",
+    availability: "",
+    lease_type: "",
+    current_state: "",
+    misc_notes: "",
+    virtual_tour_url: "",
+    suggestion: "",
+    flier_url: "",
+    tour_date: "",
+    tour_time: "",
+    tour_location: "",
+    tour_status: "",
+    status: "new",
   });
   const [saving, setSaving] = useState(false);
 
   // Use the unified data hook for properties
-  const { 
-    data: properties, 
-    loading: propertiesLoading, 
-    refetch: fetchProperties 
-  } = useProjectData<Property>({ 
-    projectId, 
-    shareId, 
-    dataType: 'properties' 
+  const {
+    data: properties,
+    loading: propertiesLoading,
+    refetch: fetchProperties,
+  } = useProjectData<Property>({
+    projectId,
+    shareId,
+    dataType: "properties",
   });
-
 
   const loading = propertiesLoading;
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'new':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'declined':
-        return 'bg-red-100 text-red-800';
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "new":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "declined":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getCurrentStateColor = (state: string) => {
     switch (state) {
-      case 'Available':
-        return 'bg-green-100 text-green-800';
-      case 'Under Review':
-        return 'bg-blue-100 text-blue-800';
-      case 'Negotiating':
-        return 'bg-orange-100 text-orange-800';
-      case 'On Hold':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Declined':
-        return 'bg-red-100 text-red-800';
+      case "Available":
+        return "bg-green-100 text-green-800";
+      case "Under Review":
+        return "bg-blue-100 text-blue-800";
+      case "Negotiating":
+        return "bg-orange-100 text-orange-800";
+      case "On Hold":
+        return "bg-yellow-100 text-yellow-800";
+      case "Declined":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getTourStatusColor = (status: string) => {
     switch (status) {
-      case 'Scheduled':
-        return 'bg-blue-100 text-blue-800';
-      case 'Completed':
-        return 'bg-green-100 text-green-800';
-      case 'Cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'Rescheduled':
-        return 'bg-yellow-100 text-yellow-800';
+      case "Scheduled":
+        return "bg-blue-100 text-blue-800";
+      case "Completed":
+        return "bg-green-100 text-green-800";
+      case "Cancelled":
+        return "bg-red-100 text-red-800";
+      case "Rescheduled":
+        return "bg-yellow-100 text-yellow-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getTourStatusIcon = (status: string) => {
     switch (status) {
-      case 'Scheduled':
+      case "Scheduled":
         return Clock;
-      case 'Completed':
+      case "Completed":
         return CheckCircle;
-      case 'Cancelled':
+      case "Cancelled":
         return XCircle;
-      case 'Rescheduled':
+      case "Rescheduled":
         return RotateCcw;
       default:
         return AlertCircle;
@@ -170,25 +199,25 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      address: '',
-      sf: '',
-      people_capacity: '',
-      price_per_sf: '',
-      monthly_cost: '',
-      contract_term: '',
-      availability: '',
-      lease_type: '',
-      current_state: '',
-      misc_notes: '',
-      virtual_tour_url: '',
-      suggestion: '',
-      flier_url: '',
-      tour_date: '',
-      tour_time: '',
-      tour_location: '',
-      tour_status: '',
-      status: 'new'
+      name: "",
+      address: "",
+      sf: "",
+      people_capacity: "",
+      price_per_sf: "",
+      monthly_cost: "",
+      contract_term: "",
+      availability: "",
+      lease_type: "",
+      current_state: "",
+      misc_notes: "",
+      virtual_tour_url: "",
+      suggestion: "",
+      flier_url: "",
+      tour_date: "",
+      tour_time: "",
+      tour_location: "",
+      tour_status: "",
+      status: "new",
     });
     setEditingProperty(null);
   };
@@ -201,24 +230,24 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const openEditModal = (property: Property) => {
     setFormData({
       name: property.name,
-      address: property.address || '',
-      sf: property.sf || '',
-      people_capacity: property.people_capacity || '',
-      price_per_sf: property.price_per_sf || '',
-      monthly_cost: property.monthly_cost || '',
-      contract_term: property.contract_term || '',
-      availability: property.availability || '',
-      lease_type: property.lease_type || '',
-      current_state: property.current_state || '',
-      misc_notes: property.misc_notes || '',
-      virtual_tour_url: property.virtual_tour_url || '',
-      suggestion: property.suggestion || '',
-      flier_url: property.flier_url || '',
-      tour_date: property.tour_date || '',
-      tour_time: property.tour_time || '',
-      tour_location: property.tour_location || '',
-      tour_status: property.tour_status || '',
-      status: property.status
+      address: property.address || "",
+      sf: property.sf || "",
+      people_capacity: property.people_capacity || "",
+      price_per_sf: property.price_per_sf || "",
+      monthly_cost: property.monthly_cost || "",
+      contract_term: property.contract_term || "",
+      availability: property.availability || "",
+      lease_type: property.lease_type || "",
+      current_state: property.current_state || "",
+      misc_notes: property.misc_notes || "",
+      virtual_tour_url: property.virtual_tour_url || "",
+      suggestion: property.suggestion || "",
+      flier_url: property.flier_url || "",
+      tour_date: property.tour_date || "",
+      tour_time: property.tour_time || "",
+      tour_location: property.tour_location || "",
+      tour_status: property.tour_status || "",
+      status: property.status,
     });
     setEditingProperty(property);
     setIsModalOpen(true);
@@ -257,21 +286,23 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         tour_status: formData.tour_status || null,
         status: formData.status,
         updated_at: new Date().toISOString(),
-        order_index: editingProperty ? editingProperty.order_index : properties.length
+        order_index: editingProperty
+          ? editingProperty.order_index
+          : properties.length,
       };
 
       if (editingProperty) {
         // Update existing property
         const { error } = await supabase
-          .from('properties')
+          .from("properties")
           .update(propertyData)
-          .eq('id', editingProperty.id);
+          .eq("id", editingProperty.id);
 
         if (error) throw error;
       } else {
         // Create new property
         const { error } = await supabase
-          .from('properties')
+          .from("properties")
           .insert([propertyData]);
 
         if (error) throw error;
@@ -280,28 +311,31 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       await fetchProperties();
       closeModal();
     } catch {
-      alert('Error saving property. Please try again.');
+      alert("Error saving property. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (propertyId: string) => {
-    if (!confirm('Are you sure you want to delete this property?') || readonly) {
+    if (
+      !confirm("Are you sure you want to delete this property?") ||
+      readonly
+    ) {
       return;
     }
 
     try {
       const { error } = await supabase
-        .from('properties')
+        .from("properties")
         .delete()
-        .eq('id', propertyId);
+        .eq("id", propertyId);
 
       if (error) throw error;
 
       await fetchProperties();
     } catch {
-      alert('Error deleting property. Please try again.');
+      alert("Error deleting property. Please try again.");
     }
   };
 
@@ -322,22 +356,22 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     // Update order_index for all properties
     const updates = reorderedProperties.map((property, index) => ({
       id: property.id,
-      order_index: index
+      order_index: index,
     }));
 
     try {
       for (const update of updates) {
         const { error } = await supabase
-          .from('properties')
+          .from("properties")
           .update({ order_index: update.order_index })
-          .eq('id', update.id);
+          .eq("id", update.id);
 
         if (error) throw error;
       }
 
       await fetchProperties();
     } catch {
-      alert('Error reordering properties. Please try again.');
+      alert("Error reordering properties. Please try again.");
       await fetchProperties(); // Refresh to get correct order
     }
   };
@@ -345,59 +379,75 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const openGoogleMaps = (address: string) => {
     if (address) {
       const encodedAddress = encodeURIComponent(address);
-      window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`,
+        "_blank"
+      );
     }
   };
 
   const openUrl = (url: string) => {
     if (url) {
       // Add https:// if no protocol is specified
-      const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-      window.open(fullUrl, '_blank', 'noopener,noreferrer');
+      const fullUrl = url.startsWith("http") ? url : `https://${url}`;
+      window.open(fullUrl, "_blank", "noopener,noreferrer");
     }
   };
 
   const formatTourDateTime = (date: string, time: string) => {
     if (!date) return null;
-    
+
     // Store the exact date string as selected - no Date object manipulation
-    console.log('=== DATE FORMATTING DEBUG ===');
-    console.log('Raw date input:', date);
-    console.log('Raw time input:', time);
-    
+    console.log("=== DATE FORMATTING DEBUG ===");
+    console.log("Raw date input:", date);
+    console.log("Raw time input:", time);
+
     // Parse the date string manually to avoid timezone issues
-    const [year, month, day] = date.split('-');
-    
+    const [year, month, day] = date.split("-");
+
     // Convert to readable format without creating Date objects
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
     const monthName = monthNames[parseInt(month) - 1];
     const dayNum = parseInt(day);
-    
+
     // For day of week, we need to be careful - create date in UTC to avoid timezone shifts
-    const utcDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const utcDate = new Date(
+      Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day))
+    );
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const dayOfWeek = dayNames[utcDate.getUTCDay()];
-    
+
     const dateStr = `${dayOfWeek}, ${monthName} ${dayNum}, ${year}`;
-    
-    console.log('Final formatted date:', dateStr);
-    console.log('=== END DEBUG ===');
-    
+
+    console.log("Final formatted date:", dateStr);
+    console.log("=== END DEBUG ===");
+
     if (time) {
-      const [hours, minutes] = time.split(':');
+      const [hours, minutes] = time.split(":");
       const hour12 = parseInt(hours) % 12 || 12;
-      const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+      const ampm = parseInt(hours) >= 12 ? "PM" : "AM";
       const timeStr = `${hour12}:${minutes} ${ampm}`;
       return `${dateStr} at ${timeStr}`;
     }
-    
+
     return dateStr;
   };
 
   const renderProperty = (property: Property) => {
-    
     return (
       <div className="border border-gray-200 rounded-xl p-6 bg-white hover:shadow-lg transition-shadow">
         <div className="flex items-start justify-between mb-6">
@@ -406,11 +456,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
               {property.name}
             </h3>
             <div className="flex items-center space-x-3 mb-3">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(property.status)}`}>
-                {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                  property.status
+                )}`}
+              >
+                {property.status.charAt(0).toUpperCase() +
+                  property.status.slice(1)}
               </span>
               {property.current_state && (
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCurrentStateColor(property.current_state)}`}>
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCurrentStateColor(
+                    property.current_state
+                  )}`}
+                >
                   {property.current_state}
                 </span>
               )}
@@ -455,8 +514,15 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <span>Property Tour</span>
               </h4>
               {property.tour_status && (
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getTourStatusColor(property.tour_status)}`}>
-                  {React.createElement(getTourStatusIcon(property.tour_status), { className: "w-3 h-3 mr-1" })}
+                <span
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getTourStatusColor(
+                    property.tour_status
+                  )}`}
+                >
+                  {React.createElement(
+                    getTourStatusIcon(property.tour_status),
+                    { className: "w-3 h-3 mr-1" }
+                  )}
                   {property.tour_status}
                 </span>
               )}
@@ -465,7 +531,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
               {property.tour_date && (
                 <div className="flex items-center space-x-2 text-blue-800">
                   <Clock className="w-4 h-4" />
-                  <span>{formatTourDateTime(property.tour_date, property.tour_time || '')}</span>
+                  <span>
+                    {formatTourDateTime(
+                      property.tour_date,
+                      property.tour_time || ""
+                    )}
+                  </span>
                 </div>
               )}
               {property.tour_location && (
@@ -487,7 +558,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">Square Feet</p>
-                <p className="text-sm text-gray-900 font-semibold">{property.sf}</p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.sf}
+                </p>
               </div>
             </div>
           )}
@@ -499,7 +572,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium"># of People</p>
-                <p className="text-sm text-gray-900 font-semibold">{property.people_capacity}</p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.people_capacity}
+                </p>
               </div>
             </div>
           )}
@@ -507,11 +582,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           {property.price_per_sf && (
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-purple-600" />
+                <Building2 className="w-4 h-4 text-purple-600" />
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">$ / SF</p>
-                <p className="text-sm text-gray-900 font-semibold">{property.price_per_sf}</p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.price_per_sf}
+                </p>
               </div>
             </div>
           )}
@@ -519,11 +596,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           {property.monthly_cost && (
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-orange-600" />
+                <Calendar className="w-4 h-4 text-orange-600" />
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">$$ / Month</p>
-                <p className="text-sm text-gray-900 font-semibold">{property.monthly_cost}</p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.monthly_cost}
+                </p>
               </div>
             </div>
           )}
@@ -534,8 +613,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <FileText className="w-4 h-4 text-indigo-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">Contract Term</p>
-                <p className="text-sm text-gray-900 font-semibold">{property.contract_term}</p>
+                <p className="text-xs text-gray-500 font-medium">
+                  Contract Term
+                </p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.contract_term}
+                </p>
               </div>
             </div>
           )}
@@ -546,8 +629,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <Calendar className="w-4 h-4 text-cyan-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">Availability</p>
-                <p className="text-sm text-gray-900 font-semibold">{property.availability}</p>
+                <p className="text-xs text-gray-500 font-medium">
+                  Availability
+                </p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.availability}
+                </p>
               </div>
             </div>
           )}
@@ -567,7 +654,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         {property.misc_notes && (
           <div className="mb-4">
             <p className="text-xs text-gray-500 font-medium mb-2">Notes</p>
-            <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{property.misc_notes}</p>
+            <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
+              {property.misc_notes}
+            </p>
           </div>
         )}
 
@@ -575,7 +664,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         {property.suggestion && (
           <div className="mb-4">
             <p className="text-xs text-gray-500 font-medium mb-2">Suggestion</p>
-            <p className="text-sm text-gray-700 bg-blue-50 rounded-lg p-3 border-l-4 border-blue-400">{property.suggestion}</p>
+            <p className="text-sm text-gray-700 bg-blue-50 rounded-lg p-3 border-l-4 border-blue-400">
+              {property.suggestion}
+            </p>
           </div>
         )}
 
@@ -602,9 +693,11 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         </div>
 
         {/* Decline Reason */}
-        {property.status === 'declined' && property.decline_reason && (
+        {property.status === "declined" && property.decline_reason && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-xs text-red-600 font-medium mb-1">Decline Reason</p>
+            <p className="text-xs text-red-600 font-medium mb-1">
+              Decline Reason
+            </p>
             <p className="text-sm text-red-700">{property.decline_reason}</p>
           </div>
         )}
@@ -615,7 +708,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Properties of Interest</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Properties of Interest
+        </h2>
         <div className="text-center py-8">
           <div className="text-gray-500">Loading properties...</div>
         </div>
@@ -629,7 +724,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
             <Building2 className="w-5 h-5 text-gray-400" />
-            <h2 className="text-xl font-semibold text-gray-900">Properties of Interest</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Properties of Interest
+            </h2>
           </div>
           {!readonly && (
             <button
@@ -661,16 +758,11 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
             {readonly ? (
               // Static view for readonly mode
               properties.map((property) => (
-                <div key={property.id}>
-                  {renderProperty(property)}
-                </div>
+                <div key={property.id}>{renderProperty(property)}</div>
               ))
             ) : (
               // Interactive view for authenticated mode
-              <DragDropList
-                items={properties}
-                onReorder={handleReorder}
-              >
+              <DragDropList items={properties} onReorder={handleReorder}>
                 {(property) => renderProperty(property)}
               </DragDropList>
             )}
@@ -684,7 +776,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
-                {editingProperty ? 'Edit Property' : 'Add Property'}
+                {editingProperty ? "Edit Property" : "Add Property"}
               </h3>
               <button
                 onClick={closeModal}
@@ -693,11 +785,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Basic Information */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Basic Information</h4>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                  Basic Information
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -706,7 +800,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter property name"
                       required
@@ -719,7 +815,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="text"
                       value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter property address"
                     />
@@ -729,7 +827,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
               {/* Tour Details */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Tour Details</h4>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                  Tour Details
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -739,8 +839,11 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       type="date"
                       value={formData.tour_date}
                       onChange={(e) => {
-                        console.log('Date input changed to:', e.target.value);
-                        console.log('This will be stored exactly as:', e.target.value);
+                        console.log("Date input changed to:", e.target.value);
+                        console.log(
+                          "This will be stored exactly as:",
+                          e.target.value
+                        );
                         setFormData({ ...formData, tour_date: e.target.value });
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -753,7 +856,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="time"
                       value={formData.tour_time}
-                      onChange={(e) => setFormData({ ...formData, tour_time: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, tour_time: e.target.value })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -764,7 +869,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="text"
                       value={formData.tour_location}
-                      onChange={(e) => setFormData({ ...formData, tour_location: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          tour_location: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Meet at main lobby"
                     />
@@ -775,7 +885,17 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </label>
                     <select
                       value={formData.tour_status}
-                      onChange={(e) => setFormData({ ...formData, tour_status: e.target.value as any })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          tour_status: e.target.value as
+                            | "Scheduled"
+                            | "Completed"
+                            | "Cancelled"
+                            | "Rescheduled"
+                            | "",
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select tour status</option>
@@ -790,7 +910,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
               {/* Property Details */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Property Details</h4>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                  Property Details
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -799,7 +921,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="text"
                       value={formData.sf}
-                      onChange={(e) => setFormData({ ...formData, sf: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sf: e.target.value })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., 15,000 sq ft"
                     />
@@ -811,7 +935,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="text"
                       value={formData.people_capacity}
-                      onChange={(e) => setFormData({ ...formData, people_capacity: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          people_capacity: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., 75-100 people"
                     />
@@ -823,7 +952,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="text"
                       value={formData.price_per_sf}
-                      onChange={(e) => setFormData({ ...formData, price_per_sf: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          price_per_sf: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., $24/sq ft"
                     />
@@ -835,7 +969,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="text"
                       value={formData.monthly_cost}
-                      onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          monthly_cost: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., $30,000/month"
                     />
@@ -847,7 +986,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="text"
                       value={formData.contract_term}
-                      onChange={(e) => setFormData({ ...formData, contract_term: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contract_term: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., 3-5 years"
                     />
@@ -859,7 +1003,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="text"
                       value={formData.availability}
-                      onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          availability: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Available March 2024"
                     />
@@ -869,7 +1018,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
               {/* Status and Type */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Status & Type</h4>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                  Status & Type
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -877,7 +1028,16 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </label>
                     <select
                       value={formData.lease_type}
-                      onChange={(e) => setFormData({ ...formData, lease_type: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          lease_type: e.target.value as
+                            | "Direct Lease"
+                            | "Sublease"
+                            | "Sub-sublease"
+                            | "",
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select lease type</option>
@@ -892,7 +1052,18 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </label>
                     <select
                       value={formData.current_state}
-                      onChange={(e) => setFormData({ ...formData, current_state: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          current_state: e.target.value as
+                            | "Available"
+                            | "Under Review"
+                            | "Negotiating"
+                            | "On Hold"
+                            | "Declined"
+                            | "",
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select current state</option>
@@ -909,7 +1080,16 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </label>
                     <select
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          status: e.target.value as
+                            | "active"
+                            | "new"
+                            | "pending"
+                            | "declined",
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="new">New</option>
@@ -923,7 +1103,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
               {/* Links and Resources */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Links & Resources</h4>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                  Links & Resources
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -932,7 +1114,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="url"
                       value={formData.virtual_tour_url}
-                      onChange={(e) => setFormData({ ...formData, virtual_tour_url: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          virtual_tour_url: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="https://example.com/virtual-tour"
                     />
@@ -944,7 +1131,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="url"
                       value={formData.flier_url}
-                      onChange={(e) => setFormData({ ...formData, flier_url: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, flier_url: e.target.value })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="https://example.com/property-flier.pdf"
                     />
@@ -954,7 +1143,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
               {/* Notes and Suggestions */}
               <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-4">Additional Information</h4>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                  Additional Information
+                </h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -962,7 +1153,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </label>
                     <textarea
                       value={formData.misc_notes}
-                      onChange={(e) => setFormData({ ...formData, misc_notes: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, misc_notes: e.target.value })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
                       placeholder="Any additional notes about this property..."
@@ -974,7 +1167,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </label>
                     <textarea
                       value={formData.suggestion}
-                      onChange={(e) => setFormData({ ...formData, suggestion: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, suggestion: e.target.value })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
                       placeholder="Recommendations or suggestions for this property..."
@@ -982,7 +1177,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
@@ -1004,7 +1199,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      <span>{editingProperty ? 'Update' : 'Add Property'}</span>
+                      <span>{editingProperty ? "Update" : "Add Property"}</span>
                     </>
                   )}
                 </button>
