@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Calendar, Plus, Edit3, X, DollarSign, Trash2, Save, MapPin, Users, FileText, ExternalLink, Eye } from 'lucide-react';
+import { Building2, Calendar, Plus, Edit3, X, DollarSign, Trash2, Save, MapPin, Users, FileText, ExternalLink, Eye, Clock, CheckCircle, AlertCircle, XCircle, RotateCcw } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { DragDropList } from './DragDropList';
@@ -21,6 +21,10 @@ interface Property {
   virtual_tour_url?: string | null;
   suggestion?: string | null;
   flier_url?: string | null;
+  tour_date?: string | null;
+  tour_time?: string | null;
+  tour_location?: string | null;
+  tour_status?: 'Scheduled' | 'Completed' | 'Cancelled' | 'Rescheduled' | null;
   status: 'active' | 'new' | 'pending' | 'declined';
   decline_reason?: string | null;
   created_at: string;
@@ -43,6 +47,10 @@ interface PropertyFormData {
   virtual_tour_url: string;
   suggestion: string;
   flier_url: string;
+  tour_date: string;
+  tour_time: string;
+  tour_location: string;
+  tour_status: 'Scheduled' | 'Completed' | 'Cancelled' | 'Rescheduled' | '';
   status: 'active' | 'new' | 'pending' | 'declined';
 }
 
@@ -76,6 +84,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     virtual_tour_url: '',
     suggestion: '',
     flier_url: '',
+    tour_date: '',
+    tour_time: '',
+    tour_location: '',
+    tour_status: '',
     status: 'new'
   });
   const [saving, setSaving] = useState(false);
@@ -126,6 +138,36 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
+  const getTourStatusColor = (status: string) => {
+    switch (status) {
+      case 'Scheduled':
+        return 'bg-blue-100 text-blue-800';
+      case 'Completed':
+        return 'bg-green-100 text-green-800';
+      case 'Cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'Rescheduled':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTourStatusIcon = (status: string) => {
+    switch (status) {
+      case 'Scheduled':
+        return Clock;
+      case 'Completed':
+        return CheckCircle;
+      case 'Cancelled':
+        return XCircle;
+      case 'Rescheduled':
+        return RotateCcw;
+      default:
+        return AlertCircle;
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -142,6 +184,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       virtual_tour_url: '',
       suggestion: '',
       flier_url: '',
+      tour_date: '',
+      tour_time: '',
+      tour_location: '',
+      tour_status: '',
       status: 'new'
     });
     setEditingProperty(null);
@@ -168,6 +214,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       virtual_tour_url: property.virtual_tour_url || '',
       suggestion: property.suggestion || '',
       flier_url: property.flier_url || '',
+      tour_date: property.tour_date || '',
+      tour_time: property.tour_time || '',
+      tour_location: property.tour_location || '',
+      tour_status: property.tour_status || '',
       status: property.status
     });
     setEditingProperty(property);
@@ -201,6 +251,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         virtual_tour_url: formData.virtual_tour_url.trim() || null,
         suggestion: formData.suggestion.trim() || null,
         flier_url: formData.flier_url.trim() || null,
+        tour_date: formData.tour_date || null,
+        tour_time: formData.tour_time || null,
+        tour_location: formData.tour_location.trim() || null,
+        tour_status: formData.tour_status || null,
         status: formData.status,
         updated_at: new Date().toISOString(),
         order_index: editingProperty ? editingProperty.order_index : properties.length
@@ -303,6 +357,32 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
+  const formatTourDateTime = (date: string, time: string) => {
+    if (!date) return null;
+    
+    const tourDate = new Date(date);
+    const dateStr = tourDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    
+    if (time) {
+      const [hours, minutes] = time.split(':');
+      const timeDate = new Date();
+      timeDate.setHours(parseInt(hours), parseInt(minutes));
+      const timeStr = timeDate.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      return `${dateStr} at ${timeStr}`;
+    }
+    
+    return dateStr;
+  };
+
   const renderProperty = (property: Property) => {
     
     return (
@@ -352,6 +432,38 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
             </div>
           )}
         </div>
+
+        {/* Tour Information Section */}
+        {(property.tour_date || property.tour_status) && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold text-blue-900 flex items-center space-x-2">
+                <Calendar className="w-4 h-4" />
+                <span>Property Tour</span>
+              </h4>
+              {property.tour_status && (
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getTourStatusColor(property.tour_status)}`}>
+                  {React.createElement(getTourStatusIcon(property.tour_status), { className: "w-3 h-3 mr-1" })}
+                  {property.tour_status}
+                </span>
+              )}
+            </div>
+            <div className="space-y-2 text-sm">
+              {property.tour_date && (
+                <div className="flex items-center space-x-2 text-blue-800">
+                  <Clock className="w-4 h-4" />
+                  <span>{formatTourDateTime(property.tour_date, property.tour_time || '')}</span>
+                </div>
+              )}
+              {property.tour_location && (
+                <div className="flex items-center space-x-2 text-blue-800">
+                  <MapPin className="w-4 h-4" />
+                  <span>{property.tour_location}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Property Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -598,6 +710,63 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter property address"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Tour Details */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">Tour Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tour Date
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.tour_date}
+                      onChange={(e) => setFormData({ ...formData, tour_date: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tour Time
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.tour_time}
+                      onChange={(e) => setFormData({ ...formData, tour_time: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tour Location
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.tour_location}
+                      onChange={(e) => setFormData({ ...formData, tour_location: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Meet at main lobby"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tour Status
+                    </label>
+                    <select
+                      value={formData.tour_status}
+                      onChange={(e) => setFormData({ ...formData, tour_status: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select tour status</option>
+                      <option value="Scheduled">Scheduled</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                      <option value="Rescheduled">Rescheduled</option>
+                    </select>
                   </div>
                 </div>
               </div>
