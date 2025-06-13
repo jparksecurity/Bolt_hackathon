@@ -360,42 +360,36 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const formatTourDateTime = (date: string, time: string) => {
     if (!date) return null;
     
-    // Log timezone information for debugging
+    // Store the exact date string as selected - no Date object manipulation
     console.log('=== DATE FORMATTING DEBUG ===');
-    console.log('Input date string:', date);
-    console.log('Input time string:', time);
-    console.log('Current timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
-    console.log('Current timezone offset (minutes):', new Date().getTimezoneOffset());
+    console.log('Raw date input:', date);
+    console.log('Raw time input:', time);
     
-    // Simply format the date string directly without creating a Date object
-    // This avoids any timezone conversion issues
+    // Parse the date string manually to avoid timezone issues
     const [year, month, day] = date.split('-');
     
-    // Create a date string in the format that toLocaleDateString expects
-    // Use the exact values from the input without any Date object manipulation
+    // Convert to readable format without creating Date objects
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     
-    // Create a date object just to get the day of week, but use our parsed values for display
-    const tempDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    const dayOfWeek = dayNames[tempDate.getDay()];
     const monthName = monthNames[parseInt(month) - 1];
+    const dayNum = parseInt(day);
     
-    const dateStr = `${dayOfWeek}, ${monthName} ${parseInt(day)}, ${year}`;
+    // For day of week, we need to be careful - create date in UTC to avoid timezone shifts
+    const utcDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayOfWeek = dayNames[utcDate.getUTCDay()];
     
-    console.log('Formatted date string:', dateStr);
+    const dateStr = `${dayOfWeek}, ${monthName} ${dayNum}, ${year}`;
+    
+    console.log('Final formatted date:', dateStr);
     console.log('=== END DEBUG ===');
     
     if (time) {
       const [hours, minutes] = time.split(':');
-      const timeDate = new Date();
-      timeDate.setHours(parseInt(hours), parseInt(minutes));
-      const timeStr = timeDate.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      });
+      const hour12 = parseInt(hours) % 12 || 12;
+      const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+      const timeStr = `${hour12}:${minutes} ${ampm}`;
       return `${dateStr} at ${timeStr}`;
     }
     
@@ -745,7 +739,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       type="date"
                       value={formData.tour_date}
                       onChange={(e) => {
-                        console.log('Date input changed:', e.target.value);
+                        console.log('Date input changed to:', e.target.value);
+                        console.log('This will be stored exactly as:', e.target.value);
                         setFormData({ ...formData, tour_date: e.target.value });
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
