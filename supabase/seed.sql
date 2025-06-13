@@ -85,11 +85,13 @@ INSERT INTO project_roadmap (
   3
 );
 
--- Insert properties
+-- Insert properties with tour information
 INSERT INTO properties (
   id, project_id, name, address, sf, people_capacity, price_per_sf, monthly_cost,
   contract_term, availability, lease_type, current_state, misc_notes,
-  virtual_tour_url, suggestion, flier_url, status, order_index, created_at, updated_at
+  virtual_tour_url, suggestion, flier_url, 
+  tour_datetime, tour_location, tour_status,
+  status, order_index, created_at, updated_at
 ) VALUES
 (
   '550e8400-e29b-41d4-a716-446655440020',
@@ -108,6 +110,9 @@ INSERT INTO properties (
   'https://drive.google.com/file/d/1example-virtual-tour-tech-tower',
   'Highly recommended - perfect location and modern infrastructure',
   'https://drive.google.com/file/d/1example-flier-tech-tower',
+  '2024-02-08 14:00:00+00',
+  'Meet at main lobby with building manager',
+  'Scheduled',
   'active',
   0,
   NOW(),
@@ -130,6 +135,9 @@ INSERT INTO properties (
   'https://drive.google.com/file/d/1example-virtual-tour-innovation',
   'Great amenities but higher cost - consider if budget allows',
   'https://drive.google.com/file/d/1example-flier-innovation',
+  '2024-01-25 10:30:00+00',
+  'Property management office, 2nd floor',
+  'Completed',
   'new',
   1,
   NOW(),
@@ -152,8 +160,36 @@ INSERT INTO properties (
   NULL,
   'Consider for future if noise concerns can be addressed',
   'https://drive.google.com/file/d/1example-flier-warehouse',
+  '2024-01-30 16:00:00+00',
+  'Loading dock entrance - ask for Tom',
+  'Cancelled',
   'declined',
   2,
+  NOW(),
+  NOW()
+),
+(
+  '550e8400-e29b-41d4-a716-446655440023',
+  '550e8400-e29b-41d4-a716-446655440000',
+  'Riverside Executive Center',
+  '321 River View Drive, Financial District',
+  '14,800',
+  '70-85',
+  '$28',
+  '$34,500',
+  '3-6 years',
+  'Available May 2024',
+  'Direct Lease',
+  'Negotiating',
+  'Premium executive office space with stunning river views. Recently renovated with modern amenities, conference facilities, and executive parking. Walking distance to financial district and waterfront.',
+  'https://drive.google.com/file/d/1example-virtual-tour-riverside',
+  'Excellent location and amenities, slightly over budget but worth considering',
+  'https://drive.google.com/file/d/1example-flier-riverside',
+  '2024-02-12 11:00:00+00',
+  'Executive lobby, ask for Ms. Johnson',
+  'Rescheduled',
+  'pending',
+  3,
   NOW(),
   NOW()
 );

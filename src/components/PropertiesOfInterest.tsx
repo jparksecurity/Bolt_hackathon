@@ -224,9 +224,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   };
 
   const openEditModal = (property: Property) => {
-    // Convert ISO datetime to datetime-local format (YYYY-MM-DDTHH:MM)
+    // Convert UTC datetime to local datetime-local format (YYYY-MM-DDTHH:MM)
     const datetimeLocal = property.tour_datetime 
-      ? new Date(property.tour_datetime).toISOString().slice(0, 16)
+      ? new Date(new Date(property.tour_datetime).getTime() - new Date(property.tour_datetime).getTimezoneOffset() * 60000).toISOString().slice(0, 16)
       : "";
     
     setFormData({
@@ -395,37 +395,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
-  const formatTourDateTime = (isoDateTime: string) => {
-    if (!isoDateTime) return null;
-
-    const dateTime = new Date(isoDateTime);
-
-    // Format the date using built-in toLocaleDateString with options
-    const dateOptions: Intl.DateTimeFormatOptions = {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    };
-
-    const formattedDate = dateTime.toLocaleDateString('en-US', dateOptions);
-
-    // Check if time component exists (not midnight)
-    const hasTime = dateTime.getHours() !== 0 || dateTime.getMinutes() !== 0;
-    
-    if (hasTime) {
-      const timeOptions: Intl.DateTimeFormatOptions = {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      };
-      const formattedTime = dateTime.toLocaleTimeString('en-US', timeOptions);
-      return `${formattedDate} at ${formattedTime}`;
-    }
-
-    return formattedDate;
-  };
-
   const renderProperty = (property: Property) => {
     return (
       <div className="border border-gray-200 rounded-xl p-6 bg-white hover:shadow-lg transition-shadow">
@@ -511,9 +480,15 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <div className="flex items-center space-x-2 text-blue-800">
                   <Clock className="w-4 h-4" />
                   <span>
-                    {formatTourDateTime(
-                      property.tour_datetime
-                    )}
+                    {new Date(property.tour_datetime).toLocaleString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      timeZoneName: 'short'
+                    })}
                   </span>
                 </div>
               )}
