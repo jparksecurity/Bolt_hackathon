@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Calendar, Plus, Edit3, X, DollarSign, Trash2, Save, MapPin, Users, FileText, ExternalLink, Eye } from 'lucide-react';
+import { Building2, Calendar, Plus, Edit3, Trash2, X, Save, MapPin, Users, FileText, ExternalLink, Eye } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { DragDropList } from './DragDropList';
@@ -382,7 +382,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           {property.price_per_sf && (
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-purple-600" />
+                <Building2 className="w-4 h-4 text-purple-600" />
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">$ / SF</p>
@@ -394,7 +394,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           {property.monthly_cost && (
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-orange-600" />
+                <Calendar className="w-4 h-4 text-orange-600" />
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">$$ / Month</p>
