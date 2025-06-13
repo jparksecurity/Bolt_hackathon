@@ -21,7 +21,6 @@ export const Header: React.FC<HeaderProps> = ({ children }) => {
           />
           <div>
             <span className="text-2xl font-bold text-gray-900">JIGO Dash</span>
-            <div className="text-sm text-gray-600 font-medium -mt-1">Commercial Real Estate Platform</div>
           </div>
         </div>
         <div className="flex items-center space-x-6">
