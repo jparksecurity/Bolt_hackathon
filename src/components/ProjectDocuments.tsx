@@ -18,7 +18,6 @@ import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../lib/supabase";
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../hooks/useProjectData";
-import { PublicProjectAPI } from "../lib/publicApi";
 
 interface ProjectDocumentsProps {
   projectId?: string;
@@ -283,64 +282,9 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
   const openDocument = async (doc: Document) => {
     try {
-      let url: string | null = null;
-
-      if (doc.source_type === 'upload' && doc.storage_path) {
-        // Handle uploaded files
-        if (shareId && readonly) {
-          // For public users, check if this is a real document or seeded data
-          if (!doc.storage_path) {
-            alert("This document is not available for download (demo data).");
-            return;
-          }
-
-          // For public users, use the PublicProjectAPI to verify access
-          const publicAPI = new PublicProjectAPI(supabase);
-          const result = await publicAPI.getDocumentDownloadInfo(shareId, doc.id);
-          
-          if (result.error || !result.documentInfo) {
-            alert("Failed to access document. Please try again.");
-            return;
-          }
-
-          // Try to get public URL directly (this works if bucket is public)
-          const { data: publicUrlData } = supabase.storage
-            .from("project-documents")
-            .getPublicUrl(result.documentInfo.storage_path);
-          
-          if (publicUrlData?.publicUrl) {
-            url = publicUrlData.publicUrl;
-          } else {
-            alert("Document access is not available in public view.");
-            return;
-          }
-        } else {
-          // For authenticated users, check if this is a real document or seeded data
-          if (!doc.storage_path) {
-            alert("This document is not available for download (demo data).");
-            return;
-          }
-
-          // For authenticated users, use the standard approach
-          const { data, error } = await supabase.storage
-            .from("project-documents")
-            .createSignedUrl(doc.storage_path, 60); // 60 seconds expiry
-
-          if (error) {
-            alert("Failed to access document. Please try again.");
-            return;
-          }
-
-          url = data?.signedUrl || null;
-        }
-      } else if (doc.document_url) {
-        // Handle URL-based documents (Google Drive, OneDrive, etc.)
-        url = doc.document_url;
-      }
-
-      if (url) {
+      if (doc.document_url) {
         // Open the document in a new tab
-        window.open(url, '_blank', 'noopener,noreferrer');
+        window.open(doc.document_url, '_blank', 'noopener,noreferrer');
       } else {
         alert("Document URL is not available.");
       }
