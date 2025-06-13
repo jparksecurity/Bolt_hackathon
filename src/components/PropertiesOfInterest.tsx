@@ -45,8 +45,7 @@ interface Property {
   virtual_tour_url?: string | null;
   suggestion?: string | null;
   flier_url?: string | null;
-  tour_date?: string | null;
-  tour_time?: string | null;
+  tour_datetime?: string | null;
   tour_location?: string | null;
   tour_status?: "Scheduled" | "Completed" | "Cancelled" | "Rescheduled" | null;
   status: "active" | "new" | "pending" | "declined";
@@ -77,8 +76,7 @@ interface PropertyFormData {
   virtual_tour_url: string;
   suggestion: string;
   flier_url: string;
-  tour_date: string;
-  tour_time: string;
+  tour_datetime: string;
   tour_location: string;
   tour_status: "Scheduled" | "Completed" | "Cancelled" | "Rescheduled" | "";
   status: "active" | "new" | "pending" | "declined";
@@ -114,8 +112,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     virtual_tour_url: "",
     suggestion: "",
     flier_url: "",
-    tour_date: "",
-    tour_time: "",
+    tour_datetime: "",
     tour_location: "",
     tour_status: "",
     status: "new",
@@ -213,8 +210,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       virtual_tour_url: "",
       suggestion: "",
       flier_url: "",
-      tour_date: "",
-      tour_time: "",
+      tour_datetime: "",
       tour_location: "",
       tour_status: "",
       status: "new",
@@ -228,6 +224,11 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   };
 
   const openEditModal = (property: Property) => {
+    // Convert ISO datetime to datetime-local format (YYYY-MM-DDTHH:MM)
+    const datetimeLocal = property.tour_datetime 
+      ? new Date(property.tour_datetime).toISOString().slice(0, 16)
+      : "";
+    
     setFormData({
       name: property.name,
       address: property.address || "",
@@ -243,8 +244,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       virtual_tour_url: property.virtual_tour_url || "",
       suggestion: property.suggestion || "",
       flier_url: property.flier_url || "",
-      tour_date: property.tour_date || "",
-      tour_time: property.tour_time || "",
+      tour_datetime: datetimeLocal,
       tour_location: property.tour_location || "",
       tour_status: property.tour_status || "",
       status: property.status,
@@ -280,8 +280,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         virtual_tour_url: formData.virtual_tour_url.trim() || null,
         suggestion: formData.suggestion.trim() || null,
         flier_url: formData.flier_url.trim() || null,
-        tour_date: formData.tour_date || null,
-        tour_time: formData.tour_time || null,
+        tour_datetime: formData.tour_datetime 
+          ? new Date(formData.tour_datetime).toISOString() 
+          : null,
         tour_location: formData.tour_location.trim() || null,
         tour_status: formData.tour_status || null,
         status: formData.status,
@@ -394,57 +395,35 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
-  const formatTourDateTime = (date: string, time: string) => {
-    if (!date) return null;
+  const formatTourDateTime = (isoDateTime: string) => {
+    if (!isoDateTime) return null;
 
-    // Store the exact date string as selected - no Date object manipulation
-    console.log("=== DATE FORMATTING DEBUG ===");
-    console.log("Raw date input:", date);
-    console.log("Raw time input:", time);
+    const dateTime = new Date(isoDateTime);
 
-    // Parse the date string manually to avoid timezone issues
-    const [year, month, day] = date.split("-");
+    // Format the date using built-in toLocaleDateString with options
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    };
 
-    // Convert to readable format without creating Date objects
-    const monthNames = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
+    const formattedDate = dateTime.toLocaleDateString('en-US', dateOptions);
 
-    const monthName = monthNames[parseInt(month) - 1];
-    const dayNum = parseInt(day);
-
-    // For day of week, we need to be careful - create date in UTC to avoid timezone shifts
-    const utcDate = new Date(
-      Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day))
-    );
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const dayOfWeek = dayNames[utcDate.getUTCDay()];
-
-    const dateStr = `${dayOfWeek}, ${monthName} ${dayNum}, ${year}`;
-
-    console.log("Final formatted date:", dateStr);
-    console.log("=== END DEBUG ===");
-
-    if (time) {
-      const [hours, minutes] = time.split(":");
-      const hour12 = parseInt(hours) % 12 || 12;
-      const ampm = parseInt(hours) >= 12 ? "PM" : "AM";
-      const timeStr = `${hour12}:${minutes} ${ampm}`;
-      return `${dateStr} at ${timeStr}`;
+    // Check if time component exists (not midnight)
+    const hasTime = dateTime.getHours() !== 0 || dateTime.getMinutes() !== 0;
+    
+    if (hasTime) {
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      };
+      const formattedTime = dateTime.toLocaleTimeString('en-US', timeOptions);
+      return `${formattedDate} at ${formattedTime}`;
     }
 
-    return dateStr;
+    return formattedDate;
   };
 
   const renderProperty = (property: Property) => {
@@ -506,7 +485,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         </div>
 
         {/* Tour Information Section */}
-        {(property.tour_date || property.tour_status) && (
+        {(property.tour_datetime || property.tour_status) && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-blue-900 flex items-center space-x-2">
@@ -528,13 +507,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
               )}
             </div>
             <div className="space-y-2 text-sm">
-              {property.tour_date && (
+              {property.tour_datetime && (
                 <div className="flex items-center space-x-2 text-blue-800">
                   <Clock className="w-4 h-4" />
                   <span>
                     {formatTourDateTime(
-                      property.tour_date,
-                      property.tour_time || ""
+                      property.tour_datetime
                     )}
                   </span>
                 </div>
@@ -833,31 +811,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tour Date
+                      Tour Date & Time
                     </label>
                     <input
-                      type="date"
-                      value={formData.tour_date}
-                      onChange={(e) => {
-                        console.log("Date input changed to:", e.target.value);
-                        console.log(
-                          "This will be stored exactly as:",
-                          e.target.value
-                        );
-                        setFormData({ ...formData, tour_date: e.target.value });
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tour Time
-                    </label>
-                    <input
-                      type="time"
-                      value={formData.tour_time}
+                      type="datetime-local"
+                      value={formData.tour_datetime}
                       onChange={(e) =>
-                        setFormData({ ...formData, tour_time: e.target.value })
+                        setFormData({ ...formData, tour_datetime: e.target.value })
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
