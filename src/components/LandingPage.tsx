@@ -7,24 +7,37 @@ export function LandingPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Commercial Real Estate
-            <span className="text-gradient block">Management Platform</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Transform your commercial real estate leasing process with our intelligent tracking and management platform
-          </p>
-          <div className="flex items-center justify-center">
-            <Link
-              to="/projects"
-              className="btn-primary flex items-center space-x-3 px-10 py-4 text-lg font-semibold"
-            >
-              <span>Get Started</span>
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+      {/* Hero Section with Animated Background */}
+      <section className="hero-section-animated">
+        {/* Animated Background Elements */}
+        <div className="hero-background">
+          <div className="floating-element floating-element-1"></div>
+          <div className="floating-element floating-element-2"></div>
+          <div className="floating-element floating-element-3"></div>
+          <div className="floating-element floating-element-4"></div>
+          <div className="floating-element floating-element-5"></div>
+          <div className="floating-element floating-element-6"></div>
+        </div>
+        
+        {/* Hero Content */}
+        <div className="hero-content">
+          <div className="max-w-6xl mx-auto px-6 text-center relative z-10">
+            <h1 className="hero-title">
+              Commercial Real Estate
+              <span className="text-gradient block hero-subtitle">Management Platform</span>
+            </h1>
+            <p className="hero-description">
+              Transform your commercial real estate leasing process with our intelligent tracking and management platform
+            </p>
+            <div className="hero-cta">
+              <Link
+                to="/projects"
+                className="btn-primary-hero"
+              >
+                <span>Get Started</span>
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
