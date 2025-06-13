@@ -360,16 +360,32 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const formatTourDateTime = (date: string, time: string) => {
     if (!date) return null;
     
-    // Parse the date string manually to avoid timezone issues
-    const [year, month, day] = date.split('-').map(Number);
-    const tourDate = new Date(year, month - 1, day); // month is 0-indexed
+    // Log timezone information for debugging
+    console.log('=== DATE FORMATTING DEBUG ===');
+    console.log('Input date string:', date);
+    console.log('Input time string:', time);
+    console.log('Current timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+    console.log('Current timezone offset (minutes):', new Date().getTimezoneOffset());
     
-    const dateStr = tourDate.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    // Simply format the date string directly without creating a Date object
+    // This avoids any timezone conversion issues
+    const [year, month, day] = date.split('-');
+    
+    // Create a date string in the format that toLocaleDateString expects
+    // Use the exact values from the input without any Date object manipulation
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    // Create a date object just to get the day of week, but use our parsed values for display
+    const tempDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const dayOfWeek = dayNames[tempDate.getDay()];
+    const monthName = monthNames[parseInt(month) - 1];
+    
+    const dateStr = `${dayOfWeek}, ${monthName} ${parseInt(day)}, ${year}`;
+    
+    console.log('Formatted date string:', dateStr);
+    console.log('=== END DEBUG ===');
     
     if (time) {
       const [hours, minutes] = time.split(':');
@@ -728,7 +744,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <input
                       type="date"
                       value={formData.tour_date}
-                      onChange={(e) => setFormData({ ...formData, tour_date: e.target.value })}
+                      onChange={(e) => {
+                        console.log('Date input changed:', e.target.value);
+                        setFormData({ ...formData, tour_date: e.target.value });
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
