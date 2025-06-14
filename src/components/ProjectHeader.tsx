@@ -352,7 +352,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <DollarSign className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-green-700 text-sm font-medium">Expected Fee</p>
+              <p className="text-green-700 text-sm font-medium">Estimated Tenant Fee</p>
               <p className="text-green-900 font-bold text-lg">
                 ${project.expected_fee ? project.expected_fee.toLocaleString() : '0'}
               </p>
@@ -578,7 +578,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Expected Fee ($)
+                Estimated Tenant Fee ($)
               </label>
               <input
                 type="number"
