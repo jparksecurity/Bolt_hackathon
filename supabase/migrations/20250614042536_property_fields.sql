@@ -1,16 +1,35 @@
 -- =====================================================
--- ADD EXPECTED MONTHLY COST FIELD TO PROPERTIES TABLE
--- Adds expected monthly cost field for budget tracking
+-- ADD EXPECTED MONTHLY COST AND CONDITION FIELDS TO PROPERTIES TABLE
+-- Adds expected monthly cost field for budget tracking and condition field for property state
 -- =====================================================
 
 -- Add expected_monthly_cost field to properties table
 ALTER TABLE properties 
 ADD COLUMN expected_monthly_cost TEXT;
 
--- Add index for better query performance
-CREATE INDEX IF NOT EXISTS idx_properties_expected_monthly_cost ON properties(project_id) WHERE expected_monthly_cost IS NOT NULL;
+-- Add condition field to properties table
+ALTER TABLE properties 
+ADD COLUMN condition TEXT;
 
--- Update the get_public_properties function to include expected_monthly_cost field
+-- Add lease_structure field to properties table (if not exists)
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS lease_structure TEXT;
+
+-- Add CHECK constraint for condition values
+ALTER TABLE properties 
+ADD CONSTRAINT properties_condition_check 
+CHECK (condition IS NULL OR condition IN ('Plug & Play', 'Built-out', 'White Box', 'Shell Space', 'Turnkey'));
+
+-- Add CHECK constraint for lease_structure values
+ALTER TABLE properties 
+ADD CONSTRAINT properties_lease_structure_check 
+CHECK (lease_structure IS NULL OR lease_structure IN ('NNN', 'Full Service'));
+
+-- Add indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_properties_expected_monthly_cost ON properties(project_id) WHERE expected_monthly_cost IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_properties_condition ON properties(project_id, condition) WHERE condition IS NOT NULL;
+
+-- Update the get_public_properties function to include both new fields
 DROP FUNCTION IF EXISTS get_public_properties(UUID);
 
 CREATE FUNCTION get_public_properties(share_id UUID)
@@ -29,6 +48,7 @@ RETURNS TABLE (
   lease_type TEXT,
   lease_structure TEXT,
   current_state TEXT,
+  condition TEXT,
   misc_notes TEXT,
   virtual_tour_url TEXT,
   suggestion TEXT,
@@ -60,6 +80,7 @@ AS $$
     prop.lease_type,
     prop.lease_structure,
     prop.current_state,
+    prop.condition,
     prop.misc_notes,
     prop.virtual_tour_url,
     prop.suggestion,
