@@ -156,23 +156,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
-  const getCurrentStateColor = (state: string) => {
-    switch (state) {
-      case "Available":
-        return "bg-green-100 text-green-800";
-      case "Under Review":
-        return "bg-blue-100 text-blue-800";
-      case "Negotiating":
-        return "bg-orange-100 text-orange-800";
-      case "On Hold":
-        return "bg-yellow-100 text-yellow-800";
-      case "Declined":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   const getConditionColor = (condition: string) => {
     switch (condition) {
       case "Plug & Play":
@@ -447,15 +430,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 {property.status.charAt(0).toUpperCase() +
                   property.status.slice(1)}
               </span>
-              {property.current_state && (
-                <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCurrentStateColor(
-                    property.current_state
-                  )}`}
-                >
-                  {property.current_state}
-                </span>
-              )}
               {property.condition && (
                 <span
                   className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getConditionColor(
@@ -1049,7 +1023,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <h4 className="text-md font-semibold text-gray-900 mb-4">
                   Status & Type
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Lease Type
@@ -1096,34 +1070,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       <option value="">Select lease structure</option>
                       <option value="NNN">NNN</option>
                       <option value="Full Service">Full Service</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Current State
-                    </label>
-                    <select
-                      value={formData.current_state}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          current_state: e.target.value as
-                            | "Available"
-                            | "Under Review"
-                            | "Negotiating"
-                            | "On Hold"
-                            | "Declined"
-                            | "",
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select current state</option>
-                      <option value="Available">Available</option>
-                      <option value="Under Review">Under Review</option>
-                      <option value="Negotiating">Negotiating</option>
-                      <option value="On Hold">On Hold</option>
-                      <option value="Declined">Declined</option>
                     </select>
                   </div>
                   <div>
