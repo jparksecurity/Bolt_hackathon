@@ -558,7 +558,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <Calendar className="w-4 h-4 text-orange-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">$$ / Month</p>
+                <p className="text-xs text-gray-500 font-medium">$$ / Month - Asking</p>
                 <p className="text-sm text-gray-900 font-semibold">
                   {property.monthly_cost}
                 </p>
@@ -915,7 +915,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      $$ / Month
+                      $$ / Month - Asking
                     </label>
                     <input
                       type="text"
