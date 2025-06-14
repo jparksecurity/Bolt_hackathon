@@ -366,7 +366,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <Info className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-gray-700 text-sm font-medium">Commission</p>
+              <p className="text-gray-700 text-sm font-medium">JIGO Commission</p>
               <p className="text-gray-900 font-bold text-lg">
                 ${project.broker_commission ? project.broker_commission.toLocaleString() : '0'}
               </p>
@@ -592,7 +592,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Broker Commission ($)
+                JIGO Commission ($)
               </label>
               <input
                 type="number"
