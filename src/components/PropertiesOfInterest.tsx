@@ -31,6 +31,7 @@ interface Property {
   people_capacity?: string | null;
   price_per_sf?: string | null;
   monthly_cost?: string | null;
+  expected_monthly_cost?: string | null;
   contract_term?: string | null;
   availability?: string | null;
   lease_type?: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | null;
@@ -63,6 +64,7 @@ interface PropertyFormData {
   people_capacity: string;
   price_per_sf: string;
   monthly_cost: string;
+  expected_monthly_cost: string;
   contract_term: string;
   availability: string;
   lease_type: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | "";
@@ -106,6 +108,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     people_capacity: "",
     price_per_sf: "",
     monthly_cost: "",
+    expected_monthly_cost: "",
     contract_term: "",
     availability: "",
     lease_type: "",
@@ -205,6 +208,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       people_capacity: "",
       price_per_sf: "",
       monthly_cost: "",
+      expected_monthly_cost: "",
       contract_term: "",
       availability: "",
       lease_type: "",
@@ -240,6 +244,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       people_capacity: property.people_capacity || "",
       price_per_sf: property.price_per_sf || "",
       monthly_cost: property.monthly_cost || "",
+      expected_monthly_cost: property.expected_monthly_cost || "",
       contract_term: property.contract_term || "",
       availability: property.availability || "",
       lease_type: property.lease_type || "",
@@ -277,6 +282,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         people_capacity: formData.people_capacity.trim() || null,
         price_per_sf: formData.price_per_sf.trim() || null,
         monthly_cost: formData.monthly_cost.trim() || null,
+        expected_monthly_cost: formData.expected_monthly_cost.trim() || null,
         contract_term: formData.contract_term.trim() || null,
         availability: formData.availability.trim() || null,
         lease_type: formData.lease_type || null,
@@ -561,6 +567,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <p className="text-xs text-gray-500 font-medium">$$ / Month - Asking</p>
                 <p className="text-sm text-gray-900 font-semibold">
                   {property.monthly_cost}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {property.expected_monthly_cost && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-teal-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Expected Monthly Cost</p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.expected_monthly_cost}
                 </p>
               </div>
             </div>
@@ -928,6 +948,23 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., $30,000/month"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Expected Monthly Cost
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.expected_monthly_cost}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          expected_monthly_cost: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., $28,000/month"
                     />
                   </div>
                   <div>
