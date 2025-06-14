@@ -33,7 +33,7 @@ interface Property {
   monthly_cost?: string | null;
   contract_term?: string | null;
   availability?: string | null;
-  lease_type?: "Direct Lease" | "Sublease" | "Sub-sublease" | null;
+  lease_type?: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | null;
   current_state?:
     | "Available"
     | "Under Review"
@@ -64,7 +64,7 @@ interface PropertyFormData {
   monthly_cost: string;
   contract_term: string;
   availability: string;
-  lease_type: "Direct Lease" | "Sublease" | "Sub-sublease" | "";
+  lease_type: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | "";
   current_state:
     | "Available"
     | "Under Review"
@@ -970,6 +970,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                             | "Direct Lease"
                             | "Sublease"
                             | "Sub-sublease"
+                            | "Coworking"
                             | "",
                         })
                       }
@@ -979,6 +980,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       <option value="Direct Lease">Direct Lease</option>
                       <option value="Sublease">Sublease</option>
                       <option value="Sub-sublease">Sub-sublease</option>
+                      <option value="Coworking">Coworking</option>
                     </select>
                   </div>
                   <div>
