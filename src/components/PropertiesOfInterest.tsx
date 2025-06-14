@@ -31,9 +31,11 @@ interface Property {
   people_capacity?: string | null;
   price_per_sf?: string | null;
   monthly_cost?: string | null;
+  expected_monthly_cost?: string | null;
   contract_term?: string | null;
   availability?: string | null;
-  lease_type?: "Direct Lease" | "Sublease" | "Sub-sublease" | null;
+  lease_type?: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | null;
+  lease_structure?: "NNN" | "Full Service" | null;
   current_state?:
     | "Available"
     | "Under Review"
@@ -41,6 +43,7 @@ interface Property {
     | "On Hold"
     | "Declined"
     | null;
+  condition?: "Plug & Play" | "Built-out" | "White Box" | "Shell Space" | "Turnkey" | null;
   misc_notes?: string | null;
   virtual_tour_url?: string | null;
   suggestion?: string | null;
@@ -62,9 +65,11 @@ interface PropertyFormData {
   people_capacity: string;
   price_per_sf: string;
   monthly_cost: string;
+  expected_monthly_cost: string;
   contract_term: string;
   availability: string;
-  lease_type: "Direct Lease" | "Sublease" | "Sub-sublease" | "";
+  lease_type: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | "";
+  lease_structure: "NNN" | "Full Service" | "";
   current_state:
     | "Available"
     | "Under Review"
@@ -72,6 +77,7 @@ interface PropertyFormData {
     | "On Hold"
     | "Declined"
     | "";
+  condition: "Plug & Play" | "Built-out" | "White Box" | "Shell Space" | "Turnkey" | "";
   misc_notes: string;
   virtual_tour_url: string;
   suggestion: string;
@@ -104,10 +110,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     people_capacity: "",
     price_per_sf: "",
     monthly_cost: "",
+    expected_monthly_cost: "",
     contract_term: "",
     availability: "",
     lease_type: "",
+    lease_structure: "",
     current_state: "",
+    condition: "",
     misc_notes: "",
     virtual_tour_url: "",
     suggestion: "",
@@ -164,6 +173,23 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
+  const getConditionColor = (condition: string) => {
+    switch (condition) {
+      case "Plug & Play":
+        return "bg-green-100 text-green-800";
+      case "Built-out":
+        return "bg-blue-100 text-blue-800";
+      case "White Box":
+        return "bg-gray-100 text-gray-800";
+      case "Shell Space":
+        return "bg-orange-100 text-orange-800";
+      case "Turnkey":
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
   const getTourStatusColor = (status: string) => {
     switch (status) {
       case "Scheduled":
@@ -202,10 +228,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       people_capacity: "",
       price_per_sf: "",
       monthly_cost: "",
+      expected_monthly_cost: "",
       contract_term: "",
       availability: "",
       lease_type: "",
+      lease_structure: "",
       current_state: "",
+      condition: "",
       misc_notes: "",
       virtual_tour_url: "",
       suggestion: "",
@@ -236,10 +265,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       people_capacity: property.people_capacity || "",
       price_per_sf: property.price_per_sf || "",
       monthly_cost: property.monthly_cost || "",
+      expected_monthly_cost: property.expected_monthly_cost || "",
       contract_term: property.contract_term || "",
       availability: property.availability || "",
       lease_type: property.lease_type || "",
+      lease_structure: property.lease_structure || "",
       current_state: property.current_state || "",
+      condition: property.condition || "",
       misc_notes: property.misc_notes || "",
       virtual_tour_url: property.virtual_tour_url || "",
       suggestion: property.suggestion || "",
@@ -272,10 +304,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         people_capacity: formData.people_capacity.trim() || null,
         price_per_sf: formData.price_per_sf.trim() || null,
         monthly_cost: formData.monthly_cost.trim() || null,
+        expected_monthly_cost: formData.expected_monthly_cost.trim() || null,
         contract_term: formData.contract_term.trim() || null,
         availability: formData.availability.trim() || null,
         lease_type: formData.lease_type || null,
+        lease_structure: formData.lease_structure || null,
         current_state: formData.current_state || null,
+        condition: formData.condition || null,
         misc_notes: formData.misc_notes.trim() || null,
         virtual_tour_url: formData.virtual_tour_url.trim() || null,
         suggestion: formData.suggestion.trim() || null,
@@ -403,7 +438,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
             <h3 className="text-xl font-bold text-gray-900 mb-3">
               {property.name}
             </h3>
-            <div className="flex items-center space-x-3 mb-3">
+            <div className="flex items-center space-x-3 mb-3 flex-wrap">
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
                   property.status
@@ -419,6 +454,15 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   )}`}
                 >
                   {property.current_state}
+                </span>
+              )}
+              {property.condition && (
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getConditionColor(
+                    property.condition
+                  )}`}
+                >
+                  {property.condition}
                 </span>
               )}
             </div>
@@ -538,7 +582,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <Building2 className="w-4 h-4 text-purple-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">$ / SF</p>
+                <p className="text-xs text-gray-500 font-medium">Ask Rate ( $ /SF)</p>
                 <p className="text-sm text-gray-900 font-semibold">
                   {property.price_per_sf}
                 </p>
@@ -552,9 +596,23 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <Calendar className="w-4 h-4 text-orange-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">$$ / Month</p>
+                <p className="text-xs text-gray-500 font-medium">$$ / Month - Asking</p>
                 <p className="text-sm text-gray-900 font-semibold">
                   {property.monthly_cost}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {property.expected_monthly_cost && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-teal-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Expected Monthly Cost</p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.expected_monthly_cost}
                 </p>
               </div>
             </div>
@@ -593,15 +651,33 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           )}
         </div>
 
-        {/* Lease Type */}
-        {property.lease_type && (
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 font-medium mb-1">Lease Type</p>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-              {property.lease_type}
-            </span>
-          </div>
-        )}
+        {/* Lease Type, Structure, and Condition */}
+        <div className="mb-4 flex flex-wrap gap-4">
+          {property.lease_type && (
+            <div>
+              <p className="text-xs text-gray-500 font-medium mb-1">Lease Type</p>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                {property.lease_type}
+              </span>
+            </div>
+          )}
+          {property.lease_structure && (
+            <div>
+              <p className="text-xs text-gray-500 font-medium mb-1">Lease Structure</p>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {property.lease_structure}
+              </span>
+            </div>
+          )}
+          {property.condition && (
+            <div>
+              <p className="text-xs text-gray-500 font-medium mb-1">Condition</p>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getConditionColor(property.condition)}`}>
+                {property.condition}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Misc Notes */}
         {property.misc_notes && (
@@ -882,7 +958,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      $ / SF
+                      Ask Rate ( $ /SF)
                     </label>
                     <input
                       type="text"
@@ -899,7 +975,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      $$ / Month
+                      $$ / Month - Asking
                     </label>
                     <input
                       type="text"
@@ -912,6 +988,23 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., $30,000/month"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Expected Monthly Cost
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.expected_monthly_cost}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          expected_monthly_cost: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., $28,000/month"
                     />
                   </div>
                   <div>
@@ -956,7 +1049,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <h4 className="text-md font-semibold text-gray-900 mb-4">
                   Status & Type
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Lease Type
@@ -970,6 +1063,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                             | "Direct Lease"
                             | "Sublease"
                             | "Sub-sublease"
+                            | "Coworking"
                             | "",
                         })
                       }
@@ -979,6 +1073,29 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       <option value="Direct Lease">Direct Lease</option>
                       <option value="Sublease">Sublease</option>
                       <option value="Sub-sublease">Sub-sublease</option>
+                      <option value="Coworking">Coworking</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lease Structure
+                    </label>
+                    <select
+                      value={formData.lease_structure}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          lease_structure: e.target.value as
+                            | "NNN"
+                            | "Full Service"
+                            | "",
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select lease structure</option>
+                      <option value="NNN">NNN</option>
+                      <option value="Full Service">Full Service</option>
                     </select>
                   </div>
                   <div>
@@ -1007,6 +1124,34 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       <option value="Negotiating">Negotiating</option>
                       <option value="On Hold">On Hold</option>
                       <option value="Declined">Declined</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Condition
+                    </label>
+                    <select
+                      value={formData.condition}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          condition: e.target.value as
+                            | "Plug & Play"
+                            | "Built-out"
+                            | "White Box"
+                            | "Shell Space"
+                            | "Turnkey"
+                            | "",
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select condition</option>
+                      <option value="Plug & Play">Plug & Play</option>
+                      <option value="Built-out">Built-out</option>
+                      <option value="White Box">White Box</option>
+                      <option value="Shell Space">Shell Space</option>
+                      <option value="Turnkey">Turnkey</option>
                     </select>
                   </div>
                   <div>

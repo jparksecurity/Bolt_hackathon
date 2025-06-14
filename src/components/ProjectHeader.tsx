@@ -352,7 +352,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <DollarSign className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-green-700 text-sm font-medium">Expected Fee</p>
+              <p className="text-green-700 text-sm font-medium">Estimated Tenant Fee</p>
               <p className="text-green-900 font-bold text-lg">
                 ${project.expected_fee ? project.expected_fee.toLocaleString() : '0'}
               </p>
@@ -366,10 +366,15 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <Info className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-gray-700 text-sm font-medium">Commission</p>
+              <p className="text-gray-700 text-sm font-medium">JIGO Commission</p>
               <p className="text-gray-900 font-bold text-lg">
                 ${project.broker_commission ? project.broker_commission.toLocaleString() : '0'}
               </p>
+              {project.commission_paid_by && (
+                <p className="text-sm font-semibold text-blue-700 mt-1">
+                  Paid by {project.commission_paid_by}
+                </p>
+              )}
             </div>
             {project.broker_commission && project.broker_commission > 0 && (
               <div 
@@ -573,7 +578,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Expected Fee ($)
+                Estimated Tenant Fee ($)
               </label>
               <input
                 type="number"
@@ -587,7 +592,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Broker Commission ($)
+                JIGO Commission ($)
               </label>
               <input
                 type="number"

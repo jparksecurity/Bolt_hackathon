@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Header } from './Header';
-import { Building, TrendingUp, Users, FileText, ArrowRight, CheckCircle, Star } from 'lucide-react';
+import { Building, TrendingUp, Users, FileText, ArrowRight, CheckCircle, Star, Shield, Award } from 'lucide-react';
 
 export function LandingPage() {
   return (
@@ -22,19 +22,25 @@ export function LandingPage() {
         {/* Hero Content */}
         <div className="hero-content">
           <div className="max-w-6xl mx-auto px-6 text-center relative z-10">
+            {/* Exclusive Badge */}
+            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
+              <Shield className="w-5 h-5 text-yellow-400" />
+              <span className="text-white font-semibold">Invitation Only Platform</span>
+            </div>
+            
             <h1 className="hero-title">
-              Commercial Real Estate
+              Elite Commercial Real Estate
               <span className="text-gradient block hero-subtitle">Management Platform</span>
             </h1>
             <p className="hero-description">
-              Transform your commercial real estate leasing process with our intelligent tracking and management platform
+              An exclusive platform designed for top-tier commercial real estate brokers to manage high-value leasing projects with sophisticated tools and premium client experiences
             </p>
             <div className="hero-cta">
               <Link
                 to="/projects"
                 className="btn-primary-hero"
               >
-                <span>Get Started</span>
+                <span>Access Platform</span>
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
@@ -43,79 +49,54 @@ export function LandingPage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-6">
-        {/* Features Grid */}
+        {/* Exclusive Features Grid */}
         <section className="feature-grid">
           <div className="feature-card group">
             <div className="w-14 h-14 bg-gray-800 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <Building className="w-7 h-7 text-white" />
+              <Award className="w-7 h-7 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Property Management</h3>
-            <p className="text-gray-600 leading-relaxed">Track multiple properties and their leasing status in one centralized platform with real-time updates and comprehensive analytics.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Premium Client Management</h3>
+            <p className="text-gray-600 leading-relaxed">Sophisticated tools designed for managing high-value commercial leasing projects with enterprise-level clients and complex requirements.</p>
           </div>
 
           <div className="feature-card group">
             <div className="w-14 h-14 bg-gray-700 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <TrendingUp className="w-7 h-7 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Market Analysis</h3>
-            <p className="text-gray-600 leading-relaxed">Research and analyze market trends to make informed leasing decisions with data-driven insights and competitive intelligence.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Advanced Market Intelligence</h3>
+            <p className="text-gray-600 leading-relaxed">Access exclusive market data and analytics to provide clients with strategic insights and competitive advantages in their leasing decisions.</p>
           </div>
 
           <div className="feature-card group">
             <div className="w-14 h-14 bg-gray-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <Users className="w-7 h-7 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Client Management</h3>
-            <p className="text-gray-600 leading-relaxed">Manage client requirements and preferences throughout the leasing process with automated workflows and communication tools.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Elite Broker Network</h3>
+            <p className="text-gray-600 leading-relaxed">Connect with a curated network of top-performing commercial real estate professionals handling premium properties and Fortune 500 clients.</p>
           </div>
 
           <div className="feature-card group">
             <div className="w-14 h-14 bg-gray-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <FileText className="w-7 h-7 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Document Tracking</h3>
-            <p className="text-gray-600 leading-relaxed">Keep all lease documents and contracts organized and accessible with secure cloud storage and version control.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Confidential Deal Management</h3>
+            <p className="text-gray-600 leading-relaxed">Secure, encrypted platform for managing sensitive lease negotiations and confidential client information with enterprise-grade security.</p>
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="stats-section">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Trusted by Industry Leaders</h2>
-            <p className="text-gray-600 text-lg">Join thousands of real estate professionals who rely on our platform</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-12">
-            <div className="text-center">
-              <div className="text-5xl font-bold text-gray-800 mb-3">500+</div>
-              <div className="text-gray-600 text-lg font-medium">Active Projects</div>
-              <div className="text-gray-500 text-sm mt-1">Managed monthly</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold text-gray-800 mb-3">$2.5B+</div>
-              <div className="text-gray-600 text-lg font-medium">Deals Tracked</div>
-              <div className="text-gray-500 text-sm mt-1">Total transaction value</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold text-gray-800 mb-3">98%</div>
-              <div className="text-gray-600 text-lg font-medium">Client Satisfaction</div>
-              <div className="text-gray-500 text-sm mt-1">Based on user feedback</div>
-            </div>
-          </div>
-        </section>
-
-        {/* Benefits Section */}
+        {/* Exclusive Benefits Section */}
         <section className="py-16">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">Why Choose Our Platform?</h2>
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">Why Elite Brokers Choose Our Platform</h2>
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
                   <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Streamlined Workflow</h3>
-                    <p className="text-gray-600">Automate repetitive tasks and focus on what matters most - closing deals and building relationships.</p>
+                    <h3 className="font-semibold text-gray-900 mb-2">Invitation-Only Access</h3>
+                    <p className="text-gray-600">Exclusive platform reserved for vetted, top-performing commercial real estate professionals with proven track records.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
@@ -123,8 +104,8 @@ export function LandingPage() {
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Real-time Collaboration</h3>
-                    <p className="text-gray-600">Keep your team and clients in sync with instant updates and shared project visibility.</p>
+                    <h3 className="font-semibold text-gray-900 mb-2">Premium Client Experience</h3>
+                    <p className="text-gray-600">Sophisticated tools and white-glove service capabilities that match the expectations of Fortune 500 clients and high-net-worth individuals.</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
@@ -132,8 +113,8 @@ export function LandingPage() {
                     <CheckCircle className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Data-Driven Insights</h3>
-                    <p className="text-gray-600">Make informed decisions with comprehensive analytics and market intelligence.</p>
+                    <h3 className="font-semibold text-gray-900 mb-2">Confidential & Secure</h3>
+                    <p className="text-gray-600">Bank-level security and confidentiality protocols to protect sensitive deal information and client data.</p>
                   </div>
                 </div>
               </div>
@@ -143,13 +124,13 @@ export function LandingPage() {
                 <div className="w-20 h-20 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Star className="w-10 h-10 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Get Started?</h3>
-                <p className="text-gray-600 mb-8">Join the future of commercial real estate management today.</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Elevate Your Practice?</h3>
+                <p className="text-gray-600 mb-8">Join the most exclusive commercial real estate platform designed for industry leaders.</p>
                 <Link
                   to="/projects"
                   className="btn-primary inline-flex items-center space-x-2 px-8 py-3"
                 >
-                  <span>Start Your Free Trial</span>
+                  <span>Access Your Dashboard</span>
                   <ArrowRight className="w-5 h-5" />
                 </Link>
               </div>
