@@ -370,6 +370,11 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <p className="text-gray-900 font-bold text-lg">
                 ${project.broker_commission ? project.broker_commission.toLocaleString() : '0'}
               </p>
+              {project.commission_paid_by && (
+                <p className="text-xs text-gray-600 mt-1">
+                  Paid by: {project.commission_paid_by}
+                </p>
+              )}
             </div>
             {project.broker_commission && project.broker_commission > 0 && (
               <div 
