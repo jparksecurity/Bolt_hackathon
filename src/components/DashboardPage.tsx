@@ -208,9 +208,9 @@ export function DashboardPage() {
                         <div className="flex items-center space-x-2 text-gray-600">
                           <DollarSign className="w-4 h-4" />
                           <span>
-                            {project.expected_fee 
-                              ? `$${project.expected_fee.toLocaleString()} expected`
-                              : 'Fee not set'
+                            {project.broker_commission 
+                              ? `$${project.broker_commission.toLocaleString()} commission`
+                              : 'Commission not set'
                             }
                           </span>
                         </div>
