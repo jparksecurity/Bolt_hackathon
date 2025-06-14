@@ -34,6 +34,7 @@ interface Property {
   contract_term?: string | null;
   availability?: string | null;
   lease_type?: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | null;
+  lease_structure?: "NNN" | "Full Service" | null;
   current_state?:
     | "Available"
     | "Under Review"
@@ -65,6 +66,7 @@ interface PropertyFormData {
   contract_term: string;
   availability: string;
   lease_type: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | "";
+  lease_structure: "NNN" | "Full Service" | "";
   current_state:
     | "Available"
     | "Under Review"
@@ -107,6 +109,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     contract_term: "",
     availability: "",
     lease_type: "",
+    lease_structure: "",
     current_state: "",
     misc_notes: "",
     virtual_tour_url: "",
@@ -205,6 +208,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       contract_term: "",
       availability: "",
       lease_type: "",
+      lease_structure: "",
       current_state: "",
       misc_notes: "",
       virtual_tour_url: "",
@@ -239,6 +243,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       contract_term: property.contract_term || "",
       availability: property.availability || "",
       lease_type: property.lease_type || "",
+      lease_structure: property.lease_structure || "",
       current_state: property.current_state || "",
       misc_notes: property.misc_notes || "",
       virtual_tour_url: property.virtual_tour_url || "",
@@ -275,6 +280,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         contract_term: formData.contract_term.trim() || null,
         availability: formData.availability.trim() || null,
         lease_type: formData.lease_type || null,
+        lease_structure: formData.lease_structure || null,
         current_state: formData.current_state || null,
         misc_notes: formData.misc_notes.trim() || null,
         virtual_tour_url: formData.virtual_tour_url.trim() || null,
@@ -593,15 +599,25 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           )}
         </div>
 
-        {/* Lease Type */}
-        {property.lease_type && (
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 font-medium mb-1">Lease Type</p>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-              {property.lease_type}
-            </span>
-          </div>
-        )}
+        {/* Lease Type and Structure */}
+        <div className="mb-4 flex flex-wrap gap-4">
+          {property.lease_type && (
+            <div>
+              <p className="text-xs text-gray-500 font-medium mb-1">Lease Type</p>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                {property.lease_type}
+              </span>
+            </div>
+          )}
+          {property.lease_structure && (
+            <div>
+              <p className="text-xs text-gray-500 font-medium mb-1">Lease Structure</p>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {property.lease_structure}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Misc Notes */}
         {property.misc_notes && (
@@ -956,7 +972,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <h4 className="text-md font-semibold text-gray-900 mb-4">
                   Status & Type
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Lease Type
@@ -981,6 +997,28 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       <option value="Sublease">Sublease</option>
                       <option value="Sub-sublease">Sub-sublease</option>
                       <option value="Coworking">Coworking</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lease Structure
+                    </label>
+                    <select
+                      value={formData.lease_structure}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          lease_structure: e.target.value as
+                            | "NNN"
+                            | "Full Service"
+                            | "",
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select lease structure</option>
+                      <option value="NNN">NNN</option>
+                      <option value="Full Service">Full Service</option>
                     </select>
                   </div>
                   <div>
