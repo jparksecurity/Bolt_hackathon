@@ -270,14 +270,14 @@ export function ProjectsListPage() {
                     </div>
                   </div>
 
-                  {/* Fee */}
+                  {/* Broker Commission */}
                   <div className="pt-4 border-t border-gray-100">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Expected Fee</span>
+                      <span className="text-sm font-medium text-gray-600">Broker Commission</span>
                       <div className="flex items-center space-x-1">
                         <DollarSign className="w-4 h-4 text-green-600" />
                         <span className="text-lg font-bold text-green-600">
-                          {project.expected_fee != null ? `${project.expected_fee.toLocaleString()}` : 'Not set'}
+                          {project.broker_commission != null ? `${project.broker_commission.toLocaleString()}` : 'Not set'}
                         </span>
                       </div>
                     </div>
