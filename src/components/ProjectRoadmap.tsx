@@ -95,7 +95,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId, share
         description: formData.description.trim() || null,
         status: formData.status,
         expected_date: formData.expected_date || null,
-        completed_date: formData.status === 'completed' ? new Date().toISOString().split('T')[0] : null,
+        completed_date: formData.status === 'completed' ? new Date().toLocaleDateString('en-CA') : null,
         order_index: editingStep ? editingStep.order_index : roadmapSteps.length
       };
 
@@ -150,7 +150,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId, share
     try {
       const updateData: Partial<RoadmapStep> = {
         status: newStatus,
-        completed_date: newStatus === 'completed' ? new Date().toISOString().split('T')[0] : null
+        completed_date: newStatus === 'completed' ? new Date().toLocaleDateString('en-CA') : null
       };
 
       const { error } = await supabase
@@ -299,9 +299,9 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId, share
                   )}
                   <div className="text-xs text-gray-500">
                     {step.completed_date ? (
-                      <span>Completed: {new Date(step.completed_date).toLocaleDateString()}</span>
+                      <span>Completed: {new Date(step.completed_date + 'T00:00:00').toLocaleDateString()}</span>
                     ) : step.expected_date ? (
-                      <span>Expected: {new Date(step.expected_date).toLocaleDateString()}</span>
+                      <span>Expected: {new Date(step.expected_date + 'T00:00:00').toLocaleDateString()}</span>
                     ) : (
                       <span>No date set</span>
                     )}
@@ -382,9 +382,9 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId, share
                 )}
                 <div className="text-xs text-gray-500">
                   {step.completed_date ? (
-                    <span>Completed: {new Date(step.completed_date).toLocaleDateString()}</span>
+                    <span>Completed: {new Date(step.completed_date + 'T00:00:00').toLocaleDateString()}</span>
                   ) : step.expected_date ? (
-                    <span>Expected: {new Date(step.expected_date).toLocaleDateString()}</span>
+                    <span>Expected: {new Date(step.expected_date + 'T00:00:00').toLocaleDateString()}</span>
                   ) : (
                     <span>No date set</span>
                   )}

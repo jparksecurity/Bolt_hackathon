@@ -323,7 +323,7 @@ export function ProjectsListPage() {
                     </div>
                     <div className="flex items-center space-x-2 text-gray-600">
                       <Calendar className="w-4 h-4" />
-                      <span>{project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
+                      <span>{project.start_date ? new Date(project.start_date + 'T00:00:00').toLocaleDateString() : 'Not set'}</span>
                     </div>
                   </div>
 

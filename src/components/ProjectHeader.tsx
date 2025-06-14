@@ -326,7 +326,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <div>
               <p className="text-gray-700 text-sm font-medium">Start Date</p>
               <p className="text-gray-900 font-bold text-lg">
-                {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}
+                {project.start_date ? new Date(project.start_date + 'T00:00:00').toLocaleDateString() : 'Not set'}
               </p>
             </div>
           </div>
@@ -340,7 +340,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <div>
               <p className="text-blue-700 text-sm font-medium">Desired Move-in</p>
               <p className="text-blue-900 font-bold text-lg">
-                {project.desired_move_in_date ? new Date(project.desired_move_in_date).toLocaleDateString() : 'Not set'}
+                {project.desired_move_in_date ? new Date(project.desired_move_in_date + 'T00:00:00').toLocaleDateString() : 'Not set'}
               </p>
             </div>
           </div>

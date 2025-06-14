@@ -52,7 +52,7 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
   const resetForm = () => {
     setFormData({
       content: '',
-      update_date: new Date().toISOString().split('T')[0]
+      update_date: new Date().toLocaleDateString('en-CA') // YYYY-MM-DD format in local timezone
     });
     setEditingUpdate(null);
   };
@@ -132,7 +132,7 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString + 'T00:00:00').toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
