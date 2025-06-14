@@ -25,7 +25,7 @@ export function LandingPage() {
             {/* Exclusive Badge */}
             <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
               <Shield className="w-5 h-5 text-yellow-400" />
-              <span className="text-white font-semibold">Invitation Only Platform</span>
+              <span className="text-white font-semibold">by Invitation</span>
             </div>
             
             <h1 className="hero-title">
