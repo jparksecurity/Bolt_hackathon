@@ -87,31 +87,33 @@ body {
 .sidebar-nav-item {
   display: flex;
   align-items: center;
-  padding: 0.875rem 1.25rem;
-  margin-bottom: 0.25rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.125rem;
   color: var(--sidebar-text);
   text-decoration: none;
-  border-radius: 0.75rem;
-  transition: all 0.2s ease;
+  border-radius: 0.5rem;
+  transition: all 0.15s ease;
   font-weight: 500;
   font-size: 0.875rem;
+  border: none;
+  background: transparent;
 }
 
 .sidebar-nav-item:hover {
-  background: #f3f4f6;
+  background: #f8fafc;
   color: var(--text-primary);
 }
 
 .sidebar-nav-item.active {
-  background: var(--sidebar-active);
-  color: white;
-  box-shadow: 0 1px 3px 0 rgba(17, 24, 39, 0.3);
+  background: #f1f5f9;
+  color: var(--primary-dark);
+  font-weight: 600;
 }
 
 .sidebar-nav-item svg {
   width: 1.125rem;
   height: 1.125rem;
-  margin-right: 0.875rem;
+  margin-right: 0.75rem;
 }
 
 /* Card styles */

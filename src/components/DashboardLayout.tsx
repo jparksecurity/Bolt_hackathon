@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Building, Home, LogOut } from 'lucide-react';
+import { Building, LogOut } from 'lucide-react';
 import { useUser, SignOutButton } from '@clerk/clerk-react';
 import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
 
@@ -10,11 +10,6 @@ interface DashboardLayoutProps {
 }
 
 const navigationItems = [
-  {
-    name: 'Dashboard',
-    href: '/projects',
-    icon: Home,
-  },
   {
     name: 'Projects',
     href: '/projects',
