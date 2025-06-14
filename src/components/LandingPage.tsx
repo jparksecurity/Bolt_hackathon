@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Header } from './Header';
-import { Building, TrendingUp, Users, FileText, ArrowRight, CheckCircle, Star, Shield, Award } from 'lucide-react';
+import { Building, TrendingUp, Users, FileText, ArrowRight, CheckCircle, Star, Shield, Award, Eye, Calendar, FolderOpen, MapPin, Heart } from 'lucide-react';
 
 export function LandingPage() {
   return (
@@ -29,11 +29,11 @@ export function LandingPage() {
             </div>
             
             <h1 className="hero-title">
-              Elite Commercial Real Estate
-              <span className="text-gradient block hero-subtitle">Management Platform</span>
+              Keep Your Clients Informed.
+              <span className="text-gradient block hero-subtitle">Every Step of the Way.</span>
             </h1>
             <p className="hero-description">
-              An exclusive platform designed for top-tier commercial real estate brokers to manage high-value leasing projects with sophisticated tools and premium client experiences
+              JIGO Dash is a private dashboard that helps brokers update clients on leasing projects, tour schedules, documents, and what's next—so clients feel confident and cared for.
             </p>
             <div className="hero-cta">
               <Link
@@ -49,38 +49,93 @@ export function LandingPage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-6">
-        {/* Exclusive Features Grid */}
-        <section className="feature-grid">
-          <div className="feature-card group">
-            <div className="w-14 h-14 bg-gray-800 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <Award className="w-7 h-7 text-white" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Premium Client Management</h3>
-            <p className="text-gray-600 leading-relaxed">Sophisticated tools designed for managing high-value commercial leasing projects with enterprise-level clients and complex requirements.</p>
+        {/* What Your Clients Get Section */}
+        <section className="py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">What Your Clients Get with JIGO Dash</h2>
           </div>
-
-          <div className="feature-card group">
-            <div className="w-14 h-14 bg-gray-700 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <TrendingUp className="w-7 h-7 text-white" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="feature-card group">
+              <div className="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <TrendingUp className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Real-Time Project Updates</h3>
+              <p className="text-gray-600 leading-relaxed">Keep clients in the loop with daily notes and progress updates throughout the entire leasing process.</p>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Advanced Market Intelligence</h3>
-            <p className="text-gray-600 leading-relaxed">Access exclusive market data and analytics to provide clients with strategic insights and competitive advantages in their leasing decisions.</p>
+
+            <div className="feature-card group">
+              <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <MapPin className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Tour Plans</h3>
+              <p className="text-gray-600 leading-relaxed">Let them know where and when they'll be visiting spaces with detailed tour schedules and locations.</p>
+            </div>
+
+            <div className="feature-card group">
+              <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <FolderOpen className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Centralized Docs</h3>
+              <p className="text-gray-600 leading-relaxed">Share LOIs, floor plans, comps, and more—no more email digging for important documents.</p>
+            </div>
+
+            <div className="feature-card group">
+              <div className="w-14 h-14 bg-orange-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Eye className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Clear Roadmap</h3>
+              <p className="text-gray-600 leading-relaxed">Clients always know what's next in the lease process with transparent project timelines.</p>
+            </div>
+
+            <div className="feature-card group">
+              <div className="w-14 h-14 bg-red-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Heart className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Peace of Mind</h3>
+              <p className="text-gray-600 leading-relaxed">Feel like they're being walked through, not left in the dark during critical decisions.</p>
+            </div>
           </div>
+        </section>
 
-          <div className="feature-card group">
-            <div className="w-14 h-14 bg-gray-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <Users className="w-7 h-7 text-white" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Elite Broker Network</h3>
-            <p className="text-gray-600 leading-relaxed">Connect with a curated network of top-performing commercial real estate professionals handling premium properties and Fortune 500 clients.</p>
+        {/* How It Works Section */}
+        <section className="py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">From Tour to Lease—Transparent Every Step</h2>
           </div>
-
-          <div className="feature-card group">
-            <div className="w-14 h-14 bg-gray-500 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <FileText className="w-7 h-7 text-white" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Building className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">1. Broker Creates Project Dashboard</h3>
+              <p className="text-gray-600">Set up a dedicated project space with all client requirements and property details.</p>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Confidential Deal Management</h3>
-            <p className="text-gray-600 leading-relaxed">Secure, encrypted platform for managing sensitive lease negotiations and confidential client information with enterprise-grade security.</p>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">2. Client Receives Private Link</h3>
+              <p className="text-gray-600">Secure, personalized access to their project dashboard with read-only permissions.</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <FileText className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">3. Broker Posts Updates + Uploads Docs</h3>
+              <p className="text-gray-600">Real-time updates, document sharing, and tour scheduling all in one place.</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Eye className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">4. Client Follows Along with Full Visibility</h3>
+              <p className="text-gray-600">Complete transparency throughout the leasing process builds trust and confidence.</p>
+            </div>
           </div>
         </section>
 
