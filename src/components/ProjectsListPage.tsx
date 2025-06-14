@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
-import { Plus, Calendar, DollarSign, Building, User, Trash2, X, TrendingUp, Activity, Search, Filter } from 'lucide-react';
+import { Plus, Calendar, DollarSign, Building, User, Trash2, X, Search, Filter } from 'lucide-react';
 import { ProjectStatus, BaseProjectData } from '../types/project';
 import { DashboardLayout } from './DashboardLayout';
 
@@ -196,63 +196,6 @@ export function ProjectsListPage() {
 
   return (
     <DashboardLayout headerContent={headerContent}>
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="dashboard-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium mb-1">Total Projects</p>
-              <p className="text-3xl font-bold text-gray-900">{projects.length}</p>
-              <p className="text-xs text-gray-500 mt-1">All time</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-              <Building className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="dashboard-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium mb-1">Active Projects</p>
-              <p className="text-3xl font-bold text-gray-900">{projects.filter(p => p.status === 'Active').length}</p>
-              <p className="text-xs text-green-600 mt-1">+12% this month</p>
-            </div>
-            <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
-              <Activity className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="dashboard-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium mb-1">Total Value</p>
-              <p className="text-3xl font-bold text-gray-900">
-                ${projects.reduce((sum, p) => sum + (p.expected_fee || 0), 0).toLocaleString()}
-              </p>
-              <p className="text-xs text-blue-600 mt-1">Expected revenue</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="dashboard-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium mb-1">Completed</p>
-              <p className="text-3xl font-bold text-gray-900">{projects.filter(p => p.status === 'Completed').length}</p>
-              <p className="text-xs text-orange-600 mt-1">Success rate: 94%</p>
-            </div>
-            <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
         <div className="dashboard-card p-12 text-center">
