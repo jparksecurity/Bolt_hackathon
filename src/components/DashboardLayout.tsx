@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Building, LogOut } from 'lucide-react';
+import { Building, LogOut, BarChart3 } from 'lucide-react';
 import { useUser, SignOutButton } from '@clerk/clerk-react';
 import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
 
@@ -10,6 +10,11 @@ interface DashboardLayoutProps {
 }
 
 const navigationItems = [
+  {
+    name: 'Dashboard',
+    href: '/dashboard',
+    icon: BarChart3,
+  },
   {
     name: 'Projects',
     href: '/projects',
@@ -22,10 +27,35 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
   const { user } = useUser();
 
   const isActive = (href: string) => {
+    if (href === '/dashboard') {
+      return location.pathname === '/dashboard';
+    }
     if (href === '/projects') {
       return location.pathname === '/projects' || location.pathname.startsWith('/projects/');
     }
     return location.pathname === href;
+  };
+
+  const getPageTitle = () => {
+    if (location.pathname === '/dashboard') {
+      return 'Dashboard';
+    } else if (location.pathname === '/projects') {
+      return 'Projects';
+    } else if (location.pathname.startsWith('/projects/')) {
+      return 'Project Details';
+    }
+    return 'Dashboard';
+  };
+
+  const getPageDescription = () => {
+    if (location.pathname === '/dashboard') {
+      return 'Overview of your commercial real estate activities';
+    } else if (location.pathname === '/projects') {
+      return 'Manage your commercial real estate projects';
+    } else if (location.pathname.startsWith('/projects/')) {
+      return 'Track progress and manage project details';
+    }
+    return 'Overview of your activities';
   };
 
   const getInitials = (firstName?: string | null, lastName?: string | null) => {
@@ -120,14 +150,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
         <div className="dashboard-header">
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">
-              {location.pathname === '/projects' ? 'Projects' : 
-               location.pathname.startsWith('/projects/') ? 'Project Details' : 
-               'Dashboard'}
+              {getPageTitle()}
             </h1>
             <p className="text-gray-600 text-sm mt-1">
-              {location.pathname === '/projects' ? 'Manage your commercial real estate projects' : 
-               location.pathname.startsWith('/projects/') ? 'Track progress and manage project details' : 
-               'Overview of your activities'}
+              {getPageDescription()}
             </p>
           </div>
           <div className="flex items-center space-x-4">
