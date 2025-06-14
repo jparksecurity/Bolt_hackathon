@@ -84,31 +84,6 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* Exclusive Stats Section */}
-        <section className="stats-section">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Trusted by Elite Brokers</h2>
-            <p className="text-gray-600 text-lg">Join an exclusive network of top-performing commercial real estate professionals</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-12">
-            <div className="text-center">
-              <div className="text-5xl font-bold text-gray-800 mb-3">$2.5B+</div>
-              <div className="text-gray-600 text-lg font-medium">Transaction Volume</div>
-              <div className="text-gray-500 text-sm mt-1">Managed annually</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold text-gray-800 mb-3">150+</div>
-              <div className="text-gray-600 text-lg font-medium">Elite Brokers</div>
-              <div className="text-gray-500 text-sm mt-1">Invitation-only network</div>
-            </div>
-            <div className="text-center">
-              <div className="text-5xl font-bold text-gray-800 mb-3">98%</div>
-              <div className="text-gray-600 text-lg font-medium">Client Satisfaction</div>
-              <div className="text-gray-500 text-sm mt-1">Premium service standard</div>
-            </div>
-          </div>
-        </section>
-
         {/* Exclusive Benefits Section */}
         <section className="py-16">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
