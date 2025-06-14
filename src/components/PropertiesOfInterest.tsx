@@ -538,7 +538,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <Building2 className="w-4 h-4 text-purple-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">$ / SF</p>
+                <p className="text-xs text-gray-500 font-medium">Ask Rate ( $ /SF)</p>
                 <p className="text-sm text-gray-900 font-semibold">
                   {property.price_per_sf}
                 </p>
@@ -882,7 +882,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      $ / SF
+                      Ask Rate ( $ /SF)
                     </label>
                     <input
                       type="text"
