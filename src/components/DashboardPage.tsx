@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
-import { Building, DollarSign, TrendingUp, Activity, Calendar, User, ArrowRight } from 'lucide-react';
+import { Building, DollarSign, TrendingUp, Activity, Calendar, User, ArrowRight, Maximize } from 'lucide-react';
 import { ProjectStatus, BaseProjectData } from '../types/project';
 import { DashboardLayout } from './DashboardLayout';
 
@@ -10,10 +10,17 @@ interface Project extends BaseProjectData {
   deleted_at?: string | null;
 }
 
+interface Property {
+  id: string;
+  project_id: string;
+  sf?: string | null;
+}
+
 export function DashboardPage() {
   const { user, isLoaded } = useUser();
   const supabase = useSupabaseClient();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,16 +38,44 @@ export function DashboardPage() {
       setProjects(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch projects');
-    } finally {
-      setLoading(false);
     }
   }, [user, supabase]);
+
+  const fetchProperties = useCallback(async () => {
+    try {
+      if (!user) return;
+      
+      // Get properties for projects that are completed or in progress (Active/Pending)
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          id,
+          project_id,
+          sf
+        `)
+        .in('project_id', projects
+          .filter(p => p.status === 'Active' || p.status === 'Pending' || p.status === 'Completed')
+          .map(p => p.id)
+        );
+
+      if (error) throw error;
+      setProperties(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch properties');
+    }
+  }, [user, supabase, projects]);
 
   useEffect(() => {
     if (isLoaded && user) {
       fetchProjects();
     }
   }, [isLoaded, user, fetchProjects]);
+
+  useEffect(() => {
+    if (projects.length > 0) {
+      fetchProperties();
+    }
+  }, [projects, fetchProperties]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -63,9 +98,28 @@ export function DashboardPage() {
     return new Date(dateString + 'T00:00:00').toLocaleDateString();
   };
 
+  // Calculate total square feet from properties of completed and in-progress projects
+  const calculateTotalSquareFeet = () => {
+    const relevantProjectIds = projects
+      .filter(p => p.status === 'Active' || p.status === 'Pending' || p.status === 'Completed')
+      .map(p => p.id);
+    
+    return properties
+      .filter(prop => relevantProjectIds.includes(prop.project_id))
+      .reduce((total, prop) => {
+        if (prop.sf) {
+          // Parse the square footage string (remove commas and non-numeric characters)
+          const sfNumber = parseFloat(prop.sf.replace(/[^0-9.]/g, ''));
+          return total + (isNaN(sfNumber) ? 0 : sfNumber);
+        }
+        return total;
+      }, 0);
+  };
+
   const ongoingProjects = projects.filter(p => p.status === 'Active' || p.status === 'Pending');
   const totalValue = projects.reduce((sum, p) => sum + (p.expected_fee || 0), 0);
   const totalCommission = projects.reduce((sum, p) => sum + (p.broker_commission || 0), 0);
+  const totalSquareFeet = calculateTotalSquareFeet();
 
   if (!isLoaded || loading) {
     return (
@@ -98,7 +152,7 @@ export function DashboardPage() {
   return (
     <DashboardLayout>
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="dashboard-card p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -121,6 +175,21 @@ export function DashboardPage() {
             </div>
             <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
               <Activity className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="dashboard-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm font-medium mb-1">Total Square Feet</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {totalSquareFeet.toLocaleString()}
+              </p>
+              <p className="text-xs text-indigo-600 mt-1">Active & completed</p>
+            </div>
+            <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center">
+              <Maximize className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
