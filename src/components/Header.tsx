@@ -42,6 +42,15 @@ export const Header: React.FC<HeaderProps> = ({ children }) => {
           <SignedIn>
             {/* Account management is now only available in the dashboard sidebar */}
           </SignedIn>
+          {/* Bolt logo in top right */}
+          <div className="flex items-center">
+            <img 
+              src="/bolt-logo.png"
+              alt="Powered by Bolt" 
+              className="w-8 h-8 opacity-60 hover:opacity-80 transition-opacity"
+              title="Powered by Bolt"
+            />
+          </div>
         </div>
       </div>
     </header>
