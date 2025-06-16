@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { DashboardLayout } from './DashboardLayout';
@@ -65,13 +65,7 @@ export function AutomatedUpdatePage() {
   const [approvedSuggestions, setApprovedSuggestions] = useState<Set<string>>(new Set());
   const [rejectedSuggestions, setRejectedSuggestions] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (isLoaded && user) {
-      fetchData();
-    }
-  }, [isLoaded, user, fetchData]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -100,7 +94,13 @@ export function AutomatedUpdatePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetchData();
+    }
+  }, [isLoaded, user, fetchData]);
 
   const processWithAI = async () => {
     if (!inputText.trim()) {

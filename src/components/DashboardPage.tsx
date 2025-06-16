@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
-import { Building, DollarSign, TrendingUp, Activity, Calendar, User, ArrowRight, Maximize } from 'lucide-react';
-import { ProjectStatus, BaseProjectData } from '../types/project';
+import { Building, DollarSign, TrendingUp, Activity, Calendar, ArrowRight, Maximize } from 'lucide-react';
+import { BaseProjectData } from '../types/project';
 import { DashboardLayout } from './DashboardLayout';
 import { formatDate } from '../utils/dateUtils';
 
@@ -25,22 +25,6 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProjects = useCallback(async () => {
-    try {
-      if (!user) return;
-      
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setProjects(data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch projects');
-    }
-  }, [user, supabase]);
 
   const fetchProperties = useCallback(async (projectList: Project[]) => {
     try {

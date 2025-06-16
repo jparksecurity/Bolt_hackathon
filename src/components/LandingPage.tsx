@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Header } from './Header';
-import { Building, TrendingUp, Users, FileText, ArrowRight, CheckCircle, Star, Shield, Award, Eye, Calendar, FolderOpen, MapPin, Heart } from 'lucide-react';
+import { Building, TrendingUp, FileText, ArrowRight, CheckCircle, Star, Shield, Eye, FolderOpen, MapPin, Heart } from 'lucide-react';
 
 export function LandingPage() {
   return (
