@@ -5,6 +5,7 @@ import { useSupabaseClient } from '../lib/supabase';
 import { Building, DollarSign, TrendingUp, Activity, Calendar, User, ArrowRight, Maximize } from 'lucide-react';
 import { ProjectStatus, BaseProjectData } from '../types/project';
 import { DashboardLayout } from './DashboardLayout';
+import { formatDate } from '../utils/dateUtils';
 
 interface Project extends BaseProjectData {
   deleted_at?: string | null;
@@ -124,11 +125,6 @@ export function DashboardPage() {
     }
   };
 
-  // Helper function to format dates consistently
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    return new Date(dateString + 'T00:00:00').toLocaleDateString();
-  };
 
   // Calculate total square feet from properties of completed and in-progress projects
   const calculateTotalSquareFeet = () => {

@@ -3,6 +3,7 @@ import { Edit3, Plus, X, Trash2, Save, Clock } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { useProjectData } from '../hooks/useProjectData';
+import { formatDateWithOptions } from '../utils/dateUtils';
 
 interface RecentUpdatesProps {
   projectId?: string;
@@ -131,14 +132,6 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString + 'T00:00:00').toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   if (loading) {
     return (
       <div className="dashboard-card p-6">
@@ -192,7 +185,7 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
               <div key={update.id} className="border-l-4 border-blue-200 pl-4 py-3 bg-slate-50 rounded-r-lg group">
                 <div className="flex justify-between items-start mb-2">
                   <div className="text-sm text-slate-600 font-medium">
-                    {formatDate(update.update_date)}
+                    {formatDateWithOptions(update.update_date)}
                   </div>
                   {!readonly && (
                     <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">

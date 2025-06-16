@@ -5,6 +5,7 @@ import { useSupabaseClient } from '../lib/supabase';
 import { Plus, Calendar, DollarSign, Building, User, Trash2, X, Search, Filter } from 'lucide-react';
 import { ProjectStatus, BaseProjectData } from '../types/project';
 import { DashboardLayout } from './DashboardLayout';
+import { formatDate } from '../utils/dateUtils';
 
 interface Project extends BaseProjectData {
   deleted_at?: string | null;
@@ -128,11 +129,6 @@ export function ProjectsListPage() {
     }
   };
 
-  // Helper function to format dates consistently
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    return new Date(dateString + 'T00:00:00').toLocaleDateString();
-  };
 
   const filteredProjects = projects.filter(project =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

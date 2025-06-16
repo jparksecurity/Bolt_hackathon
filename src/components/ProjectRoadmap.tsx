@@ -4,6 +4,7 @@ import { useUser } from '@clerk/clerk-react';
 import { useSupabaseClient } from '../lib/supabase';
 import { DragDropList } from './DragDropList';
 import { useProjectData } from '../hooks/useProjectData';
+import { formatDate } from '../utils/dateUtils';
 
 interface ProjectRoadmapProps {
   projectId?: string;
@@ -299,9 +300,9 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId, share
                   )}
                   <div className="text-xs text-gray-500">
                     {step.completed_date ? (
-                      <span>Completed: {new Date(step.completed_date + 'T00:00:00').toLocaleDateString()}</span>
+                      <span>Completed: {formatDate(step.completed_date)}</span>
                     ) : step.expected_date ? (
-                      <span>Completion date: {new Date(step.expected_date + 'T00:00:00').toLocaleDateString()}</span>
+                      <span>Completion date: {formatDate(step.expected_date)}</span>
                     ) : (
                       <span>No date set</span>
                     )}
@@ -382,9 +383,9 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId, share
                 )}
                 <div className="text-xs text-gray-500">
                   {step.completed_date ? (
-                    <span>Completed: {new Date(step.completed_date + 'T00:00:00').toLocaleDateString()}</span>
+                    <span>Completed: {formatDate(step.completed_date)}</span>
                   ) : step.expected_date ? (
-                    <span>Completion date: {new Date(step.expected_date + 'T00:00:00').toLocaleDateString()}</span>
+                    <span>Completion date: {formatDate(step.expected_date)}</span>
                   ) : (
                     <span>No date set</span>
                   )}
