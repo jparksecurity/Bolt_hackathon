@@ -326,7 +326,7 @@ export function AutomatedUpdatePage() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
         {/* Introduction Card */}
-        <div className="dashboard-card p-8 mb-8">
+        <div className="dashboard-card p-8">
           <div className="flex items-center space-x-4 mb-6">
             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
               <Bot className="w-6 h-6 text-white" />
@@ -537,45 +537,6 @@ export function AutomatedUpdatePage() {
               )}
             </div>
           )}
-        </div>
-
-        {/* Current Data Summary */}
-        <div className="dashboard-card p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Data Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium text-gray-700 mb-2">Projects ({projects.length})</h4>
-              <div className="space-y-2">
-                {projects.slice(0, 3).map((project) => (
-                  <div key={project.id} className="text-sm text-gray-600">
-                    <span className="font-medium">{project.title}</span>
-                    <span className="text-gray-400"> • {project.status}</span>
-                  </div>
-                ))}
-                {projects.length > 3 && (
-                  <div className="text-sm text-gray-400">
-                    +{projects.length - 3} more projects
-                  </div>
-                )}
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-700 mb-2">Properties ({properties.length})</h4>
-              <div className="space-y-2">
-                {properties.slice(0, 3).map((property) => (
-                  <div key={property.id} className="text-sm text-gray-600">
-                    <span className="font-medium">{property.name}</span>
-                    <span className="text-gray-400"> • {property.status}</span>
-                  </div>
-                ))}
-                {properties.length > 3 && (
-                  <div className="text-sm text-gray-400">
-                    +{properties.length - 3} more properties
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </DashboardLayout>
