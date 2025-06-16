@@ -58,9 +58,8 @@ export function AutomatedUpdatePage() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Form state
-  const [instructions, setInstructions] = useState('');
-  const [context, setContext] = useState('');
+  // Form state - simplified to single text input
+  const [inputText, setInputText] = useState('');
   const [suggestions, setSuggestions] = useState<UpdateSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [approvedSuggestions, setApprovedSuggestions] = useState<Set<string>>(new Set());
@@ -104,8 +103,8 @@ export function AutomatedUpdatePage() {
   };
 
   const processWithAI = async () => {
-    if (!instructions.trim() || !context.trim()) {
-      alert('Please provide both instructions and context.');
+    if (!inputText.trim()) {
+      alert('Please provide some information to process.');
       return;
     }
 
@@ -116,8 +115,8 @@ export function AutomatedUpdatePage() {
       // Simulate AI processing - In a real implementation, this would call an AI service
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Generate mock suggestions based on the context
-      const mockSuggestions = generateMockSuggestions(instructions, context);
+      // Generate mock suggestions based on the input text
+      const mockSuggestions = generateMockSuggestions(inputText);
       setSuggestions(mockSuggestions);
       setShowSuggestions(true);
       setApprovedSuggestions(new Set());
@@ -130,11 +129,12 @@ export function AutomatedUpdatePage() {
     }
   };
 
-  const generateMockSuggestions = (instructions: string, context: string): UpdateSuggestion[] => {
+  const generateMockSuggestions = (text: string): UpdateSuggestion[] => {
     const suggestions: UpdateSuggestion[] = [];
+    const lowerText = text.toLowerCase();
     
-    // Parse context for common patterns and generate suggestions
-    const lines = context.toLowerCase().split('\n');
+    // Parse text for common patterns and generate suggestions
+    const lines = lowerText.split('\n');
     
     lines.forEach((line, index) => {
       // Look for date patterns
@@ -150,7 +150,7 @@ export function AutomatedUpdatePage() {
           currentValue: projects[0].desired_move_in_date,
           suggestedValue: '2024-03-15',
           confidence: 85,
-          reasoning: `Found date reference "${dateMatch[0]}" in context that appears to be a move-in date.`
+          reasoning: `Found date reference "${dateMatch[0]}" in the provided text that appears to be a move-in date.`
         });
       }
 
@@ -167,7 +167,7 @@ export function AutomatedUpdatePage() {
           currentValue: properties[0].sf,
           suggestedValue: `${sfMatch[1]} sq ft`,
           confidence: 90,
-          reasoning: `Found square footage "${sfMatch[0]}" in context.`
+          reasoning: `Found square footage "${sfMatch[0]}" in the provided text.`
         });
       }
 
@@ -184,7 +184,7 @@ export function AutomatedUpdatePage() {
           currentValue: properties[0].monthly_cost,
           suggestedValue: `$${rentMatch[1]}/month`,
           confidence: 80,
-          reasoning: `Found monetary amount "$${rentMatch[1]}" in context that appears to be rent.`
+          reasoning: `Found monetary amount "$${rentMatch[1]}" in the text that appears to be rent.`
         });
       }
 
@@ -201,7 +201,7 @@ export function AutomatedUpdatePage() {
           currentValue: projects[0].company_name,
           suggestedValue: companyMatch[1],
           confidence: 75,
-          reasoning: `Found potential company name "${companyMatch[1]}" in context.`
+          reasoning: `Found potential company name "${companyMatch[1]}" in the text.`
         });
       }
     });
@@ -254,8 +254,7 @@ export function AutomatedUpdatePage() {
       alert(`Successfully applied ${approvedSuggestionsList.length} updates!`);
       setShowSuggestions(false);
       setSuggestions([]);
-      setInstructions('');
-      setContext('');
+      setInputText('');
       await fetchData(); // Refresh data
 
     } catch (err) {
@@ -344,8 +343,8 @@ export function AutomatedUpdatePage() {
               <div>
                 <h3 className="font-semibold text-blue-900 mb-1">How it works:</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>1. Provide instructions on what information to extract</li>
-                  <li>2. Paste relevant context (emails, documents, notes)</li>
+                  <li>1. Paste any relevant information (emails, documents, notes)</li>
+                  <li>2. Optionally add instructions on what to extract</li>
                   <li>3. Review AI-generated suggestions</li>
                   <li>4. Approve or reject each suggestion</li>
                   <li>5. Apply approved updates to your projects</li>
@@ -365,39 +364,28 @@ export function AutomatedUpdatePage() {
 
           {!showSuggestions ? (
             <div className="space-y-6">
-              {/* Instructions Input */}
+              {/* Single Text Input */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Instructions for AI
+                  Information & Instructions
                 </label>
                 <textarea
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  placeholder="Example: Extract move-in dates, square footage, rental costs, and company names from the provided context..."
-                  rows={3}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Paste emails, documents, notes, or any relevant information here. You can also include instructions like 'Extract move-in dates and square footage' at the beginning..."
+                  rows={12}
                   className="form-input w-full px-4 py-3 rounded-lg"
                 />
-              </div>
-
-              {/* Context Input */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Context (Paste relevant information)
-                </label>
-                <textarea
-                  value={context}
-                  onChange={(e) => setContext(e.target.value)}
-                  placeholder="Paste emails, documents, notes, or any relevant information here..."
-                  rows={8}
-                  className="form-input w-full px-4 py-3 rounded-lg"
-                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Example: "Extract move-in dates, square footage, and rental costs. The client wants to move in by March 2024 and needs 15,000 sq ft at $25/sq ft..."
+                </p>
               </div>
 
               {/* Process Button */}
               <div className="flex justify-end">
                 <button
                   onClick={processWithAI}
-                  disabled={processing || !instructions.trim() || !context.trim()}
+                  disabled={processing || !inputText.trim()}
                   className="btn-primary flex items-center space-x-2 px-6 py-3 disabled:opacity-50"
                 >
                   {processing ? (
