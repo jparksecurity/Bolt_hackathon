@@ -47,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({ children }) => {
             <img 
               src="/black_circle_360x360.png"
               alt="Powered by Bolt" 
-              className="w-8 h-8 opacity-60 hover:opacity-80 transition-opacity"
+              className="w-12 h-12 opacity-60 hover:opacity-80 transition-opacity"
               title="Powered by Bolt"
             />
           </div>
