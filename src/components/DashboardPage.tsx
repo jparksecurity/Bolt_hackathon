@@ -57,6 +57,12 @@ export function DashboardPage() {
     }
   };
 
+  // Helper function to format dates consistently
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return null;
+    return new Date(dateString + 'T00:00:00').toLocaleDateString();
+  };
+
   const ongoingProjects = projects.filter(p => p.status === 'Active' || p.status === 'Pending');
   const totalValue = projects.reduce((sum, p) => sum + (p.expected_fee || 0), 0);
   const totalCommission = projects.reduce((sum, p) => sum + (p.broker_commission || 0), 0);
@@ -219,9 +225,9 @@ export function DashboardPage() {
                           <Calendar className="w-4 h-4" />
                           <span>
                             {project.desired_move_in_date 
-                              ? `Move-in: ${new Date(project.desired_move_in_date).toLocaleDateString()}`
+                              ? `Move-in: ${formatDate(project.desired_move_in_date)}`
                               : project.start_date
-                              ? `Started: ${new Date(project.start_date).toLocaleDateString()}`
+                              ? `Started: ${formatDate(project.start_date)}`
                               : 'No date set'
                             }
                           </span>

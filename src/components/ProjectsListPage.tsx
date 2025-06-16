@@ -128,6 +128,12 @@ export function ProjectsListPage() {
     }
   };
 
+  // Helper function to format dates consistently
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return null;
+    return new Date(dateString + 'T00:00:00').toLocaleDateString();
+  };
+
   const filteredProjects = projects.filter(project =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (project.company_name && project.company_name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -266,7 +272,7 @@ export function ProjectsListPage() {
                     </div>
                     <div className="flex items-center space-x-2 text-gray-600">
                       <Calendar className="w-4 h-4" />
-                      <span>{project.start_date ? new Date(project.start_date + 'T00:00:00').toLocaleDateString() : 'Not set'}</span>
+                      <span>{formatDate(project.start_date) || 'Not set'}</span>
                     </div>
                   </div>
 
