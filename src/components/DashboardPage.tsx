@@ -41,11 +41,23 @@ export function DashboardPage() {
     }
   }, [user, supabase]);
 
-  const fetchProperties = useCallback(async () => {
+  const fetchProperties = useCallback(async (projectList: Project[]) => {
     try {
-      if (!user) return;
+      if (!user || projectList.length === 0) {
+        setProperties([]);
+        return;
+      }
       
-      // Get properties for projects that are completed or in progress (Active/Pending)
+      // Get properties for projects that are completed or in progress (Active/Pending/Completed)
+      const relevantProjectIds = projectList
+        .filter(p => p.status === 'Active' || p.status === 'Pending' || p.status === 'Completed')
+        .map(p => p.id);
+
+      if (relevantProjectIds.length === 0) {
+        setProperties([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('properties')
         .select(`
@@ -53,29 +65,49 @@ export function DashboardPage() {
           project_id,
           sf
         `)
-        .in('project_id', projects
-          .filter(p => p.status === 'Active' || p.status === 'Pending' || p.status === 'Completed')
-          .map(p => p.id)
-        );
+        .in('project_id', relevantProjectIds);
 
       if (error) throw error;
       setProperties(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch properties');
     }
-  }, [user, supabase, projects]);
+  }, [user, supabase]);
+
+  const fetchAllData = useCallback(async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // First fetch projects
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (projectsError) throw projectsError;
+      
+      const projects = projectsData || [];
+      setProjects(projects);
+
+      // Then fetch properties for those projects
+      await fetchProperties(projects);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  }, [user, supabase, fetchProperties]);
 
   useEffect(() => {
     if (isLoaded && user) {
-      fetchProjects();
+      fetchAllData();
+    } else if (isLoaded && !user) {
+      setLoading(false);
     }
-  }, [isLoaded, user, fetchProjects]);
-
-  useEffect(() => {
-    if (projects.length > 0) {
-      fetchProperties();
-    }
-  }, [projects, fetchProperties]);
+  }, [isLoaded, user, fetchAllData]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
