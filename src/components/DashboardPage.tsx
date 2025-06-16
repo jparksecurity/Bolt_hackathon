@@ -229,11 +229,11 @@ export function DashboardPage() {
         <div className="dashboard-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium mb-1">Total Value</p>
+              <p className="text-gray-600 text-sm font-medium mb-1">Total Lease Value</p>
               <p className="text-3xl font-bold text-gray-900">
                 ${totalValue.toLocaleString()}
               </p>
-              <p className="text-xs text-blue-600 mt-1">Expected revenue</p>
+              <p className="text-xs text-blue-600 mt-1">Contract value</p>
             </div>
             <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-white" />
