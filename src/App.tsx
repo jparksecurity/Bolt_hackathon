@@ -6,20 +6,44 @@ import { LeaseTrackerPage } from './components/LeaseTrackerPage';
 import { PublicProjectPage } from './components/PublicProjectPage';
 import { SettingsPage } from './components/SettingsPage';
 import { AutomatedUpdatePage } from './components/AutomatedUpdatePage';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/projects" element={<ProjectsListPage />} />
-        <Route path="/projects/:id" element={<LeaseTrackerPage />} />
-        <Route path="/share/:shareId" element={<PublicProjectPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/automated-update" element={<AutomatedUpdatePage />} />
-      </Routes>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/share/:shareId" element={<PublicProjectPage />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/projects" element={
+            <ProtectedRoute>
+              <ProjectsListPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/projects/:id" element={
+            <ProtectedRoute>
+              <LeaseTrackerPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/automated-update" element={
+            <ProtectedRoute>
+              <AutomatedUpdatePage />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
