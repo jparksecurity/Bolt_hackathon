@@ -5,6 +5,7 @@ import { ProjectsListPage } from './components/ProjectsListPage';
 import { LeaseTrackerPage } from './components/LeaseTrackerPage';
 import { PublicProjectPage } from './components/PublicProjectPage';
 import { SettingsPage } from './components/SettingsPage';
+import { AutomatedUpdatePage } from './components/AutomatedUpdatePage';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/projects/:id" element={<LeaseTrackerPage />} />
         <Route path="/share/:shareId" element={<PublicProjectPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/automated-update" element={<AutomatedUpdatePage />} />
       </Routes>
     </Router>
   );

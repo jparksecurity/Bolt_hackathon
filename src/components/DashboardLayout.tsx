@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Building, LogOut, BarChart3 } from 'lucide-react';
+import { Building, LogOut, BarChart3, Bot } from 'lucide-react';
 import { useUser, SignOutButton } from '@clerk/clerk-react';
 import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
 
@@ -20,6 +20,11 @@ const navigationItems = [
     href: '/projects',
     icon: Building,
   },
+  {
+    name: 'Automated Update',
+    href: '/automated-update',
+    icon: Bot,
+  },
 ];
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, headerContent }) => {
@@ -33,6 +38,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
     if (href === '/projects') {
       return location.pathname === '/projects' || location.pathname.startsWith('/projects/');
     }
+    if (href === '/automated-update') {
+      return location.pathname === '/automated-update';
+    }
     return location.pathname === href;
   };
 
@@ -43,6 +51,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
       return 'Projects';
     } else if (location.pathname.startsWith('/projects/')) {
       return 'Project Details';
+    } else if (location.pathname === '/automated-update') {
+      return 'Automated Update';
     }
     return 'Dashboard';
   };
@@ -54,6 +64,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, head
       return 'Manage your commercial real estate projects';
     } else if (location.pathname.startsWith('/projects/')) {
       return 'Track progress and manage project details';
+    } else if (location.pathname === '/automated-update') {
+      return 'Use AI to automatically update project information';
     }
     return 'Overview of your activities';
   };
