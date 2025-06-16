@@ -301,7 +301,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId, share
                     {step.completed_date ? (
                       <span>Completed: {new Date(step.completed_date + 'T00:00:00').toLocaleDateString()}</span>
                     ) : step.expected_date ? (
-                      <span>Expected: {new Date(step.expected_date + 'T00:00:00').toLocaleDateString()}</span>
+                      <span>Completion date: {new Date(step.expected_date + 'T00:00:00').toLocaleDateString()}</span>
                     ) : (
                       <span>No date set</span>
                     )}
@@ -384,7 +384,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId, share
                   {step.completed_date ? (
                     <span>Completed: {new Date(step.completed_date + 'T00:00:00').toLocaleDateString()}</span>
                   ) : step.expected_date ? (
-                    <span>Expected: {new Date(step.expected_date + 'T00:00:00').toLocaleDateString()}</span>
+                    <span>Completion date: {new Date(step.expected_date + 'T00:00:00').toLocaleDateString()}</span>
                   ) : (
                     <span>No date set</span>
                   )}
@@ -460,7 +460,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({ projectId, share
 
               <div>
                 <label htmlFor="expected_date" className="block text-sm font-medium text-gray-700 mb-1">
-                  Expected Date
+                  Completion Date
                 </label>
                 <input
                   id="expected_date"
