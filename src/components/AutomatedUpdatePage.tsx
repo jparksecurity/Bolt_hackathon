@@ -69,7 +69,7 @@ export function AutomatedUpdatePage() {
     if (isLoaded && user) {
       fetchData();
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, user, fetchData]);
 
   const fetchData = async () => {
     try {
@@ -122,7 +122,7 @@ export function AutomatedUpdatePage() {
       setApprovedSuggestions(new Set());
       setRejectedSuggestions(new Set());
 
-    } catch (err) {
+    } catch {
       setError('Failed to process with AI. Please try again.');
     } finally {
       setProcessing(false);
@@ -257,7 +257,7 @@ export function AutomatedUpdatePage() {
       setInputText('');
       await fetchData(); // Refresh data
 
-    } catch (err) {
+    } catch {
       setError('Failed to apply some updates. Please try again.');
     } finally {
       setProcessing(false);
