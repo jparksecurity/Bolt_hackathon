@@ -2,13 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { Share, Check, ArrowLeft } from 'lucide-react';
-import { useSupabaseClient } from '../lib/supabase';
-import { DashboardLayout } from './DashboardLayout';
-import { ProjectHeader } from './ProjectHeader';
-import { ProjectRoadmap } from './ProjectRoadmap';
-import { ProjectDocuments } from './ProjectDocuments';
-import { PropertiesOfInterest } from './PropertiesOfInterest';
-import { RecentUpdates } from './RecentUpdates';
+import { useSupabaseClient } from '../services/supabase';
+import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { ProjectHeader } from '../components/common/ProjectHeader';
+import { ProjectRoadmap } from '../components/common/ProjectRoadmap';
+import { ProjectDocuments } from '../components/common/ProjectDocuments';
+import { PropertiesOfInterest } from '../components/common/PropertiesOfInterest';
+import { RecentUpdates } from '../components/common/RecentUpdates';
 import { BaseProjectData } from '../types/project';
 
 interface ProjectData extends BaseProjectData {

@@ -19,9 +19,9 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
-import { useSupabaseClient } from "../lib/supabase";
+import { useSupabaseClient } from "../../services/supabase";
 import { DragDropList } from "./DragDropList";
-import { useProjectData } from "../hooks/useProjectData";
+import { useProjectData } from "../../hooks/useProjectData";
 
 interface Property {
   id: string;

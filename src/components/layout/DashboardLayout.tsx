@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Building, LogOut, BarChart3, Bot } from 'lucide-react';
 import { useUser, SignOutButton } from '@clerk/clerk-react';
-import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
+import logoImage from '../../assets/design/Jigo_Tenant_BW_TP.png';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

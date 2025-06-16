@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Edit3, Plus, X, Trash2, Save, Clock } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
-import { useSupabaseClient } from '../lib/supabase';
-import { useProjectData } from '../hooks/useProjectData';
-import { formatDateWithOptions } from '../utils/dateUtils';
+import { useSupabaseClient } from '../../services/supabase';
+import { useProjectData } from '../../hooks/useProjectData';
+import { formatDateWithOptions } from '../../utils/dateUtils';
 
 interface RecentUpdatesProps {
   projectId?: string;

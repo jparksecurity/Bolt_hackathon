@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
-import { useSupabaseClient } from '../lib/supabase';
+import { useSupabaseClient } from '../services/supabase';
 import { Building, DollarSign, TrendingUp, Activity, Calendar, ArrowRight, Maximize } from 'lucide-react';
 import { BaseProjectData } from '../types/project';
-import { DashboardLayout } from './DashboardLayout';
+import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { formatDate } from '../utils/dateUtils';
 
 interface Project extends BaseProjectData {

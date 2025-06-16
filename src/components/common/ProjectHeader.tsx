@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail, MapPin, X } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
-import { useSupabaseClient } from '../lib/supabase';
-import { ProjectStatus, BaseProjectData } from '../types/project';
-import { useProjectData } from '../hooks/useProjectData';
+import { useSupabaseClient } from '../../services/supabase';
+import { ProjectStatus, BaseProjectData } from '../../types/project';
+import { useProjectData } from '../../hooks/useProjectData';
 import { ClientRequirementsSection } from './ClientRequirementsSection';
-import { Modal } from './ui/Modal';
-import { FormButton } from './ui/FormButton';
-import { formatDate } from '../utils/dateUtils';
+import { Modal } from '../ui/Modal';
+import { FormButton } from '../ui/FormButton';
+import { formatDate } from '../../utils/dateUtils';
 
 interface ProjectHeaderProps {
   project: BaseProjectData;

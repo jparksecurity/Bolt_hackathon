@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { User, Bell, Shield, Trash2, Save, Eye, EyeOff } from 'lucide-react';
-import { DashboardLayout } from './DashboardLayout';
+import { DashboardLayout } from '../components/layout/DashboardLayout';
 
 export function SettingsPage() {
   const { user } = useUser();

@@ -1,13 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { LandingPage } from './components/LandingPage';
-import { DashboardPage } from './components/DashboardPage';
-import { ProjectsListPage } from './components/ProjectsListPage';
-import { LeaseTrackerPage } from './components/LeaseTrackerPage';
-import { PublicProjectPage } from './components/PublicProjectPage';
-import { SettingsPage } from './components/SettingsPage';
-import { AutomatedUpdatePage } from './components/AutomatedUpdatePage';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { LandingPage } from './pages/LandingPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { ProjectsListPage } from './pages/ProjectsListPage';
+import { LeaseTrackerPage } from './pages/LeaseTrackerPage';
+import { PublicProjectPage } from './pages/PublicProjectPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { AutomatedUpdatePage } from './pages/AutomatedUpdatePage';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 function App() {
   return (

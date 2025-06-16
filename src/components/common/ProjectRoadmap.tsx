@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { CheckCircle, Circle, Clock, Plus, Edit3, Trash2, X, Save } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
-import { useSupabaseClient } from '../lib/supabase';
+import { useSupabaseClient } from '../../services/supabase';
 import { DragDropList } from './DragDropList';
-import { useProjectData } from '../hooks/useProjectData';
-import { formatDate } from '../utils/dateUtils';
+import { useProjectData } from '../../hooks/useProjectData';
+import { formatDate } from '../../utils/dateUtils';
 
 interface ProjectRoadmapProps {
   projectId?: string;

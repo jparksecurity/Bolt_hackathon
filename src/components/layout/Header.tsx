@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/clerk-react';
-import logoImage from '../assets/design/Jigo_Tenant_BW_TP.png';
+import logoImage from '../../assets/design/Jigo_Tenant_BW_TP.png';
 
 interface HeaderProps {
   children?: React.ReactNode;

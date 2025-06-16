@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { useSupabaseClient } from '../lib/supabase';
-import { DashboardLayout } from './DashboardLayout';
+import { useSupabaseClient } from '../services/supabase';
+import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Bot, Send, CheckCircle, XCircle, Calendar, Building, User, DollarSign, MapPin, FileText, Loader2, AlertCircle } from 'lucide-react';
 import { BaseProjectData } from '../types/project';
 

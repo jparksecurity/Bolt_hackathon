@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Eye, Lock } from 'lucide-react';
-import { useSupabaseClient } from '../lib/supabase';
+import { useSupabaseClient } from '../services/supabase';
 import { BaseProjectData } from '../types/project';
-import { Header } from './Header';
-import { ProjectHeader } from './ProjectHeader';
-import { RecentUpdates } from './RecentUpdates';
-import { PropertiesOfInterest } from './PropertiesOfInterest';
-import { ProjectRoadmap } from './ProjectRoadmap';
-import { ProjectDocuments } from './ProjectDocuments';
+import { Header } from '../components/layout/Header';
+import { ProjectHeader } from '../components/common/ProjectHeader';
+import { RecentUpdates } from '../components/common/RecentUpdates';
+import { PropertiesOfInterest } from '../components/common/PropertiesOfInterest';
+import { ProjectRoadmap } from '../components/common/ProjectRoadmap';
+import { ProjectDocuments } from '../components/common/ProjectDocuments';
 
 export function PublicProjectPage() {
   const { shareId } = useParams<{ shareId: string }>();

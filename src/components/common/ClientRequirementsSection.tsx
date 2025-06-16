@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Building, MapPin, FileText, Plus, Edit3, Trash2 } from 'lucide-react';
-import { Modal } from './ui/Modal';
-import { FormButton } from './ui/FormButton';
+import { Modal } from '../ui/Modal';
+import { FormButton } from '../ui/FormButton';
 
 interface Requirement {
   id: string;

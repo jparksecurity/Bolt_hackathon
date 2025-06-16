@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { useSupabaseClient } from '../lib/supabase';
+import { useSupabaseClient } from '../services/supabase';
 
 interface UseProjectDataOptions {
   projectId?: string;
