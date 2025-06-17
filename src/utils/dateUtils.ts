@@ -7,9 +7,11 @@
  * @param dateString - The date string to format (YYYY-MM-DD format)
  * @returns Formatted date string or null if input is null/undefined
  */
-export const formatDate = (dateString: string | null | undefined): string | null => {
+export const formatDate = (
+  dateString: string | null | undefined,
+): string | null => {
   if (!dateString) return null;
-  return new Date(dateString + 'T00:00:00').toLocaleDateString();
+  return new Date(dateString + "T00:00:00").toLocaleDateString();
 };
 
 /**
@@ -20,8 +22,15 @@ export const formatDate = (dateString: string | null | undefined): string | null
  */
 export const formatDateWithOptions = (
   dateString: string | null | undefined,
-  options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
+  options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  },
 ): string | null => {
   if (!dateString) return null;
-  return new Date(dateString + 'T00:00:00').toLocaleDateString('en-US', options);
+  return new Date(dateString + "T00:00:00").toLocaleDateString(
+    "en-US",
+    options,
+  );
 };

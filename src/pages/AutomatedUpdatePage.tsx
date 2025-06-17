@@ -29,7 +29,7 @@ interface UpdateSuggestion {
 }
 
 export function AutomatedUpdatePage() {
-  const { user, isLoaded } = useUser();
+  const { isLoaded } = useUser();
   const supabase = useSupabaseClient();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,10 +39,10 @@ export function AutomatedUpdatePage() {
   const [suggestions, setSuggestions] = useState<UpdateSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [approvedSuggestions, setApprovedSuggestions] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [rejectedSuggestions, setRejectedSuggestions] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const processWithAI = async () => {
@@ -62,7 +62,7 @@ export function AutomatedUpdatePage() {
           body: {
             inputText,
           },
-        }
+        },
       );
 
       if (error) {
@@ -78,7 +78,7 @@ export function AutomatedUpdatePage() {
             // Preserve all original fields but guarantee a unique id per entry.
             ...s,
             id: s.id ? `${s.id}-${idx}` : `suggestion-${idx}`,
-          })
+          }),
         );
 
         setSuggestions(uniqueSuggestions);
@@ -92,7 +92,7 @@ export function AutomatedUpdatePage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to process with AI. Please try again."
+          : "Failed to process with AI. Please try again.",
       );
     } finally {
       setProcessing(false);
@@ -119,7 +119,7 @@ export function AutomatedUpdatePage() {
 
   const applyApprovedSuggestions = async () => {
     const approvedSuggestionsList = suggestions.filter((s) =>
-      approvedSuggestions.has(s.id)
+      approvedSuggestions.has(s.id),
     );
 
     if (approvedSuggestionsList.length === 0) {
@@ -130,35 +130,56 @@ export function AutomatedUpdatePage() {
     setProcessing(true);
     try {
       // Helper function to coerce values to appropriate types with validation
-      const coerceValue = (value: string, field: string): string | number | null => {
+      const coerceValue = (
+        value: string,
+        field: string,
+      ): string | number | null => {
         // Numeric fields that should be converted to numbers
         const numericFields = [
-          'expected_fee', 'broker_commission', 'monthly_cost', 
-          'expected_monthly_cost', 'price_per_sf', 'people_capacity',
-          'expected_headcount', 'order_index'
+          "expected_fee",
+          "broker_commission",
+          "monthly_cost",
+          "expected_monthly_cost",
+          "price_per_sf",
+          "people_capacity",
+          "expected_headcount",
+          "order_index",
         ];
-        
+
         if (numericFields.includes(field)) {
           const numValue = parseFloat(value);
           return isNaN(numValue) ? null : numValue;
         }
-        
+
         // Validate constrained fields
-        if (field === 'status') {
-          const validStatuses = ['active', 'new', 'pending', 'declined'];
-          return validStatuses.includes(value.toLowerCase()) ? value.toLowerCase() : 'new';
+        if (field === "status") {
+          const validStatuses = ["active", "new", "pending", "declined"];
+          return validStatuses.includes(value.toLowerCase())
+            ? value.toLowerCase()
+            : "new";
         }
-        
-        if (field === 'current_state') {
-          const validStates = ['Available', 'Under Review', 'Negotiating', 'On Hold', 'Declined'];
+
+        if (field === "current_state") {
+          const validStates = [
+            "Available",
+            "Under Review",
+            "Negotiating",
+            "On Hold",
+            "Declined",
+          ];
           return validStates.includes(value) ? value : null; // Default to null if invalid
         }
-        
-        if (field === 'tour_status') {
-          const validTourStatuses = ['Scheduled', 'Completed', 'Cancelled', 'Rescheduled'];
+
+        if (field === "tour_status") {
+          const validTourStatuses = [
+            "Scheduled",
+            "Completed",
+            "Cancelled",
+            "Rescheduled",
+          ];
           return validTourStatuses.includes(value) ? value : null;
         }
-        
+
         return value || null;
       };
 
@@ -166,8 +187,11 @@ export function AutomatedUpdatePage() {
       const updatePromises = approvedSuggestionsList.map(async (suggestion) => {
         try {
           const updateData: Record<string, string | number | null> = {
-            [suggestion.field]: coerceValue(suggestion.suggestedValue, suggestion.field),
-            updated_at: new Date().toISOString()
+            [suggestion.field]: coerceValue(
+              suggestion.suggestedValue,
+              suggestion.field,
+            ),
+            updated_at: new Date().toISOString(),
           };
 
           let tableName: string;
@@ -187,38 +211,44 @@ export function AutomatedUpdatePage() {
             .eq("id", suggestion.entityId);
 
           if (error) {
-            throw new Error(`Failed to update ${suggestion.type} "${suggestion.entityName}": ${error.message}`);
+            throw new Error(
+              `Failed to update ${suggestion.type} "${suggestion.entityName}": ${error.message}`,
+            );
           }
 
           return {
             success: true,
             name: `${suggestion.entityName} (${suggestion.field})`,
-            suggestion
+            suggestion,
           };
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-          console.error(`Error processing suggestion for ${suggestion.entityName}:`, error);
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error occurred";
+          console.error(
+            `Error processing suggestion for ${suggestion.entityName}:`,
+            error,
+          );
           return {
             success: false,
             error: errorMessage,
-            suggestion
+            suggestion,
           };
         }
       });
 
       // Wait for all updates to complete
       const results = await Promise.all(updatePromises);
-      
+
       // Separate successful and failed results
       const successful = results
-        .filter(result => result.success)
-        .map(result => result.name as string);
-      
+        .filter((result) => result.success)
+        .map((result) => result.name as string);
+
       const failed = results
-        .filter(result => !result.success)
-        .map(result => ({
+        .filter((result) => !result.success)
+        .map((result) => ({
           suggestion: result.suggestion,
-          error: result.error as string
+          error: result.error as string,
         }));
 
       // Provide success/error feedback
@@ -226,11 +256,15 @@ export function AutomatedUpdatePage() {
         alert(`Successfully updated ${successful.length} fields.`);
       } else {
         if (successful.length > 0) {
-          alert(`Partially successful: ${successful.length} updates applied, ${failed.length} failed. Check console for details.`);
+          alert(
+            `Partially successful: ${successful.length} updates applied, ${failed.length} failed. Check console for details.`,
+          );
         } else {
-          alert(`All ${failed.length} updates failed. Check console for details.`);
+          alert(
+            `All ${failed.length} updates failed. Check console for details.`,
+          );
         }
-        
+
         // Log detailed error information
         console.error("Failed suggestions:", failed);
       }
@@ -239,7 +273,8 @@ export function AutomatedUpdatePage() {
       setSuggestions([]);
       setInputText("");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
       setError(`Failed to apply updates: ${errorMessage}`);
       console.error("Error applying suggestions:", error);
     } finally {
@@ -306,18 +341,6 @@ export function AutomatedUpdatePage() {
     );
   }
 
-  if (!user) {
-    return (
-      <DashboardLayout>
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Please sign in to use automated updates
-          </h2>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
@@ -332,7 +355,8 @@ export function AutomatedUpdatePage() {
                 AI-Powered Data Updates
               </h2>
               <p className="text-gray-600">
-                Automatically extract and update existing project information using AI
+                Automatically extract and update existing project information
+                using AI
               </p>
             </div>
           </div>
@@ -350,7 +374,10 @@ export function AutomatedUpdatePage() {
                   </li>
                   <li>2. Optionally add instructions on what to extract</li>
                   <li>3. Click "Process with AI" and wait for analysis</li>
-                  <li>4. Review AI-generated update suggestions for existing records</li>
+                  <li>
+                    4. Review AI-generated update suggestions for existing
+                    records
+                  </li>
                   <li>5. Approve or reject each suggested update</li>
                   <li>6. Apply approved updates to your existing projects</li>
                 </ul>
@@ -449,8 +476,8 @@ export function AutomatedUpdatePage() {
                         isApproved
                           ? "border-green-300 bg-green-50"
                           : isRejected
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-200 bg-white"
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-200 bg-white"
                       }`}
                     >
                       <div className="flex items-start justify-between">
@@ -489,7 +516,8 @@ export function AutomatedUpdatePage() {
                                     );
                                   }
 
-                                  return typeof suggestion.currentValue === "object"
+                                  return typeof suggestion.currentValue ===
+                                    "object"
                                     ? JSON.stringify(suggestion.currentValue)
                                     : String(suggestion.currentValue);
                                 })()}

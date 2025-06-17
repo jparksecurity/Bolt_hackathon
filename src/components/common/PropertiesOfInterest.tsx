@@ -34,7 +34,12 @@ interface Property {
   expected_monthly_cost?: string | null;
   contract_term?: string | null;
   availability?: string | null;
-  lease_type?: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | null;
+  lease_type?:
+    | "Direct Lease"
+    | "Sublease"
+    | "Sub-sublease"
+    | "Coworking"
+    | null;
   lease_structure?: "NNN" | "Full Service" | null;
   current_state?:
     | "Available"
@@ -43,7 +48,13 @@ interface Property {
     | "On Hold"
     | "Declined"
     | null;
-  condition?: "Plug & Play" | "Built-out" | "White Box" | "Shell Space" | "Turnkey" | null;
+  condition?:
+    | "Plug & Play"
+    | "Built-out"
+    | "White Box"
+    | "Shell Space"
+    | "Turnkey"
+    | null;
   misc_notes?: string | null;
   virtual_tour_url?: string | null;
   suggestion?: string | null;
@@ -77,7 +88,13 @@ interface PropertyFormData {
     | "On Hold"
     | "Declined"
     | "";
-  condition: "Plug & Play" | "Built-out" | "White Box" | "Shell Space" | "Turnkey" | "";
+  condition:
+    | "Plug & Play"
+    | "Built-out"
+    | "White Box"
+    | "Shell Space"
+    | "Turnkey"
+    | "";
   misc_notes: string;
   virtual_tour_url: string;
   suggestion: string;
@@ -237,10 +254,15 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
   const openEditModal = (property: Property) => {
     // Convert UTC datetime to local datetime-local format (YYYY-MM-DDTHH:MM)
-    const datetimeLocal = property.tour_datetime 
-      ? new Date(new Date(property.tour_datetime).getTime() - new Date(property.tour_datetime).getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+    const datetimeLocal = property.tour_datetime
+      ? new Date(
+          new Date(property.tour_datetime).getTime() -
+            new Date(property.tour_datetime).getTimezoneOffset() * 60000,
+        )
+          .toISOString()
+          .slice(0, 16)
       : "";
-    
+
     setFormData({
       name: property.name,
       address: property.address || "",
@@ -298,8 +320,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         virtual_tour_url: formData.virtual_tour_url.trim() || null,
         suggestion: formData.suggestion.trim() || null,
         flier_url: formData.flier_url.trim() || null,
-        tour_datetime: formData.tour_datetime 
-          ? new Date(formData.tour_datetime).toISOString() 
+        tour_datetime: formData.tour_datetime
+          ? new Date(formData.tour_datetime).toISOString()
           : null,
         tour_location: formData.tour_location.trim() || null,
         tour_status: formData.tour_status || null,
@@ -400,7 +422,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       const encodedAddress = encodeURIComponent(address);
       window.open(
         `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`,
-        "_blank"
+        "_blank",
       );
     }
   };
@@ -424,7 +446,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
             <div className="flex items-center space-x-3 mb-3 flex-wrap">
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                  property.status
+                  property.status,
                 )}`}
               >
                 {property.status.charAt(0).toUpperCase() +
@@ -433,7 +455,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
               {property.condition && (
                 <span
                   className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getConditionColor(
-                    property.condition
+                    property.condition,
                   )}`}
                 >
                   {property.condition}
@@ -482,12 +504,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
               {property.tour_status && (
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getTourStatusColor(
-                    property.tour_status
+                    property.tour_status,
                   )}`}
                 >
                   {React.createElement(
                     getTourStatusIcon(property.tour_status),
-                    { className: "w-3 h-3 mr-1" }
+                    { className: "w-3 h-3 mr-1" },
                   )}
                   {property.tour_status}
                 </span>
@@ -498,14 +520,14 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <div className="flex items-center space-x-2 text-blue-800">
                   <Clock className="w-4 h-4" />
                   <span>
-                    {new Date(property.tour_datetime).toLocaleString('en-US', {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      timeZoneName: 'short'
+                    {new Date(property.tour_datetime).toLocaleString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      timeZoneName: "short",
                     })}
                   </span>
                 </div>
@@ -556,7 +578,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <Building2 className="w-4 h-4 text-purple-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">Ask Rate ( $ /SF)</p>
+                <p className="text-xs text-gray-500 font-medium">
+                  Ask Rate ( $ /SF)
+                </p>
                 <p className="text-sm text-gray-900 font-semibold">
                   {property.price_per_sf}
                 </p>
@@ -570,7 +594,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <Calendar className="w-4 h-4 text-orange-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">$$ / Month - Asking</p>
+                <p className="text-xs text-gray-500 font-medium">
+                  $$ / Month - Asking
+                </p>
                 <p className="text-sm text-gray-900 font-semibold">
                   {property.monthly_cost}
                 </p>
@@ -584,7 +610,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <Calendar className="w-4 h-4 text-teal-600" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">Expected Monthly Cost</p>
+                <p className="text-xs text-gray-500 font-medium">
+                  Expected Monthly Cost
+                </p>
                 <p className="text-sm text-gray-900 font-semibold">
                   {property.expected_monthly_cost}
                 </p>
@@ -629,7 +657,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         <div className="mb-4 flex flex-wrap gap-4">
           {property.lease_type && (
             <div>
-              <p className="text-xs text-gray-500 font-medium mb-1">Lease Type</p>
+              <p className="text-xs text-gray-500 font-medium mb-1">
+                Lease Type
+              </p>
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 {property.lease_type}
               </span>
@@ -637,7 +667,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           )}
           {property.lease_structure && (
             <div>
-              <p className="text-xs text-gray-500 font-medium mb-1">Lease Structure</p>
+              <p className="text-xs text-gray-500 font-medium mb-1">
+                Lease Structure
+              </p>
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                 {property.lease_structure}
               </span>
@@ -645,8 +677,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           )}
           {property.condition && (
             <div>
-              <p className="text-xs text-gray-500 font-medium mb-1">Condition</p>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getConditionColor(property.condition)}`}>
+              <p className="text-xs text-gray-500 font-medium mb-1">
+                Condition
+              </p>
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getConditionColor(property.condition)}`}
+              >
                 {property.condition}
               </span>
             </div>
@@ -842,7 +878,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       type="datetime-local"
                       value={formData.tour_datetime}
                       onChange={(e) =>
-                        setFormData({ ...formData, tour_datetime: e.target.value })
+                        setFormData({
+                          ...formData,
+                          tour_datetime: e.target.value,
+                        })
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />

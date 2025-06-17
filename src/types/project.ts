@@ -1,8 +1,8 @@
 export enum ProjectStatus {
-  ACTIVE = 'Active',
-  PENDING = 'Pending',
-  COMPLETED = 'Completed',
-  ON_HOLD = 'On Hold'
+  ACTIVE = "Active",
+  PENDING = "Pending",
+  COMPLETED = "Completed",
+  ON_HOLD = "On Hold",
 }
 
 export interface BaseProjectData {

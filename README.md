@@ -21,11 +21,13 @@ CLERK_DOMAIN=your-production-domain.clerk.accounts.dev
 ## Local Development
 
 1. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 2. Start Supabase locally (optional for local development):
+
    ```bash
    pnpm run supabase:start
    ```
@@ -38,6 +40,7 @@ CLERK_DOMAIN=your-production-domain.clerk.accounts.dev
 ## Database Setup
 
 The project uses Supabase with the following schema:
+
 - **projects**: Main lease tracking projects (includes public sharing functionality)
 - **project_contacts**: Client contacts for each project
 - **client_requirements**: Categorized requirements per project
@@ -52,6 +55,7 @@ The project uses Supabase with the following schema:
 Apply the complete schema using the consolidated migration file:
 
 1. **Using Supabase CLI** (if available):
+
    ```bash
    supabase db push
    ```
@@ -80,8 +84,8 @@ The remote database has been linked and reset with migrations applied. To update
 1. Connect to your remote database
 2. Update the `clerk_user_id` in the projects table:
    ```sql
-   UPDATE projects 
-   SET clerk_user_id = 'your_actual_clerk_user_id' 
+   UPDATE projects
+   SET clerk_user_id = 'your_actual_clerk_user_id'
    WHERE clerk_user_id = 'user_2yHntOGKi6N4kXscdHcJrYjEpWN';
    ```
 
@@ -92,6 +96,7 @@ The system includes a public sharing feature that allows project owners to gener
 ### How to Use Public Sharing
 
 1. **For Project Owners**:
+
    - Navigate to any project page (`/projects/:id`)
    - Click the "Copy Public Link" button in the header
    - Share the generated URL with clients or stakeholders
@@ -114,8 +119,8 @@ The system includes a public sharing feature that allows project owners to gener
 To revoke public access to a project:
 
 ```sql
-UPDATE projects 
-SET public_share_id = NULL 
+UPDATE projects
+SET public_share_id = NULL
 WHERE id = 'your-project-id';
 ```
 
@@ -124,6 +129,7 @@ WHERE id = 'your-project-id';
 ### Netlify (Primary Deployment)
 
 1. Build the project:
+
    ```bash
    pnpm run build
    ```
@@ -141,6 +147,7 @@ WHERE id = 'your-project-id';
 ### Alternative: Manual Build
 
 1. Build the project:
+
    ```bash
    pnpm run build
    ```

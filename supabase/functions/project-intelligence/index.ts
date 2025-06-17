@@ -3,12 +3,12 @@
 // This enables autocomplete, go to definition, etc.
 
 // Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import { createClient } from 'npm:@supabase/supabase-js@2'
-import { ChatGoogleGenerativeAI } from 'npm:@langchain/google-genai'
-import { z } from 'npm:zod'
-import { corsHeaders } from '../_shared/cors.ts'
-import { createRemoteJWKSet, jwtVerify } from 'npm:jose'
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { ChatGoogleGenerativeAI } from "npm:@langchain/google-genai";
+import { z } from "npm:zod";
+import { corsHeaders } from "../_shared/cors.ts";
+import { createRemoteJWKSet, jwtVerify } from "npm:jose";
 
 // Zod schema as single source of truth
 const UpdateSuggestionSchema = z.object({
@@ -17,47 +17,49 @@ const UpdateSuggestionSchema = z.object({
    * correspond to any record in the database – it is only used for tracking
    * the suggestion in the UI (e.g. as a React key).
    */
-  id: z.string().describe('Unique identifier for this suggestion (not a DB entity id)'),
+  id: z
+    .string()
+    .describe("Unique identifier for this suggestion (not a DB entity id)"),
 
   /**
    * The kind of entity that will be affected when the suggestion is applied.
    * Determines which table the update should target on the frontend.
    */
-  type: z.enum(['project', 'property', 'client_requirement']).describe('Target entity type'),
-
-
+  type: z
+    .enum(["project", "property", "client_requirement"])
+    .describe("Target entity type"),
 
   /**
    * The primary-key ID of the existing entity that should be updated.
    */
-  entityId: z.string().describe('Database id of the entity to update'),
+  entityId: z.string().describe("Database id of the entity to update"),
 
   /**
    * Human-readable name of the entity – e.g. the project title or property
    * name – useful for showing in the UI and for AI reasoning.
    */
-  entityName: z.string().describe('Display name of the entity'),
+  entityName: z.string().describe("Display name of the entity"),
 
   /**
    * The specific field/column that is being suggested for change.
    */
-  field: z.string().describe('Field to be updated'),
+  field: z.string().describe("Field to be updated"),
 
   /**
    * The current value in the database for this field (may be omitted if null
    * or unknown at suggestion-time).
    */
-  currentValue: z.string().optional().describe('Existing value (if any)'),
+  currentValue: z.string().optional().describe("Existing value (if any)"),
 
   /**
    * The value the AI recommends setting.
    */
-  suggestedValue: z.string().describe('AI-proposed new value'),
+  suggestedValue: z.string().describe("AI-proposed new value"),
 
   /**
    * Explanation from the AI about why this change is being proposed.
    */
-  reasoning: z.string().describe('Rationale for the suggestion'),
+  reasoning: z.string().describe("Rationale for the suggestion"),
 });
 
 // Infer TypeScript type from Zod schema
@@ -109,54 +111,64 @@ interface ClientRequirementRecord {
 
 // Request validation schema
 const ProcessRequestSchema = z.object({
-  inputText: z.string().min(1, 'Input text is required'),
+  inputText: z.string().min(1, "Input text is required"),
 });
 
-const generateAISuggestions = async (text: string, projects: ProjectRecord[], properties: PropertyRecord[], clientRequirements: ClientRequirementRecord[]): Promise<UpdateSuggestion[]> => {
-  
+const generateAISuggestions = async (
+  text: string,
+  projects: ProjectRecord[],
+  properties: PropertyRecord[],
+  clientRequirements: ClientRequirementRecord[],
+): Promise<UpdateSuggestion[]> => {
   // Initialize LangChain with Google Generative AI
   const model = new ChatGoogleGenerativeAI({
-    model: 'gemini-2.5-flash-preview-05-20',
-    apiKey: Deno.env.get('GOOGLE_API_KEY') ?? '',
+    model: "gemini-2.5-flash-preview-05-20",
+    apiKey: Deno.env.get("GOOGLE_API_KEY") ?? "",
     temperature: 0,
   });
 
   // Create structured output chain
-  const structuredModel = model.withStructuredOutput(UpdateSuggestionsArraySchema);
+  const structuredModel = model.withStructuredOutput(
+    UpdateSuggestionsArraySchema,
+  );
 
   // Create streamlined context with only fields useful for AI suggestions
   const context = {
     projects: projects.map((project) => {
       // Get all related data for this specific project
-      const projectProperties = properties.filter((p) => p.project_id === project.id);
-      const projectRequirements = clientRequirements.filter((cr) => cr.project_id === project.id);
+      const projectProperties = properties.filter(
+        (p) => p.project_id === project.id,
+      );
+      const projectRequirements = clientRequirements.filter(
+        (cr) => cr.project_id === project.id,
+      );
 
       return {
         // Essential project info
         id: project.id,
         title: project.title,
         status: project.status,
-        
+
         // Contact information (commonly extracted from text)
         company_name: project.company_name,
         contact_name: project.contact_name,
         contact_email: project.contact_email,
         contact_phone: project.contact_phone,
         contact_title: project.contact_title,
-        
+
         // Timeline (commonly mentioned in communications)
         desired_move_in_date: project.desired_move_in_date,
         start_date: project.start_date,
-        
+
         // Financial (commonly extracted)
         expected_fee: project.expected_fee,
         broker_commission: project.broker_commission,
-        
+
         // Requirements
         expected_headcount: project.expected_headcount,
-        
+
         // Related data - only essential fields
-        properties: projectProperties.map(p => ({
+        properties: projectProperties.map((p) => ({
           id: p.id,
           name: p.name,
           address: p.address,
@@ -170,16 +182,16 @@ const generateAISuggestions = async (text: string, projects: ProjectRecord[], pr
           current_state: p.current_state,
           availability: p.availability,
           tour_status: p.tour_status,
-          tour_datetime: p.tour_datetime
+          tour_datetime: p.tour_datetime,
         })),
-        
-        client_requirements: projectRequirements.map(cr => ({
+
+        client_requirements: projectRequirements.map((cr) => ({
           id: cr.id,
           category: cr.category,
-          requirement_text: cr.requirement_text
-        }))
+          requirement_text: cr.requirement_text,
+        })),
       };
-    })
+    }),
   };
 
   const prompt = `You are an AI assistant specialized in commercial real estate project management. Analyze the provided text and suggest intelligent updates to existing project data.
@@ -238,7 +250,7 @@ If you cannot confidently determine the appropriate entityId for an existing ent
     const suggestions = await structuredModel.invoke(prompt);
     return suggestions;
   } catch (error) {
-    console.error('Error calling LangChain structured output:', error);
+    console.error("Error calling LangChain structured output:", error);
     // Fallback to empty suggestions if AI fails
     return [];
   }
@@ -247,60 +259,61 @@ If you cannot confidently determine the appropriate entityId for an existing ent
 Deno.serve(async (req) => {
   try {
     // This is needed if you're planning to invoke your function from a browser.
-    if (req.method === 'OPTIONS') {
-      return new Response('ok', { headers: corsHeaders })
+    if (req.method === "OPTIONS") {
+      return new Response("ok", { headers: corsHeaders });
     }
 
-    if (req.method !== 'POST') {
-      return new Response(
-        JSON.stringify({ error: 'Method not allowed' }),
-        { 
-          status: 405,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        },
-      );
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Verify Clerk JWT manually since Edge Functions don't support third-party auth
-    const authHeader = req.headers.get('Authorization');
+    const authHeader = req.headers.get("Authorization");
     let clerkUserId: string | null = null;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.slice(7); // Remove 'Bearer ' prefix
-      
+
       // Get potential Clerk domains from environment
-      const clerkDomain = Deno.env.get('CLERK_DOMAIN');
-      const clerkDomain2 = Deno.env.get('CLERK_DOMAIN_2'); // Second instance
-      
+      const clerkDomain = Deno.env.get("CLERK_DOMAIN");
+      const clerkDomain2 = Deno.env.get("CLERK_DOMAIN_2"); // Second instance
+
       const domainsToTry = [clerkDomain, clerkDomain2].filter(Boolean);
-      
+
       if (domainsToTry.length === 0) {
         return new Response(
-          JSON.stringify({ error: 'No Clerk domains configured' }),
-          { 
+          JSON.stringify({ error: "No Clerk domains configured" }),
+          {
             status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           },
         );
       }
-      
+
       let lastError: Error | null = null;
-      
+
       // Try each Clerk domain until one works
       for (const domain of domainsToTry) {
         try {
           console.log(`Attempting to verify JWT with Clerk domain: ${domain}`);
-          
+
           // Verify the JWT with Clerk's JWKS
           const issuer = `https://${domain}`;
-          const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
-          
+          const jwks = createRemoteJWKSet(
+            new URL(`${issuer}/.well-known/jwks.json`),
+          );
+
           const { payload } = await jwtVerify(token, jwks, {
             issuer,
           });
-          
+
           clerkUserId = payload.sub || null;
-          console.log(`Successfully verified Clerk JWT for user: ${clerkUserId} using domain: ${domain}`);
+          console.log(
+            `Successfully verified Clerk JWT for user: ${clerkUserId} using domain: ${domain}`,
+          );
           break; // Success, exit the loop
         } catch (error) {
           console.error(`Failed to verify JWT with domain ${domain}:`, error);
@@ -308,15 +321,15 @@ Deno.serve(async (req) => {
           continue; // Try the next domain
         }
       }
-      
+
       // If all domains failed, return error
       if (!clerkUserId && lastError) {
-        console.error('All Clerk domains failed JWT verification:', lastError);
+        console.error("All Clerk domains failed JWT verification:", lastError);
         return new Response(
-          JSON.stringify({ error: 'Invalid or expired JWT token' }),
-          { 
+          JSON.stringify({ error: "Invalid or expired JWT token" }),
+          {
             status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           },
         );
       }
@@ -324,26 +337,28 @@ Deno.serve(async (req) => {
 
     // Create Supabase client with optional auth context
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      clerkUserId ? {
-        accessToken: async () => authHeader?.slice(7) || null,
-      } : {}
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      clerkUserId
+        ? {
+            accessToken: async () => authHeader?.slice(7) || null,
+          }
+        : {},
     );
 
     // Parse and validate request body
     const requestBody = await req.json();
     const parseResult = ProcessRequestSchema.safeParse(requestBody);
-    
+
     if (!parseResult.success) {
       return new Response(
-        JSON.stringify({ 
-          error: 'Invalid request body',
-          details: parseResult.error.issues 
+        JSON.stringify({
+          error: "Invalid request body",
+          details: parseResult.error.issues,
         }),
-        { 
+        {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -352,23 +367,23 @@ Deno.serve(async (req) => {
 
     // First get non-deleted projects to get their IDs
     const projectsResult = await supabaseClient
-      .from('projects')
-      .select('*')
-      .is('deleted_at', null);
+      .from("projects")
+      .select("*")
+      .is("deleted_at", null);
 
     if (projectsResult.error) {
-      console.error('Error fetching projects:', projectsResult.error);
+      console.error("Error fetching projects:", projectsResult.error);
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch projects' }),
-        { 
+        JSON.stringify({ error: "Failed to fetch projects" }),
+        {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
 
     const projects = projectsResult.data || [];
-    const projectIds = projects.map(p => p.id);
+    const projectIds = projects.map((p) => p.id);
 
     // If no projects found, return empty results
     if (projectIds.length === 0) {
@@ -379,46 +394,49 @@ Deno.serve(async (req) => {
         input_length: inputText.length,
       };
 
-      return new Response(
-        JSON.stringify(data),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        },
-      );
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Query related data only for non-deleted projects
-    const [
-      propertiesResult, 
-      clientRequirementsResult
-    ] = await Promise.all([
-      supabaseClient.from('properties').select('*').in('project_id', projectIds),
-      supabaseClient.from('client_requirements').select('*').in('project_id', projectIds)
+    const [propertiesResult, clientRequirementsResult] = await Promise.all([
+      supabaseClient
+        .from("properties")
+        .select("*")
+        .in("project_id", projectIds),
+      supabaseClient
+        .from("client_requirements")
+        .select("*")
+        .in("project_id", projectIds),
     ]);
 
     // Check for errors in the related data queries
     const errors = [
       propertiesResult.error,
-      clientRequirementsResult.error
+      clientRequirementsResult.error,
     ].filter(Boolean);
 
     if (errors.length > 0) {
-      console.error('Error fetching related data:', errors);
+      console.error("Error fetching related data:", errors);
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch related project data', details: errors }),
-        { 
+        JSON.stringify({
+          error: "Failed to fetch related project data",
+          details: errors,
+        }),
+        {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
 
     // Generate AI-powered suggestions based on the input text and all project data
     const suggestions = await generateAISuggestions(
-      inputText, 
-      projects, 
-      propertiesResult.data || [], 
-      clientRequirementsResult.data || []
+      inputText,
+      projects,
+      propertiesResult.data || [],
+      clientRequirementsResult.data || [],
     );
 
     const data = {
@@ -428,24 +446,20 @@ Deno.serve(async (req) => {
       input_length: inputText.length,
     };
 
-    return new Response(
-      JSON.stringify(data),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      },
-    );
-
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error('Error processing request:', error);
-    
+    console.error("Error processing request:", error);
+
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+      JSON.stringify({
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
       }),
-      { 
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   }

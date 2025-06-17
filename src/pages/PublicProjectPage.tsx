@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Eye, Lock } from 'lucide-react';
-import { useSupabaseClient } from '../services/supabase';
-import { BaseProjectData } from '../types/project';
-import { Header } from '../components/layout/Header';
-import { ProjectHeader } from '../components/common/ProjectHeader';
-import { RecentUpdates } from '../components/common/RecentUpdates';
-import { PropertiesOfInterest } from '../components/common/PropertiesOfInterest';
-import { ProjectRoadmap } from '../components/common/ProjectRoadmap';
-import { ProjectDocuments } from '../components/common/ProjectDocuments';
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { Eye, Lock } from "lucide-react";
+import { useSupabaseClient } from "../services/supabase";
+import { BaseProjectData } from "../types/project";
+import { Header } from "../components/layout/Header";
+import { ProjectHeader } from "../components/common/ProjectHeader";
+import { RecentUpdates } from "../components/common/RecentUpdates";
+import { PropertiesOfInterest } from "../components/common/PropertiesOfInterest";
+import { ProjectRoadmap } from "../components/common/ProjectRoadmap";
+import { ProjectDocuments } from "../components/common/ProjectDocuments";
 
 export function PublicProjectPage() {
   const { shareId } = useParams<{ shareId: string }>();
@@ -20,28 +20,29 @@ export function PublicProjectPage() {
   useEffect(() => {
     const fetchProject = async () => {
       if (!shareId) {
-        setError('Invalid share link');
+        setError("Invalid share link");
         setLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
-          .rpc('get_public_project', { share_id: shareId });
+        const { data, error } = await supabase.rpc("get_public_project", {
+          share_id: shareId,
+        });
 
         if (error) {
-          setError('Project not found');
+          setError("Project not found");
           return;
         }
 
         if (!data || data.length === 0) {
-          setError('Project not found or not shared publicly');
+          setError("Project not found or not shared publicly");
           return;
         }
 
         setProject(data[0]);
       } catch {
-        setError('An error occurred while loading the project');
+        setError("An error occurred while loading the project");
       } finally {
         setLoading(false);
       }
@@ -56,7 +57,9 @@ export function PublicProjectPage() {
         <Header>
           <div className="flex items-center space-x-2">
             <Eye className="w-4 h-4 text-blue-600" />
-            <span className="text-sm text-blue-600">Loading shared project...</span>
+            <span className="text-sm text-blue-600">
+              Loading shared project...
+            </span>
           </div>
         </Header>
         <div className="max-w-7xl mx-auto px-6 py-12">
@@ -80,9 +83,12 @@ export function PublicProjectPage() {
         </Header>
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Project not found</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Project not found
+            </h2>
             <p className="text-gray-600 mb-6">
-              {error || 'The project you\'re looking for doesn\'t exist or is not shared publicly.'}
+              {error ||
+                "The project you're looking for doesn't exist or is not shared publicly."}
             </p>
           </div>
         </div>
@@ -96,30 +102,32 @@ export function PublicProjectPage() {
       <Header>
         <div className="flex items-center space-x-2">
           <Eye className="w-4 h-4 text-blue-600" />
-          <span className="text-sm font-medium text-blue-600">Public View - Read Only</span>
+          <span className="text-sm font-medium text-blue-600">
+            Public View - Read Only
+          </span>
         </div>
       </Header>
-      
+
       <div className="max-w-7xl mx-auto">
         <ProjectHeader project={project} readonly={true} shareId={shareId!} />
-        
+
         <div className="p-6">
           {/* Recent Updates - Full Width */}
           <div className="mb-6">
             <RecentUpdates shareId={shareId!} readonly={true} />
           </div>
         </div>
-        
+
         {/* Properties Section - Full Width */}
         <div className="px-6 pb-6">
           <PropertiesOfInterest shareId={shareId!} readonly={true} />
         </div>
-        
+
         {/* Project Roadmap - Full Width */}
         <div className="px-6 pb-6">
           <ProjectRoadmap shareId={shareId!} readonly={true} />
         </div>
-        
+
         {/* Project Documents - Full Width at Bottom */}
         <div className="px-6 pb-6">
           <ProjectDocuments shareId={shareId!} readonly={true} />
@@ -127,4 +135,4 @@ export function PublicProjectPage() {
       </div>
     </div>
   );
-} 
+}

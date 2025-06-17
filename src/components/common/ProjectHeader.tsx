@@ -1,13 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Edit3, Calendar, DollarSign, Info, Building, User, Phone, Mail, MapPin, X } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
-import { useSupabaseClient } from '../../services/supabase';
-import { ProjectStatus, BaseProjectData } from '../../types/project';
-import { useProjectData } from '../../hooks/useProjectData';
-import { ClientRequirementsSection } from './ClientRequirementsSection';
-import { Modal } from '../ui/Modal';
-import { FormButton } from '../ui/FormButton';
-import { formatDate } from '../../utils/dateUtils';
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Edit3,
+  Calendar,
+  DollarSign,
+  Info,
+  Building,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  X,
+} from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
+import { useSupabaseClient } from "../../services/supabase";
+import { ProjectStatus, BaseProjectData } from "../../types/project";
+import { useProjectData } from "../../hooks/useProjectData";
+import { ClientRequirementsSection } from "./ClientRequirementsSection";
+import { Modal } from "../ui/Modal";
+import { FormButton } from "../ui/FormButton";
+import { formatDate } from "../../utils/dateUtils";
 
 interface ProjectHeaderProps {
   project: BaseProjectData;
@@ -47,50 +58,50 @@ interface RequirementFormData {
   requirement_text: string;
 }
 
-export const ProjectHeader: React.FC<ProjectHeaderProps> = ({ 
-  project, 
-  onProjectUpdate, 
-  readonly = false, 
-  shareId 
+export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
+  project,
+  onProjectUpdate,
+  readonly = false,
+  shareId,
 }) => {
   const { user } = useUser();
   const supabase = useSupabaseClient();
   const [showTooltip, setShowTooltip] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactFormData, setContactFormData] = useState<ContactFormData>({
-    name: '',
-    title: '',
-    phone: '',
-    email: ''
+    name: "",
+    title: "",
+    phone: "",
+    email: "",
   });
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  
+
   const [projectFormData, setProjectFormData] = useState<ProjectFormData>({
-    title: '',
+    title: "",
     status: ProjectStatus.ACTIVE,
-    start_date: '',
-    desired_move_in_date: '',
-    company_name: '',
-    expected_headcount: '',
-    expected_fee: '',
-    broker_commission: '',
-    commission_paid_by: '',
-    payment_due: ''
+    start_date: "",
+    desired_move_in_date: "",
+    company_name: "",
+    expected_headcount: "",
+    expected_fee: "",
+    broker_commission: "",
+    commission_paid_by: "",
+    payment_due: "",
   });
 
   // Contact data is now directly in project object
 
-  const { 
-    data: publicRequirements, 
+  const {
+    data: publicRequirements,
     loading: publicRequirementsLoading,
-    refetch: refetchRequirements
-  } = useProjectData<Requirement>({ 
+    refetch: refetchRequirements,
+  } = useProjectData<Requirement>({
     shareId: readonly && shareId ? shareId : undefined,
     projectId: !readonly ? project.id : undefined,
-    dataType: 'requirements' 
+    dataType: "requirements",
   });
 
   const fetchRequirements = useCallback(async () => {
@@ -112,14 +123,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     setProjectFormData({
       title: project.title,
       status: project.status,
-      start_date: project.start_date || '',
-      desired_move_in_date: project.desired_move_in_date || '',
-      company_name: project.company_name || '',
-      expected_headcount: project.expected_headcount || '',
-      expected_fee: project.expected_fee?.toString() || '',
-      broker_commission: project.broker_commission?.toString() || '',
-      commission_paid_by: project.commission_paid_by || '',
-      payment_due: project.payment_due || ''
+      start_date: project.start_date || "",
+      desired_move_in_date: project.desired_move_in_date || "",
+      company_name: project.company_name || "",
+      expected_headcount: project.expected_headcount || "",
+      expected_fee: project.expected_fee?.toString() || "",
+      broker_commission: project.broker_commission?.toString() || "",
+      commission_paid_by: project.commission_paid_by || "",
+      payment_due: project.payment_due || "",
     });
   };
 
@@ -142,46 +153,53 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         desired_move_in_date: projectFormData.desired_move_in_date || null,
         company_name: projectFormData.company_name.trim() || null,
         expected_headcount: projectFormData.expected_headcount.trim() || null,
-        expected_fee: projectFormData.expected_fee ? parseFloat(projectFormData.expected_fee) : null,
-        broker_commission: projectFormData.broker_commission ? parseFloat(projectFormData.broker_commission) : null,
+        expected_fee: projectFormData.expected_fee
+          ? parseFloat(projectFormData.expected_fee)
+          : null,
+        broker_commission: projectFormData.broker_commission
+          ? parseFloat(projectFormData.broker_commission)
+          : null,
         commission_paid_by: projectFormData.commission_paid_by.trim() || null,
         payment_due: projectFormData.payment_due.trim() || null,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       const { error } = await supabase
-        .from('projects')
+        .from("projects")
         .update(updateData)
-        .eq('id', project.id);
+        .eq("id", project.id);
 
       if (error) throw error;
 
       setIsProjectModalOpen(false);
       onProjectUpdate?.();
     } catch {
-      alert('Error updating project. Please try again.');
+      alert("Error updating project. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleRequirementSave = async (formData: RequirementFormData, editingId?: string) => {
+  const handleRequirementSave = async (
+    formData: RequirementFormData,
+    editingId?: string,
+  ) => {
     const requirementData = {
       project_id: project.id,
       category: formData.category,
-      requirement_text: formData.requirement_text.trim()
+      requirement_text: formData.requirement_text.trim(),
     };
 
     if (editingId) {
       const { error } = await supabase
-        .from('client_requirements')
+        .from("client_requirements")
         .update(requirementData)
-        .eq('id', editingId);
+        .eq("id", editingId);
 
       if (error) throw error;
     } else {
       const { error } = await supabase
-        .from('client_requirements')
+        .from("client_requirements")
         .insert([requirementData]);
 
       if (error) throw error;
@@ -192,9 +210,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   const handleRequirementDelete = async (requirementId: string) => {
     const { error } = await supabase
-      .from('client_requirements')
+      .from("client_requirements")
       .delete()
-      .eq('id', requirementId);
+      .eq("id", requirementId);
 
     if (error) throw error;
     await refetchRequirements();
@@ -202,16 +220,16 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active':
-        return 'status-active';
-      case 'Pending':
-        return 'status-pending';
-      case 'Completed':
-        return 'status-completed';
-      case 'On Hold':
-        return 'status-on-hold';
+      case "Active":
+        return "status-active";
+      case "Pending":
+        return "status-pending";
+      case "Completed":
+        return "status-completed";
+      case "On Hold":
+        return "status-on-hold";
       default:
-        return 'bg-gray-500';
+        return "bg-gray-500";
     }
   };
 
@@ -219,10 +237,10 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   const resetContactForm = () => {
     setContactFormData({
-      name: project.contact_name || '',
-      title: project.contact_title || '',
-      phone: project.contact_phone || '',
-      email: project.contact_email || ''
+      name: project.contact_name || "",
+      title: project.contact_title || "",
+      phone: project.contact_phone || "",
+      email: project.contact_email || "",
     });
   };
 
@@ -237,7 +255,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   const saveContact = async () => {
     if (!contactFormData.name.trim()) return;
-    
+
     setSaving(true);
     try {
       const updateData = {
@@ -245,28 +263,28 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         contact_title: contactFormData.title.trim() || null,
         contact_phone: contactFormData.phone.trim() || null,
         contact_email: contactFormData.email.trim() || null,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       const { error } = await supabase
-        .from('projects')
+        .from("projects")
         .update(updateData)
-        .eq('id', project.id);
+        .eq("id", project.id);
 
       if (error) throw error;
 
       setIsContactModalOpen(false);
       onProjectUpdate?.();
     } catch {
-      alert('Error saving contact. Please try again.');
+      alert("Error saving contact. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
   const deleteContact = async () => {
-    if (!confirm('Are you sure you want to remove this contact?')) return;
-    
+    if (!confirm("Are you sure you want to remove this contact?")) return;
+
     setSaving(true);
     try {
       const updateData = {
@@ -274,18 +292,18 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         contact_title: null,
         contact_phone: null,
         contact_email: null,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       const { error } = await supabase
-        .from('projects')
+        .from("projects")
         .update(updateData)
-        .eq('id', project.id);
+        .eq("id", project.id);
 
       if (error) throw error;
       onProjectUpdate?.();
     } catch {
-      alert('Error removing contact. Please try again.');
+      alert("Error removing contact. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -296,15 +314,22 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       <div className="flex items-start justify-between mb-8">
         <div className="flex-1">
           <div className="flex items-center space-x-4 mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">{project.title}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {project.title}
+            </h1>
             {!readonly && (
-              <button onClick={openProjectModal} className="p-2 text-gray-400 hover:text-gray-800 transition-colors rounded-lg hover:bg-gray-50">
+              <button
+                onClick={openProjectModal}
+                className="p-2 text-gray-400 hover:text-gray-800 transition-colors rounded-lg hover:bg-gray-50"
+              >
                 <Edit3 className="w-5 h-5" />
               </button>
             )}
           </div>
           <div className="flex items-center space-x-4">
-            <span className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(project.status)}`}>
+            <span
+              className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(project.status)}`}
+            >
               {project.status}
             </span>
             {project.company_name && (
@@ -327,7 +352,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <div>
               <p className="text-gray-700 text-sm font-medium">Start Date</p>
               <p className="text-gray-900 font-bold text-lg">
-                {formatDate(project.start_date) || 'Not set'}
+                {formatDate(project.start_date) || "Not set"}
               </p>
             </div>
           </div>
@@ -339,9 +364,11 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <MapPin className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-blue-700 text-sm font-medium">Desired Move-in</p>
+              <p className="text-blue-700 text-sm font-medium">
+                Desired Move-in
+              </p>
               <p className="text-blue-900 font-bold text-lg">
-                {formatDate(project.desired_move_in_date) || 'Not set'}
+                {formatDate(project.desired_move_in_date) || "Not set"}
               </p>
             </div>
           </div>
@@ -353,9 +380,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <DollarSign className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-green-700 text-sm font-medium">Estimated Tenant Fee</p>
+              <p className="text-green-700 text-sm font-medium">
+                Estimated Tenant Fee
+              </p>
               <p className="text-green-900 font-bold text-lg">
-                ${project.expected_fee ? project.expected_fee.toLocaleString() : '0'}
+                $
+                {project.expected_fee
+                  ? project.expected_fee.toLocaleString()
+                  : "0"}
               </p>
             </div>
           </div>
@@ -367,9 +399,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <Info className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-gray-700 text-sm font-medium">Broker Commission</p>
+              <p className="text-gray-700 text-sm font-medium">
+                Broker Commission
+              </p>
               <p className="text-gray-900 font-bold text-lg">
-                ${project.broker_commission ? project.broker_commission.toLocaleString() : '0'}
+                $
+                {project.broker_commission
+                  ? project.broker_commission.toLocaleString()
+                  : "0"}
               </p>
               {project.commission_paid_by && (
                 <p className="text-sm font-semibold text-blue-700 mt-1">
@@ -378,7 +415,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               )}
             </div>
             {project.broker_commission && project.broker_commission > 0 && (
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
@@ -387,10 +424,17 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 {showTooltip && (
                   <div className="absolute bottom-full right-0 mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg z-10">
                     <div className="space-y-1">
-                      <div className="font-medium text-gray-300">Commission Details:</div>
-                      <div>• Amount: ${project.broker_commission?.toLocaleString() || '0'}</div>
-                      <div>• Paid by: {project.commission_paid_by || 'TBD'}</div>
-                      <div>• Payment due: {project.payment_due || 'TBD'}</div>
+                      <div className="font-medium text-gray-300">
+                        Commission Details:
+                      </div>
+                      <div>
+                        • Amount: $
+                        {project.broker_commission?.toLocaleString() || "0"}
+                      </div>
+                      <div>
+                        • Paid by: {project.commission_paid_by || "TBD"}
+                      </div>
+                      <div>• Payment due: {project.payment_due || "TBD"}</div>
                     </div>
                     <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                   </div>
@@ -408,7 +452,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <div>
               <p className="text-gray-700 text-sm font-medium">Head Count</p>
               <p className="text-gray-900 font-bold text-lg">
-                {project.expected_headcount || 'Not set'}
+                {project.expected_headcount || "Not set"}
               </p>
             </div>
           </div>
@@ -444,7 +488,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </div>
           )}
         </div>
-        
+
         {hasContact ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center space-x-3">
@@ -452,8 +496,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 <User className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{project.contact_name}</p>
-                {project.contact_title && <p className="text-sm text-gray-600">{project.contact_title}</p>}
+                <p className="font-semibold text-gray-900">
+                  {project.contact_name}
+                </p>
+                {project.contact_title && (
+                  <p className="text-sm text-gray-600">
+                    {project.contact_title}
+                  </p>
+                )}
               </div>
             </div>
             {project.contact_phone && (
@@ -472,7 +522,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         ) : (
           <div className="text-center py-6">
             <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">No contact information added yet</p>
+            <p className="text-gray-500 mb-4">
+              No contact information added yet
+            </p>
             {!readonly && (
               <button
                 onClick={openContactModal}
@@ -493,7 +545,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         onSave={handleRequirementSave}
         onDelete={handleRequirementDelete}
       />
-      
+
       {/* Project Edit Modal */}
       <Modal
         isOpen={isProjectModalOpen}
@@ -501,7 +553,13 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         title="Edit Project Details"
         size="lg"
       >
-        <form onSubmit={(e) => { e.preventDefault(); saveProject(); }} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveProject();
+          }}
+          className="space-y-6"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -510,7 +568,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <input
                 type="text"
                 value={projectFormData.title}
-                onChange={(e) => setProjectFormData({ ...projectFormData, title: e.target.value })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    title: e.target.value,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
                 required
               />
@@ -521,7 +584,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               </label>
               <select
                 value={projectFormData.status}
-                onChange={(e) => setProjectFormData({ ...projectFormData, status: e.target.value as ProjectStatus })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    status: e.target.value as ProjectStatus,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
               >
                 {Object.values(ProjectStatus).map((status) => (
@@ -538,7 +606,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <input
                 type="date"
                 value={projectFormData.start_date}
-                onChange={(e) => setProjectFormData({ ...projectFormData, start_date: e.target.value })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    start_date: e.target.value,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
               />
             </div>
@@ -549,7 +622,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <input
                 type="date"
                 value={projectFormData.desired_move_in_date}
-                onChange={(e) => setProjectFormData({ ...projectFormData, desired_move_in_date: e.target.value })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    desired_move_in_date: e.target.value,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
               />
             </div>
@@ -560,7 +638,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <input
                 type="text"
                 value={projectFormData.company_name}
-                onChange={(e) => setProjectFormData({ ...projectFormData, company_name: e.target.value })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    company_name: e.target.value,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
                 placeholder="Enter company name"
               />
@@ -572,7 +655,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <input
                 type="text"
                 value={projectFormData.expected_headcount}
-                onChange={(e) => setProjectFormData({ ...projectFormData, expected_headcount: e.target.value })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    expected_headcount: e.target.value,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
                 placeholder="e.g., 75-100 employees"
               />
@@ -584,7 +672,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <input
                 type="number"
                 value={projectFormData.expected_fee}
-                onChange={(e) => setProjectFormData({ ...projectFormData, expected_fee: e.target.value })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    expected_fee: e.target.value,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
                 min="0"
                 step="0.01"
@@ -598,7 +691,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <input
                 type="number"
                 value={projectFormData.broker_commission}
-                onChange={(e) => setProjectFormData({ ...projectFormData, broker_commission: e.target.value })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    broker_commission: e.target.value,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
                 min="0"
                 step="0.01"
@@ -612,7 +710,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <input
                 type="text"
                 value={projectFormData.commission_paid_by}
-                onChange={(e) => setProjectFormData({ ...projectFormData, commission_paid_by: e.target.value })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    commission_paid_by: e.target.value,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
                 placeholder="e.g., Landlord, Tenant"
               />
@@ -624,19 +727,24 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <input
                 type="text"
                 value={projectFormData.payment_due}
-                onChange={(e) => setProjectFormData({ ...projectFormData, payment_due: e.target.value })}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    payment_due: e.target.value,
+                  })
+                }
                 className="form-input w-full px-4 py-3 rounded-lg"
                 placeholder="e.g., Upon lease signing, 30 days after closing"
               />
             </div>
           </div>
-          
+
           <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
             <FormButton variant="secondary" onClick={closeProjectModal}>
               Cancel
             </FormButton>
-            <FormButton 
-              type="submit" 
+            <FormButton
+              type="submit"
               loading={saving}
               disabled={!projectFormData.title.trim()}
             >
@@ -653,7 +761,13 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         title={hasContact ? "Edit Contact" : "Add Contact"}
         size="md"
       >
-        <form onSubmit={(e) => { e.preventDefault(); saveContact(); }} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveContact();
+          }}
+          className="space-y-4"
+        >
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Contact Name *
@@ -661,13 +775,15 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <input
               type="text"
               value={contactFormData.name}
-              onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
+              onChange={(e) =>
+                setContactFormData({ ...contactFormData, name: e.target.value })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter contact name"
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Title
@@ -675,12 +791,17 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <input
               type="text"
               value={contactFormData.title}
-              onChange={(e) => setContactFormData({ ...contactFormData, title: e.target.value })}
+              onChange={(e) =>
+                setContactFormData({
+                  ...contactFormData,
+                  title: e.target.value,
+                })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., Head of Operations"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Phone
@@ -688,12 +809,17 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <input
               type="tel"
               value={contactFormData.phone}
-              onChange={(e) => setContactFormData({ ...contactFormData, phone: e.target.value })}
+              onChange={(e) =>
+                setContactFormData({
+                  ...contactFormData,
+                  phone: e.target.value,
+                })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="(555) 123-4567"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
@@ -701,18 +827,23 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <input
               type="email"
               value={contactFormData.email}
-              onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
+              onChange={(e) =>
+                setContactFormData({
+                  ...contactFormData,
+                  email: e.target.value,
+                })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="contact@company.com"
             />
           </div>
-          
+
           <div className="flex justify-end space-x-3 pt-4">
             <FormButton variant="secondary" onClick={closeContactModal}>
               Cancel
             </FormButton>
-            <FormButton 
-              type="submit" 
+            <FormButton
+              type="submit"
               loading={saving}
               disabled={!contactFormData.name.trim()}
             >

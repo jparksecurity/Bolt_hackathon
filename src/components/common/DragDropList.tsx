@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   DndContext,
   closestCenter,
@@ -7,17 +7,15 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
+} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
 
 interface DragDropItem {
   id: string;
@@ -30,7 +28,11 @@ interface SortableItemProps {
   disabled?: boolean;
 }
 
-const SortableItem: React.FC<SortableItemProps> = ({ id, children, disabled = false }) => {
+const SortableItem: React.FC<SortableItemProps> = ({
+  id,
+  children,
+  disabled = false,
+}) => {
   const {
     attributes,
     listeners,
@@ -53,16 +55,16 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, children, disabled = fa
           {...attributes}
           {...listeners}
           className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-10 p-1 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100 ${
-            disabled ? 'cursor-not-allowed opacity-30' : 'cursor-grab active:cursor-grabbing'
+            disabled
+              ? "cursor-not-allowed opacity-30"
+              : "cursor-grab active:cursor-grabbing"
           }`}
           disabled={disabled}
           aria-label="Drag to reorder"
         >
           <GripVertical className="w-4 h-4" />
         </button>
-        <div className="pl-8 w-full">
-          {children}
-        </div>
+        <div className="pl-8 w-full">{children}</div>
       </div>
     </div>
   );
@@ -89,7 +91,7 @@ export function DragDropList<T extends DragDropItem>({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Sort items by order_index, fallback to array index
@@ -120,7 +122,10 @@ export function DragDropList<T extends DragDropItem>({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={sortedItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={sortedItems.map((item) => item.id)}
+        strategy={verticalListSortingStrategy}
+      >
         <div className="space-y-3">
           {sortedItems.map((item, index) => (
             <SortableItem key={item.id} id={item.id} disabled={disabled}>
@@ -131,4 +136,4 @@ export function DragDropList<T extends DragDropItem>({
       </SortableContext>
     </DndContext>
   );
-} 
+}

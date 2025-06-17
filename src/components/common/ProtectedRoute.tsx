@@ -1,15 +1,15 @@
-import React from 'react';
-import { useUser } from '@clerk/clerk-react';
-import { Navigate } from 'react-router-dom';
+import React from "react";
+import { useUser } from "@clerk/clerk-react";
+import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   redirectTo?: string;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  redirectTo = '/' 
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  redirectTo = "/",
 }) => {
   const { isLoaded, user } = useUser();
 
@@ -29,4 +29,4 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Render protected content
   return <>{children}</>;
-}; 
+};

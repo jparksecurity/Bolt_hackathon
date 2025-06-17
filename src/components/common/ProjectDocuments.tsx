@@ -31,20 +31,20 @@ interface Document {
   file_type: string;
   storage_path?: string | null;
   document_url?: string | null;
-  source_type: 'upload' | 'google_drive' | 'onedrive' | 'url';
+  source_type: "upload" | "google_drive" | "onedrive" | "url";
   created_at: string;
   order_index?: number | null;
 }
 
 const getFileIcon = (fileType: string, sourceType: string) => {
   // Show different icons based on source
-  if (sourceType === 'google_drive') {
+  if (sourceType === "google_drive") {
     return { icon: Globe, color: "text-blue-500" };
   }
-  if (sourceType === 'onedrive') {
+  if (sourceType === "onedrive") {
     return { icon: Globe, color: "text-blue-600" };
   }
-  if (sourceType === 'url') {
+  if (sourceType === "url") {
     return { icon: Link, color: "text-purple-500" };
   }
 
@@ -73,15 +73,15 @@ const getFileIcon = (fileType: string, sourceType: string) => {
 
 const getSourceLabel = (sourceType: string) => {
   switch (sourceType) {
-    case 'google_drive':
-      return 'Google Drive';
-    case 'onedrive':
-      return 'OneDrive';
-    case 'url':
-      return 'External Link';
-    case 'upload':
+    case "google_drive":
+      return "Google Drive";
+    case "onedrive":
+      return "OneDrive";
+    case "url":
+      return "External Link";
+    case "upload":
     default:
-      return 'Uploaded';
+      return "Uploaded";
   }
 };
 
@@ -94,33 +94,40 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   const supabase = useSupabaseClient();
 
   // Use unified data hook for both public and authenticated modes
-  const { 
-    data: documents, 
-    loading, 
-    refetch: fetchDocuments 
-  } = useProjectData<Document>({ 
-    projectId, 
-    shareId, 
-    dataType: 'documents' 
+  const {
+    data: documents,
+    loading,
+    refetch: fetchDocuments,
+  } = useProjectData<Document>({
+    projectId,
+    shareId,
+    dataType: "documents",
   });
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
-  const [renamingDocument, setRenamingDocument] = useState<Document | null>(null);
+  const [renamingDocument, setRenamingDocument] = useState<Document | null>(
+    null,
+  );
   const [newDocumentName, setNewDocumentName] = useState("");
   const [renaming, setRenaming] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Form state for adding documents
   const [documentForm, setDocumentForm] = useState({
-    name: '',
-    url: '',
-    sourceType: 'google_drive' as 'google_drive' | 'onedrive' | 'url'
+    name: "",
+    url: "",
+    sourceType: "google_drive" as "google_drive" | "onedrive" | "url",
   });
 
   const addDocumentByUrl = async () => {
     try {
-      if (!user || readonly || !documentForm.name.trim() || !documentForm.url.trim()) {
+      if (
+        !user ||
+        readonly ||
+        !documentForm.name.trim() ||
+        !documentForm.url.trim()
+      ) {
         return;
       }
 
@@ -130,15 +137,16 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       try {
         new URL(documentForm.url);
       } catch {
-        alert('Please enter a valid URL');
+        alert("Please enter a valid URL");
         return;
       }
 
       // Determine file type from URL or name
       const urlPath = new URL(documentForm.url).pathname;
-      const extension = urlPath.split('.').pop()?.toLowerCase() || 
-                      documentForm.name.split('.').pop()?.toLowerCase() || 
-                      'unknown';
+      const extension =
+        urlPath.split(".").pop()?.toLowerCase() ||
+        documentForm.name.split(".").pop()?.toLowerCase() ||
+        "unknown";
 
       // Save document metadata to database
       const { error: dbError } = await supabase
@@ -157,9 +165,9 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       // Refresh documents list
       await fetchDocuments();
       setShowAddModal(false);
-      setDocumentForm({ name: '', url: '', sourceType: 'google_drive' });
+      setDocumentForm({ name: "", url: "", sourceType: "google_drive" });
     } catch (error) {
-      console.error('Error adding document:', error);
+      console.error("Error adding document:", error);
       alert("Failed to add document. Please try again.");
     } finally {
       setSaving(false);
@@ -167,7 +175,10 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   };
 
   const deleteDocument = async (doc: Document) => {
-    if (readonly || !confirm(`Are you sure you want to delete "${doc.name}"?`)) {
+    if (
+      readonly ||
+      !confirm(`Are you sure you want to delete "${doc.name}"?`)
+    ) {
       return;
     }
 
@@ -175,14 +186,14 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       if (!user) return;
 
       // For uploaded files, also delete from storage
-      if (doc.source_type === 'upload' && doc.storage_path) {
+      if (doc.source_type === "upload" && doc.storage_path) {
         const { error: storageError } = await supabase.storage
           .from("project-documents")
           .remove([doc.storage_path]);
 
         if (storageError) {
           // Storage deletion failed, but continue with database deletion
-          console.warn('Storage deletion failed:', storageError);
+          console.warn("Storage deletion failed:", storageError);
         }
       }
 
@@ -197,7 +208,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       // Refresh documents list
       await fetchDocuments();
     } catch (error) {
-      console.error('Error deleting document:', error);
+      console.error("Error deleting document:", error);
       alert("Failed to delete document. Please try again.");
     }
   };
@@ -220,7 +231,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       setRenamingDocument(null);
       setNewDocumentName("");
     } catch (error) {
-      console.error('Error renaming document:', error);
+      console.error("Error renaming document:", error);
       alert("Failed to rename document. Please try again.");
     } finally {
       setRenaming(false);
@@ -241,7 +252,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
   const handleReorder = async (oldIndex: number, newIndex: number) => {
     if (readonly) return;
-    
+
     // Optimistically update the UI
     const sortedDocuments = [...documents].sort((a, b) => {
       const aOrder = a.order_index ?? 999999;
@@ -256,16 +267,16 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     // Update order_index for all documents
     const updates = reorderedDocuments.map((document, index) => ({
       id: document.id,
-      order_index: index
+      order_index: index,
     }));
 
     try {
       // Update each document's order_index in the database
       for (const update of updates) {
         const { error } = await supabase
-          .from('project_documents')
+          .from("project_documents")
           .update({ order_index: update.order_index })
-          .eq('id', update.id);
+          .eq("id", update.id);
 
         if (error) throw error;
       }
@@ -273,8 +284,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       // Refresh the data
       await fetchDocuments();
     } catch (error) {
-      console.error('Error reordering documents:', error);
-      alert('Error reordering documents. Please try again.');
+      console.error("Error reordering documents:", error);
+      alert("Error reordering documents. Please try again.");
       // Refresh on error to revert optimistic update
       await fetchDocuments();
     }
@@ -284,12 +295,12 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     try {
       if (doc.document_url) {
         // Open the document in a new tab
-        window.open(doc.document_url, '_blank', 'noopener,noreferrer');
+        window.open(doc.document_url, "_blank", "noopener,noreferrer");
       } else {
         alert("Document URL is not available.");
       }
     } catch (error) {
-      console.error('Error opening document:', error);
+      console.error("Error opening document:", error);
       alert("Failed to open document. Please try again.");
     }
   };
@@ -326,7 +337,9 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
             No documents yet
           </h4>
           <p className="text-gray-600 mb-6">
-            {readonly ? "No documents have been connected for this project" : "Connect documents from Google Drive, OneDrive, or add external links"}
+            {readonly
+              ? "No documents have been connected for this project"
+              : "Connect documents from Google Drive, OneDrive, or add external links"}
           </p>
           {!readonly && (
             <button
@@ -342,7 +355,10 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         // Static view for readonly mode
         <div className="space-y-3">
           {documents.map((doc) => {
-            const { icon: IconComponent, color } = getFileIcon(doc.file_type, doc.source_type);
+            const { icon: IconComponent, color } = getFileIcon(
+              doc.file_type,
+              doc.source_type,
+            );
             return (
               <div
                 key={doc.id}
@@ -355,7 +371,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                       {doc.name}
                     </span>
                     <div className="text-xs text-gray-500">
-                      {getSourceLabel(doc.source_type)} • {new Date(doc.created_at).toLocaleDateString()}
+                      {getSourceLabel(doc.source_type)} •{" "}
+                      {new Date(doc.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -374,12 +391,12 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         </div>
       ) : (
         // Interactive view for authenticated mode
-        <DragDropList
-          items={documents}
-          onReorder={handleReorder}
-        >
+        <DragDropList items={documents} onReorder={handleReorder}>
           {(doc) => {
-            const { icon: IconComponent, color } = getFileIcon(doc.file_type, doc.source_type);
+            const { icon: IconComponent, color } = getFileIcon(
+              doc.file_type,
+              doc.source_type,
+            );
             return (
               <div
                 key={doc.id}
@@ -392,7 +409,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                       {doc.name}
                     </span>
                     <div className="text-xs text-gray-500">
-                      {getSourceLabel(doc.source_type)} • {new Date(doc.created_at).toLocaleDateString()}
+                      {getSourceLabel(doc.source_type)} •{" "}
+                      {new Date(doc.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -449,7 +467,15 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                 </label>
                 <select
                   value={documentForm.sourceType}
-                  onChange={(e) => setDocumentForm({ ...documentForm, sourceType: e.target.value as 'google_drive' | 'onedrive' | 'url' })}
+                  onChange={(e) =>
+                    setDocumentForm({
+                      ...documentForm,
+                      sourceType: e.target.value as
+                        | "google_drive"
+                        | "onedrive"
+                        | "url",
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   disabled={saving}
                 >
@@ -466,7 +492,9 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                 <input
                   type="text"
                   value={documentForm.name}
-                  onChange={(e) => setDocumentForm({ ...documentForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setDocumentForm({ ...documentForm, name: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   placeholder="Enter document name"
                   disabled={saving}
@@ -481,14 +509,16 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                 <input
                   type="url"
                   value={documentForm.url}
-                  onChange={(e) => setDocumentForm({ ...documentForm, url: e.target.value })}
+                  onChange={(e) =>
+                    setDocumentForm({ ...documentForm, url: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   placeholder={
-                    documentForm.sourceType === 'google_drive' 
-                      ? "https://drive.google.com/file/d/..." 
-                      : documentForm.sourceType === 'onedrive'
-                      ? "https://1drv.ms/..."
-                      : "https://example.com/document.pdf"
+                    documentForm.sourceType === "google_drive"
+                      ? "https://drive.google.com/file/d/..."
+                      : documentForm.sourceType === "onedrive"
+                        ? "https://1drv.ms/..."
+                        : "https://example.com/document.pdf"
                   }
                   disabled={saving}
                   required
@@ -496,13 +526,19 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
               </div>
 
               <div className="text-xs text-gray-500">
-                {documentForm.sourceType === 'google_drive' && (
-                  <p>Make sure the Google Drive document is shared with "Anyone with the link can view"</p>
+                {documentForm.sourceType === "google_drive" && (
+                  <p>
+                    Make sure the Google Drive document is shared with "Anyone
+                    with the link can view"
+                  </p>
                 )}
-                {documentForm.sourceType === 'onedrive' && (
-                  <p>Make sure the OneDrive document is shared with "Anyone with the link can view"</p>
+                {documentForm.sourceType === "onedrive" && (
+                  <p>
+                    Make sure the OneDrive document is shared with "Anyone with
+                    the link can view"
+                  </p>
                 )}
-                {documentForm.sourceType === 'url' && (
+                {documentForm.sourceType === "url" && (
                   <p>Enter any publicly accessible document URL</p>
                 )}
               </div>
@@ -517,7 +553,11 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                 </button>
                 <button
                   onClick={addDocumentByUrl}
-                  disabled={saving || !documentForm.name.trim() || !documentForm.url.trim()}
+                  disabled={
+                    saving ||
+                    !documentForm.name.trim() ||
+                    !documentForm.url.trim()
+                  }
                   className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? (
@@ -557,7 +597,10 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
             <div className="p-6">
               <div className="mb-4">
-                <label htmlFor="document-name" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="document-name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Document Name
                 </label>
                 <input
@@ -581,11 +624,15 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                 </button>
                 <button
                   onClick={renameDocument}
-                  disabled={renaming || !newDocumentName.trim() || newDocumentName.trim() === renamingDocument.name}
+                  disabled={
+                    renaming ||
+                    !newDocumentName.trim() ||
+                    newDocumentName.trim() === renamingDocument.name
+                  }
                   className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save className="w-4 h-4" />
-                  <span>{renaming ? 'Renaming...' : 'Rename'}</span>
+                  <span>{renaming ? "Renaming..." : "Rename"}</span>
                 </button>
               </div>
             </div>

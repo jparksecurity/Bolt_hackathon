@@ -1,5 +1,5 @@
-import React, { Component, ReactNode } from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import React, { Component, ReactNode } from "react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface Props {
   children: ReactNode;
@@ -25,11 +25,11 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // Log error to monitoring service in production
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   handleRetry = () => {
@@ -52,12 +52,16 @@ export class ErrorBoundary extends Component<Props, State> {
                 <AlertCircle className="w-6 h-6 text-red-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Something went wrong</h2>
-                <p className="text-sm text-gray-600">An unexpected error occurred</p>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Something went wrong
+                </h2>
+                <p className="text-sm text-gray-600">
+                  An unexpected error occurred
+                </p>
               </div>
             </div>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {process.env.NODE_ENV === "development" && this.state.error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm">
                 <details>
                   <summary className="font-medium text-red-800 cursor-pointer">
@@ -80,7 +84,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <span>Try Again</span>
               </button>
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => (window.location.href = "/")}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Go Home
@@ -93,4 +97,4 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return this.props.children;
   }
-} 
+}

@@ -1,15 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
-import { Share, Check, ArrowLeft } from 'lucide-react';
-import { useSupabaseClient } from '../services/supabase';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { ProjectHeader } from '../components/common/ProjectHeader';
-import { ProjectRoadmap } from '../components/common/ProjectRoadmap';
-import { ProjectDocuments } from '../components/common/ProjectDocuments';
-import { PropertiesOfInterest } from '../components/common/PropertiesOfInterest';
-import { RecentUpdates } from '../components/common/RecentUpdates';
-import { BaseProjectData } from '../types/project';
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
+import { Share, Check, ArrowLeft } from "lucide-react";
+import { useSupabaseClient } from "../services/supabase";
+import { DashboardLayout } from "../components/layout/DashboardLayout";
+import { ProjectHeader } from "../components/common/ProjectHeader";
+import { ProjectRoadmap } from "../components/common/ProjectRoadmap";
+import { ProjectDocuments } from "../components/common/ProjectDocuments";
+import { PropertiesOfInterest } from "../components/common/PropertiesOfInterest";
+import { RecentUpdates } from "../components/common/RecentUpdates";
+import { BaseProjectData } from "../types/project";
 
 interface ProjectData extends BaseProjectData {
   deleted_at?: string | null;
@@ -27,23 +27,23 @@ export function LeaseTrackerPage() {
 
   const fetchProject = useCallback(async () => {
     if (!id) return;
-    
+
     try {
       const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', id)
-        .is('deleted_at', null)
+        .from("projects")
+        .select("*")
+        .eq("id", id)
+        .is("deleted_at", null)
         .single();
 
       if (error) {
-        setError('Failed to load project');
+        setError("Failed to load project");
         return;
       }
 
       setProject(data);
     } catch {
-      setError('An unexpected error occurred');
+      setError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -60,17 +60,17 @@ export function LeaseTrackerPage() {
     }
 
     try {
-      const textArea = document.createElement('textarea');
+      const textArea = document.createElement("textarea");
       textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.opacity = '0';
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
-      
-      const success = document.execCommand('copy');
+
+      const success = document.execCommand("copy");
       document.body.removeChild(textArea);
-      
+
       return success;
     } catch {
       return false;
@@ -87,12 +87,12 @@ export function LeaseTrackerPage() {
       if (shareId) {
         publicUrl = `${window.location.origin}/share/${shareId}`;
         const success = await copyToClipboard(publicUrl);
-        
+
         if (success) {
           setCopySuccess(true);
           setTimeout(() => setCopySuccess(false), 2000);
         } else {
-          alert('Failed to copy link to clipboard. Please try again.');
+          alert("Failed to copy link to clipboard. Please try again.");
         }
         return;
       }
@@ -102,7 +102,7 @@ export function LeaseTrackerPage() {
 
       const success = await copyToClipboard(publicUrl);
       if (!success) {
-        alert('Failed to copy link to clipboard. Please try again.');
+        alert("Failed to copy link to clipboard. Please try again.");
         return;
       }
 
@@ -111,9 +111,9 @@ export function LeaseTrackerPage() {
 
       try {
         const { error } = await supabase
-          .from('projects')
+          .from("projects")
           .update({ public_share_id: shareId })
-          .eq('id', project.id);
+          .eq("id", project.id);
 
         if (!error) {
           setProject({ ...project, public_share_id: shareId });
@@ -121,9 +121,8 @@ export function LeaseTrackerPage() {
       } catch {
         // Link still works since we copied it first
       }
-
     } catch {
-      alert('Failed to create share link. Please try again.');
+      alert("Failed to create share link. Please try again.");
     }
   };
 
@@ -131,7 +130,7 @@ export function LeaseTrackerPage() {
     if (isLoaded && user && id) {
       fetchProject();
     } else if (isLoaded && !user) {
-      navigate('/');
+      navigate("/");
     }
   }, [isLoaded, user, id, navigate, fetchProject]);
 
@@ -145,24 +144,19 @@ export function LeaseTrackerPage() {
     );
   }
 
-  if (!user) {
-    return (
-      <DashboardLayout>
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Please sign in to view this project</h2>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   if (error || !project) {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Project not found</h2>
-          <p className="text-slate-600 mb-6">{error || 'The project you\'re looking for doesn\'t exist or you don\'t have permission to view it.'}</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">
+            Project not found
+          </h2>
+          <p className="text-slate-600 mb-6">
+            {error ||
+              "The project you're looking for doesn't exist or you don't have permission to view it."}
+          </p>
           <button
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate("/projects")}
             className="btn-primary flex items-center space-x-2 mx-auto"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -176,13 +170,13 @@ export function LeaseTrackerPage() {
   const headerContent = (
     <div className="flex items-center space-x-4">
       <button
-        onClick={() => navigate('/projects')}
+        onClick={() => navigate("/projects")}
         className="btn-secondary flex items-center space-x-2"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to Projects</span>
       </button>
-      <button 
+      <button
         onClick={handleShareProject}
         className="btn-secondary flex items-center space-x-2"
       >
@@ -206,16 +200,16 @@ export function LeaseTrackerPage() {
       <div className="space-y-6">
         {/* Project Header */}
         <ProjectHeader project={project} onProjectUpdate={fetchProject} />
-        
+
         {/* Recent Updates */}
         <RecentUpdates projectId={project.id} />
-        
+
         {/* Properties Section */}
         <PropertiesOfInterest projectId={project.id} />
-        
+
         {/* Project Roadmap */}
         <ProjectRoadmap projectId={project.id} />
-        
+
         {/* Project Documents */}
         <ProjectDocuments projectId={project.id} />
       </div>
