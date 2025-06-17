@@ -223,7 +223,7 @@ export function AutomatedUpdatePage() {
 
       // Provide success/error feedback
       if (failed.length === 0) {
-        alert(`Successfully updated ${successful.length} fields.}`);
+        alert(`Successfully updated ${successful.length} fields.`);
       } else {
         if (successful.length > 0) {
           alert(`Partially successful: ${successful.length} updates applied, ${failed.length} failed. Check console for details.`);
