@@ -5,20 +5,27 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { GoogleGenAI } from 'npm:@google/genai'
+import { ChatGoogleGenerativeAI } from 'npm:@langchain/google-genai'
+import { z } from 'npm:zod'
 import { corsHeaders } from '../_shared/cors.ts'
 
-interface UpdateSuggestion {
-  id: string;
-  type: 'project' | 'property' | 'client_requirement';
-  action: 'create' | 'update';
-  entityId?: string;
-  entityName: string;
-  field: string;
-  currentValue: string | null;
-  suggestedValue: string;
-  reasoning: string;
-}
+// Zod schema as single source of truth
+const UpdateSuggestionSchema = z.object({
+  id: z.string(),
+  type: z.enum(['project', 'property', 'client_requirement']),
+  action: z.enum(['create', 'update']),
+  entityId: z.string().optional(),
+  entityName: z.string(),
+  field: z.string(),
+  currentValue: z.string().optional(),
+  suggestedValue: z.string(),
+  reasoning: z.string(),
+});
+
+// Infer TypeScript type from Zod schema
+type UpdateSuggestion = z.infer<typeof UpdateSuggestionSchema>;
+
+const UpdateSuggestionsArraySchema = z.array(UpdateSuggestionSchema);
 
 interface Project {
   id: string;
@@ -87,17 +94,23 @@ interface ProjectData {
   clientRequirements: ClientRequirement[];
 }
 
-interface ProcessRequest {
-  inputText: string;
-}
+// Request validation schema
+const ProcessRequestSchema = z.object({
+  inputText: z.string().min(1, 'Input text is required'),
+});
 
 const generateAISuggestions = async (text: string, data: ProjectData): Promise<UpdateSuggestion[]> => {
   const { projects, properties, clientRequirements } = data;
   
-  // Initialize Gemini AI
-  const genAI = new GoogleGenAI({
-    apiKey: Deno.env.get('GEMINI_API_KEY') ?? ''
+  // Initialize LangChain with Google Generative AI
+  const model = new ChatGoogleGenerativeAI({
+    model: 'gemini-2.5-flash-preview-05-20',
+    apiKey: Deno.env.get('GOOGLE_API_KEY') ?? '',
+    temperature: 0,
   });
+
+  // Create structured output chain
+  const structuredModel = model.withStructuredOutput(UpdateSuggestionsArraySchema);
 
   // Create streamlined context with only fields useful for AI suggestions
   const context = {
@@ -157,8 +170,7 @@ const generateAISuggestions = async (text: string, data: ProjectData): Promise<U
     })
   };
 
-  const prompt = `
-You are an AI assistant specialized in commercial real estate project management. Analyze the provided text and suggest intelligent updates to existing project data.
+  const prompt = `You are an AI assistant specialized in commercial real estate project management. Analyze the provided text and suggest intelligent updates to existing project data.
 
 INPUT TEXT TO ANALYZE:
 "${text}"
@@ -173,21 +185,8 @@ IMPORTANT INSTRUCTIONS:
 2. For new client requirements, extract specific, actionable requirements
 3. Suggest realistic values that match the field data types
 4. Provide clear reasoning for each suggestion
-
-Return ONLY a valid JSON array of suggestions in this exact format:
-[
-  {
-    "id": "unique-suggestion-id",
-    "type": "project" | "property" | "client_requirement",
-    "action": "create" | "update",
-    "entityId": "entity-id-or-null-for-new",
-    "entityName": "human-readable-entity-name",
-    "field": "field-name-to-update",
-    "currentValue": "current-value-or-null",
-    "suggestedValue": "new-suggested-value",
-    "reasoning": "Clear explanation of why this suggestion was made"
-  }
-]
+5. Return an array of suggestions
+6. If the entity has no existing value for a field, omit the "currentValue" property entirely
 
 Focus on extracting and updating:
 
@@ -214,47 +213,13 @@ Focus on extracting and updating:
 - Each project contains its own nested properties and requirements
 - When suggesting updates, consider the specific project context and its related data
 - Avoid duplicate client requirements by checking existing requirements within each project
-- Consider property-specific details when making property suggestions within a project context
-`;
+- Consider property-specific details when making property suggestions within a project context`;
 
   try {
-    const result = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash-preview-05-20',
-      contents: prompt
-    });
-    const responseText = result.text || '';
-
-    // Parse the JSON response
-    let suggestions: UpdateSuggestion[];
-    try {
-      // Clean the response to extract just the JSON array
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        console.warn('No JSON array found in Gemini response');
-        return [];
-      }
-      
-      suggestions = JSON.parse(jsonMatch[0]);
-      
-      // Validate the structure
-      if (!Array.isArray(suggestions)) {
-        console.warn('Gemini response is not an array');
-        return [];
-      }
-
-      // Filter and validate suggestions
-      return suggestions
-        .filter(s => s && typeof s === 'object' && s.id && s.type && s.action)
-        .slice(0, 10); // Limit to 10 suggestions
-        
-    } catch (parseError) {
-      console.error('Error parsing Gemini JSON response:', parseError);
-      console.log('Raw response:', responseText);
-      return [];
-    }
-
+    const suggestions = await structuredModel.invoke(prompt);
+    return suggestions;
   } catch (error) {
-    console.error('Error calling Gemini API:', error);
+    console.error('Error calling LangChain structured output:', error);
     // Fallback to empty suggestions if AI fails
     return [];
   }
@@ -288,17 +253,24 @@ Deno.serve(async (req) => {
       }
     );
 
-    const { inputText }: ProcessRequest = await req.json();
-
-    if (!inputText || !inputText.trim()) {
+    // Parse and validate request body
+    const requestBody = await req.json();
+    const parseResult = ProcessRequestSchema.safeParse(requestBody);
+    
+    if (!parseResult.success) {
       return new Response(
-        JSON.stringify({ error: 'Input text is required' }),
+        JSON.stringify({ 
+          error: 'Invalid request body',
+          details: parseResult.error.issues 
+        }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         },
       );
     }
+
+    const { inputText } = parseResult.data;
 
     // First get non-deleted projects to get their IDs
     const projectsResult = await supabaseClient
@@ -405,7 +377,8 @@ Deno.serve(async (req) => {
 /* To invoke locally:
 
   1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
+  2. Set your Google API key: `export GOOGLE_API_KEY=your_google_api_key_here`
+  3. Make an HTTP request:
 
   curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/project-intelligence' \
     --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
