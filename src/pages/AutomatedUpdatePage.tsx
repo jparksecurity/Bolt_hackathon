@@ -1,110 +1,54 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useUser } from '@clerk/clerk-react';
-import { useSupabaseClient } from '../services/supabase';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Bot, Send, CheckCircle, XCircle, Calendar, Building, User, DollarSign, MapPin, FileText, Loader2, AlertCircle } from 'lucide-react';
-import { BaseProjectData } from '../types/project';
-
-interface Project extends BaseProjectData {
-  deleted_at?: string | null;
-}
-
-interface Property {
-  id: string;
-  project_id: string;
-  name: string;
-  address?: string | null;
-  sf?: string | null;
-  people_capacity?: string | null;
-  price_per_sf?: string | null;
-  monthly_cost?: string | null;
-  expected_monthly_cost?: string | null;
-  contract_term?: string | null;
-  availability?: string | null;
-  lease_type?: string | null;
-  lease_structure?: string | null;
-  current_state?: string | null;
-  condition?: string | null;
-  misc_notes?: string | null;
-  virtual_tour_url?: string | null;
-  suggestion?: string | null;
-  flier_url?: string | null;
-  tour_datetime?: string | null;
-  tour_location?: string | null;
-  tour_status?: string | null;
-  status: string;
-  decline_reason?: string | null;
-}
+import React, { useState } from "react";
+import { useUser } from "@clerk/clerk-react";
+import { useSupabaseClient } from "../services/supabase";
+import { DashboardLayout } from "../components/layout/DashboardLayout";
+import {
+  Bot,
+  Send,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  Building,
+  User,
+  DollarSign,
+  MapPin,
+  FileText,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 
 interface UpdateSuggestion {
   id: string;
-  type: 'project' | 'property' | 'roadmap' | 'update';
-  action: 'create' | 'update';
+  type: "project" | "property" | "client_requirement";
+  action: "create" | "update";
   entityId?: string;
   entityName: string;
   field: string;
   currentValue: string | null;
   suggestedValue: string;
-  confidence: number;
   reasoning: string;
 }
 
 export function AutomatedUpdatePage() {
   const { user, isLoaded } = useUser();
   const supabase = useSupabaseClient();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Form state - simplified to single text input
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const [suggestions, setSuggestions] = useState<UpdateSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [approvedSuggestions, setApprovedSuggestions] = useState<Set<string>>(new Set());
-  const [rejectedSuggestions, setRejectedSuggestions] = useState<Set<string>>(new Set());
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch projects
-      const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('*')
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-
-      if (projectsError) throw projectsError;
-      setProjects(projectsData || []);
-
-      // Fetch properties
-      const { data: propertiesData, error: propertiesError } = await supabase
-        .from('properties')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (propertiesError) throw propertiesError;
-      setProperties(propertiesData || []);
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch data');
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
-
-  useEffect(() => {
-    if (isLoaded && user) {
-      fetchData();
-    }
-  }, [isLoaded, user, fetchData]);
+  const [approvedSuggestions, setApprovedSuggestions] = useState<Set<string>>(
+    new Set()
+  );
+  const [rejectedSuggestions, setRejectedSuggestions] = useState<Set<string>>(
+    new Set()
+  );
 
   const processWithAI = async () => {
     if (!inputText.trim()) {
-      alert('Please provide some information to process.');
+      alert("Please provide some information to process.");
       return;
     }
 
@@ -112,114 +56,50 @@ export function AutomatedUpdatePage() {
     setError(null);
 
     try {
-      // Simulate AI processing - In a real implementation, this would call an AI service
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Call the Supabase project-intelligence function
+      const { data, error } = await supabase.functions.invoke(
+        "project-intelligence",
+        {
+          body: {
+            inputText,
+          },
+        }
+      );
 
-      // Generate mock suggestions based on the input text
-      const mockSuggestions = generateMockSuggestions(inputText);
-      setSuggestions(mockSuggestions);
-      setShowSuggestions(true);
-      setApprovedSuggestions(new Set());
-      setRejectedSuggestions(new Set());
+      if (error) {
+        throw new Error(error.message || "Failed to process with AI");
+      }
 
-    } catch {
-      setError('Failed to process with AI. Please try again.');
+      if (data?.suggestions) {
+        setSuggestions(data.suggestions);
+        setShowSuggestions(true);
+        setApprovedSuggestions(new Set());
+        setRejectedSuggestions(new Set());
+      } else {
+        throw new Error("No suggestions received from AI");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to process with AI. Please try again."
+      );
     } finally {
       setProcessing(false);
     }
   };
 
-  const generateMockSuggestions = (text: string): UpdateSuggestion[] => {
-    const suggestions: UpdateSuggestion[] = [];
-    const lowerText = text.toLowerCase();
-    
-    // Parse text for common patterns and generate suggestions
-    const lines = lowerText.split('\n');
-    
-    lines.forEach((line, index) => {
-      // Look for date patterns
-      const dateMatch = line.match(/(\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2}|january|february|march|april|may|june|july|august|september|october|november|december)/);
-      if (dateMatch && projects.length > 0) {
-        suggestions.push({
-          id: `date-${index}`,
-          type: 'project',
-          action: 'update',
-          entityId: projects[0].id,
-          entityName: projects[0].title,
-          field: 'desired_move_in_date',
-          currentValue: projects[0].desired_move_in_date,
-          suggestedValue: '2024-03-15',
-          confidence: 85,
-          reasoning: `Found date reference "${dateMatch[0]}" in the provided text that appears to be a move-in date.`
-        });
-      }
-
-      // Look for square footage
-      const sfMatch = line.match(/(\d{1,3}(?:,\d{3})*)\s*(?:sq|square)\s*(?:ft|feet)/);
-      if (sfMatch && properties.length > 0) {
-        suggestions.push({
-          id: `sf-${index}`,
-          type: 'property',
-          action: 'update',
-          entityId: properties[0].id,
-          entityName: properties[0].name,
-          field: 'sf',
-          currentValue: properties[0].sf,
-          suggestedValue: `${sfMatch[1]} sq ft`,
-          confidence: 90,
-          reasoning: `Found square footage "${sfMatch[0]}" in the provided text.`
-        });
-      }
-
-      // Look for rent/cost information
-      const rentMatch = line.match(/\$(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
-      if (rentMatch && properties.length > 0) {
-        suggestions.push({
-          id: `rent-${index}`,
-          type: 'property',
-          action: 'update',
-          entityId: properties[0].id,
-          entityName: properties[0].name,
-          field: 'monthly_cost',
-          currentValue: properties[0].monthly_cost,
-          suggestedValue: `$${rentMatch[1]}/month`,
-          confidence: 80,
-          reasoning: `Found monetary amount "$${rentMatch[1]}" in the text that appears to be rent.`
-        });
-      }
-
-      // Look for company names (capitalized words)
-      const companyMatch = line.match(/\b([A-Z][a-z]+ [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/);
-      if (companyMatch && projects.length > 0 && !projects[0].company_name) {
-        suggestions.push({
-          id: `company-${index}`,
-          type: 'project',
-          action: 'update',
-          entityId: projects[0].id,
-          entityName: projects[0].title,
-          field: 'company_name',
-          currentValue: projects[0].company_name,
-          suggestedValue: companyMatch[1],
-          confidence: 75,
-          reasoning: `Found potential company name "${companyMatch[1]}" in the text.`
-        });
-      }
-    });
-
-    return suggestions.slice(0, 5); // Limit to 5 suggestions
-  };
-
   const toggleSuggestion = (suggestionId: string, approve: boolean) => {
     if (approve) {
-      setApprovedSuggestions(prev => new Set([...prev, suggestionId]));
-      setRejectedSuggestions(prev => {
+      setApprovedSuggestions((prev) => new Set([...prev, suggestionId]));
+      setRejectedSuggestions((prev) => {
         const newSet = new Set(prev);
         newSet.delete(suggestionId);
         return newSet;
       });
     } else {
-      setRejectedSuggestions(prev => new Set([...prev, suggestionId]));
-      setApprovedSuggestions(prev => {
+      setRejectedSuggestions((prev) => new Set([...prev, suggestionId]));
+      setApprovedSuggestions((prev) => {
         const newSet = new Set(prev);
         newSet.delete(suggestionId);
         return newSet;
@@ -228,37 +108,52 @@ export function AutomatedUpdatePage() {
   };
 
   const applyApprovedSuggestions = async () => {
-    const approvedSuggestionsList = suggestions.filter(s => approvedSuggestions.has(s.id));
-    
+    const approvedSuggestionsList = suggestions.filter((s) =>
+      approvedSuggestions.has(s.id)
+    );
+
     if (approvedSuggestionsList.length === 0) {
-      alert('No suggestions approved for application.');
+      alert("No suggestions approved for application.");
       return;
     }
 
     setProcessing(true);
     try {
       for (const suggestion of approvedSuggestionsList) {
-        if (suggestion.type === 'project') {
+        if (suggestion.type === "project") {
           await supabase
-            .from('projects')
+            .from("projects")
             .update({ [suggestion.field]: suggestion.suggestedValue })
-            .eq('id', suggestion.entityId);
-        } else if (suggestion.type === 'property') {
+            .eq("id", suggestion.entityId);
+        } else if (suggestion.type === "property") {
           await supabase
-            .from('properties')
+            .from("properties")
             .update({ [suggestion.field]: suggestion.suggestedValue })
-            .eq('id', suggestion.entityId);
+            .eq("id", suggestion.entityId);
+        } else if (suggestion.type === "client_requirement") {
+          if (suggestion.action === "create") {
+            await supabase
+              .from("client_requirements")
+              .insert({
+                project_id: suggestion.entityId,
+                category: suggestion.field,
+                requirement_text: suggestion.suggestedValue,
+              });
+          } else {
+            await supabase
+              .from("client_requirements")
+              .update({ [suggestion.field]: suggestion.suggestedValue })
+              .eq("id", suggestion.entityId);
+          }
         }
       }
 
       alert(`Successfully applied ${approvedSuggestionsList.length} updates!`);
       setShowSuggestions(false);
       setSuggestions([]);
-      setInputText('');
-      await fetchData(); // Refresh data
-
+      setInputText("");
     } catch {
-      setError('Failed to apply some updates. Please try again.');
+      setError("Failed to apply some updates. Please try again.");
     } finally {
       setProcessing(false);
     }
@@ -266,21 +161,24 @@ export function AutomatedUpdatePage() {
 
   const getFieldIcon = (field: string) => {
     switch (field) {
-      case 'desired_move_in_date':
-      case 'start_date':
+      case "desired_move_in_date":
+      case "start_date":
         return Calendar;
-      case 'company_name':
+      case "company_name":
         return Building;
-      case 'contact_name':
+      case "contact_name":
         return User;
-      case 'broker_commission':
-      case 'expected_fee':
-      case 'monthly_cost':
-      case 'expected_monthly_cost':
+      case "broker_commission":
+      case "expected_fee":
+      case "monthly_cost":
+      case "expected_monthly_cost":
         return DollarSign;
-      case 'sf':
-      case 'address':
+      case "sf":
+      case "address":
         return MapPin;
+      case "category":
+      case "requirement_text":
+        return FileText;
       default:
         return FileText;
     }
@@ -288,21 +186,26 @@ export function AutomatedUpdatePage() {
 
   const getFieldLabel = (field: string) => {
     const labels: Record<string, string> = {
-      'desired_move_in_date': 'Desired Move-in Date',
-      'start_date': 'Start Date',
-      'company_name': 'Company Name',
-      'contact_name': 'Contact Name',
-      'broker_commission': 'Broker Commission',
-      'expected_fee': 'Expected Fee',
-      'monthly_cost': 'Monthly Cost',
-      'expected_monthly_cost': 'Expected Monthly Cost',
-      'sf': 'Square Feet',
-      'address': 'Address',
+      desired_move_in_date: "Desired Move-in Date",
+      start_date: "Start Date",
+      company_name: "Company Name",
+      contact_name: "Contact Name",
+      broker_commission: "Broker Commission",
+      expected_fee: "Expected Fee",
+      monthly_cost: "Monthly Cost",
+      expected_monthly_cost: "Expected Monthly Cost",
+      sf: "Square Feet",
+      address: "Address",
+      category: "Category",
+      requirement_text: "Requirement Text",
     };
-    return labels[field] || field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return (
+      labels[field] ||
+      field.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())
+    );
   };
 
-  if (!isLoaded || loading) {
+  if (!isLoaded) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -316,7 +219,9 @@ export function AutomatedUpdatePage() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Please sign in to use automated updates</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Please sign in to use automated updates
+          </h2>
         </div>
       </DashboardLayout>
     );
@@ -332,22 +237,31 @@ export function AutomatedUpdatePage() {
               <Bot className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">AI-Powered Data Updates</h2>
-              <p className="text-gray-600">Automatically extract and update project information using AI</p>
+              <h2 className="text-2xl font-bold text-gray-900">
+                AI-Powered Data Updates
+              </h2>
+              <p className="text-gray-600">
+                Automatically extract and update project information using AI
+              </p>
             </div>
           </div>
-          
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <div className="flex items-start space-x-3">
               <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-900 mb-1">How it works:</h3>
+                <h3 className="font-semibold text-blue-900 mb-1">
+                  How it works:
+                </h3>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>1. Paste any relevant information (emails, documents, notes)</li>
+                  <li>
+                    1. Paste any relevant information (emails, documents, notes)
+                  </li>
                   <li>2. Optionally add instructions on what to extract</li>
-                  <li>3. Review AI-generated suggestions</li>
-                  <li>4. Approve or reject each suggestion</li>
-                  <li>5. Apply approved updates to your projects</li>
+                  <li>3. Click "Process with AI" and wait for analysis</li>
+                  <li>4. Review AI-generated suggestions</li>
+                  <li>5. Approve or reject each suggestion</li>
+                  <li>6. Apply approved updates to your projects</li>
                 </ul>
               </div>
             </div>
@@ -377,7 +291,9 @@ export function AutomatedUpdatePage() {
                   className="form-input w-full px-4 py-3 rounded-lg"
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Example: "Extract move-in dates, square footage, and rental costs. The client wants to move in by March 2024 and needs 15,000 sq ft at $25/sq ft..."
+                  Example: "Extract move-in dates, square footage, and rental
+                  costs. The client wants to move in by March 2024 and needs
+                  15,000 sq ft at $25/sq ft..."
                 </p>
               </div>
 
@@ -411,7 +327,8 @@ export function AutomatedUpdatePage() {
                 </h3>
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-600">
-                    {approvedSuggestions.size} approved, {rejectedSuggestions.size} rejected
+                    {approvedSuggestions.size} approved,{" "}
+                    {rejectedSuggestions.size} rejected
                   </span>
                   <button
                     onClick={() => {
@@ -433,16 +350,16 @@ export function AutomatedUpdatePage() {
                   const IconComponent = getFieldIcon(suggestion.field);
                   const isApproved = approvedSuggestions.has(suggestion.id);
                   const isRejected = rejectedSuggestions.has(suggestion.id);
-                  
+
                   return (
                     <div
                       key={suggestion.id}
                       className={`border rounded-lg p-4 transition-all ${
                         isApproved
-                          ? 'border-green-300 bg-green-50'
+                          ? "border-green-300 bg-green-50"
                           : isRejected
-                          ? 'border-red-300 bg-red-50'
-                          : 'border-gray-200 bg-white'
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-200 bg-white"
                       }`}
                     >
                       <div className="flex items-start justify-between">
@@ -451,56 +368,69 @@ export function AutomatedUpdatePage() {
                             <IconComponent className="w-5 h-5 text-gray-600" />
                             <div>
                               <h4 className="font-semibold text-gray-900">
-                                {suggestion.entityName} - {getFieldLabel(suggestion.field)}
+                                {suggestion.entityName} -{" "}
+                                {getFieldLabel(suggestion.field)}
                               </h4>
                               <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <span className="capitalize">{suggestion.type}</span>
+                                <span className="capitalize">
+                                  {suggestion.type}
+                                </span>
                                 <span>•</span>
-                                <span className="capitalize">{suggestion.action}</span>
-                                <span>•</span>
-                                <span>{suggestion.confidence}% confidence</span>
+                                <span className="capitalize">
+                                  {suggestion.action}
+                                </span>
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="grid grid-cols-2 gap-4 mb-3">
                             <div>
-                              <p className="text-xs font-medium text-gray-500 mb-1">Current Value</p>
+                              <p className="text-xs font-medium text-gray-500 mb-1">
+                                Current Value
+                              </p>
                               <p className="text-sm text-gray-900">
-                                {suggestion.currentValue || <em className="text-gray-400">Not set</em>}
+                                {suggestion.currentValue || (
+                                  <em className="text-gray-400">Not set</em>
+                                )}
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs font-medium text-gray-500 mb-1">Suggested Value</p>
+                              <p className="text-xs font-medium text-gray-500 mb-1">
+                                Suggested Value
+                              </p>
                               <p className="text-sm font-semibold text-gray-900">
                                 {suggestion.suggestedValue}
                               </p>
                             </div>
                           </div>
-                          
+
                           <p className="text-sm text-gray-600 bg-gray-50 rounded p-2">
                             <strong>Reasoning:</strong> {suggestion.reasoning}
                           </p>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2 ml-4">
                           <button
-                            onClick={() => toggleSuggestion(suggestion.id, false)}
+                            onClick={() =>
+                              toggleSuggestion(suggestion.id, false)
+                            }
                             className={`p-2 rounded-lg transition-colors ${
                               isRejected
-                                ? 'bg-red-600 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600'
+                                ? "bg-red-600 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600"
                             }`}
                             title="Reject"
                           >
                             <XCircle className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => toggleSuggestion(suggestion.id, true)}
+                            onClick={() =>
+                              toggleSuggestion(suggestion.id, true)
+                            }
                             className={`p-2 rounded-lg transition-colors ${
                               isApproved
-                                ? 'bg-green-600 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600'
+                                ? "bg-green-600 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600"
                             }`}
                             title="Approve"
                           >
@@ -529,7 +459,9 @@ export function AutomatedUpdatePage() {
                     ) : (
                       <>
                         <CheckCircle className="w-5 h-5" />
-                        <span>Apply {approvedSuggestions.size} Approved Updates</span>
+                        <span>
+                          Apply {approvedSuggestions.size} Approved Updates
+                        </span>
                       </>
                     )}
                   </button>
