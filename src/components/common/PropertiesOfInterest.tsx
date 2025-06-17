@@ -17,6 +17,8 @@ import {
   AlertCircle,
   XCircle,
   RotateCcw,
+  Car,
+  Building,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
@@ -55,6 +57,8 @@ interface Property {
     | "Shell Space"
     | "Turnkey"
     | null;
+  cam_rate?: string | null;
+  parking_rate?: string | null;
   misc_notes?: string | null;
   virtual_tour_url?: string | null;
   suggestion?: string | null;
@@ -95,6 +99,8 @@ interface PropertyFormData {
     | "Shell Space"
     | "Turnkey"
     | "";
+  cam_rate: string;
+  parking_rate: string;
   misc_notes: string;
   virtual_tour_url: string;
   suggestion: string;
@@ -134,6 +140,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     lease_structure: "",
     current_state: "",
     condition: "",
+    cam_rate: "",
+    parking_rate: "",
     misc_notes: "",
     virtual_tour_url: "",
     suggestion: "",
@@ -235,6 +243,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       lease_structure: "",
       current_state: "",
       condition: "",
+      cam_rate: "",
+      parking_rate: "",
       misc_notes: "",
       virtual_tour_url: "",
       suggestion: "",
@@ -277,6 +287,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       lease_structure: property.lease_structure || "",
       current_state: property.current_state || "",
       condition: property.condition || "",
+      cam_rate: property.cam_rate || "",
+      parking_rate: property.parking_rate || "",
       misc_notes: property.misc_notes || "",
       virtual_tour_url: property.virtual_tour_url || "",
       suggestion: property.suggestion || "",
@@ -316,6 +328,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         lease_structure: formData.lease_structure || null,
         current_state: formData.current_state || null,
         condition: formData.condition || null,
+        cam_rate: formData.cam_rate.trim() || null,
+        parking_rate: formData.parking_rate.trim() || null,
         misc_notes: formData.misc_notes.trim() || null,
         virtual_tour_url: formData.virtual_tour_url.trim() || null,
         suggestion: formData.suggestion.trim() || null,
@@ -615,6 +629,38 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 </p>
                 <p className="text-sm text-gray-900 font-semibold">
                   {property.expected_monthly_cost}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {property.cam_rate && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <Building className="w-4 h-4 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">
+                  CAM Rate ($/SF)
+                </p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.cam_rate}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {property.parking_rate && (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Car className="w-4 h-4 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">
+                  Parking Rate ($/SF)
+                </p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  {property.parking_rate}
                 </p>
               </div>
             </div>
@@ -1018,6 +1064,40 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., $28,000/month"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      CAM Rate ($/SF)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cam_rate}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          cam_rate: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., $3.50/sq ft"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Parking Rate ($/SF)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.parking_rate}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          parking_rate: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., $2.00/sq ft"
                     />
                   </div>
                   <div>
