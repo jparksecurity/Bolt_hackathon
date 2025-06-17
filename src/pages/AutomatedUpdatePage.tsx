@@ -71,7 +71,18 @@ export function AutomatedUpdatePage() {
       }
 
       if (data?.suggestions) {
-        setSuggestions(data.suggestions);
+        // Ensure each suggestion has a **unique** id so that React keys are not duplicated and
+        // approving/rejecting one suggestion does not mutate the state of another suggestion
+        // that happened to share the same id coming from the API.
+        const uniqueSuggestions: UpdateSuggestion[] = data.suggestions.map(
+          (s: UpdateSuggestion, idx: number) => ({
+            // Preserve all original fields but guarantee a unique id per entry.
+            ...s,
+            id: s.id ? `${s.id}-${idx}` : `suggestion-${idx}`,
+          })
+        );
+
+        setSuggestions(uniqueSuggestions);
         setShowSuggestions(true);
         setApprovedSuggestions(new Set());
         setRejectedSuggestions(new Set());
@@ -274,6 +285,9 @@ export function AutomatedUpdatePage() {
   };
 
   const getFieldLabel = (field: string) => {
+    // Gracefully handle null/undefined field values
+    if (!field) return "Field";
+
     const labels: Record<string, string> = {
       desired_move_in_date: "Desired Move-in Date",
       start_date: "Start Date",
@@ -477,18 +491,32 @@ export function AutomatedUpdatePage() {
                               <p className="text-xs font-medium text-gray-500 mb-1">
                                 Current Value
                               </p>
-                              <p className="text-sm text-gray-900">
-                                {suggestion.currentValue || (
-                                  <em className="text-gray-400">Not set</em>
-                                )}
+                              <p className="text-sm text-gray-900 overflow-x-auto">
+                                {(() => {
+                                  if (
+                                    suggestion.currentValue === null ||
+                                    suggestion.currentValue === undefined ||
+                                    suggestion.currentValue === ""
+                                  ) {
+                                    return (
+                                      <em className="text-gray-400">Not set</em>
+                                    );
+                                  }
+
+                                  return typeof suggestion.currentValue === "object"
+                                    ? JSON.stringify(suggestion.currentValue)
+                                    : String(suggestion.currentValue);
+                                })()}
                               </p>
                             </div>
                             <div>
                               <p className="text-xs font-medium text-gray-500 mb-1">
                                 Suggested Value
                               </p>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {suggestion.suggestedValue}
+                              <p className="text-sm font-semibold text-gray-900 overflow-x-auto">
+                                {typeof suggestion.suggestedValue === "object"
+                                  ? JSON.stringify(suggestion.suggestedValue)
+                                  : String(suggestion.suggestedValue)}
                               </p>
                             </div>
                           </div>
