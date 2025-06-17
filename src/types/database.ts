@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          query?: string
-          operationName?: string
-          extensions?: Json
           variables?: Json
+          operationName?: string
+          query?: string
+          extensions?: Json
         }
         Returns: Json
       }
@@ -39,21 +39,21 @@ export type Database = {
           category: string
           created_at: string | null
           id: string
-          project_id: string | null
+          project_id: string
           requirement_text: string
         }
         Insert: {
           category: string
           created_at?: string | null
           id?: string
-          project_id?: string | null
+          project_id: string
           requirement_text: string
         }
         Update: {
           category?: string
           created_at?: string | null
           id?: string
-          project_id?: string | null
+          project_id?: string
           requirement_text?: string
         }
         Relationships: [
@@ -74,7 +74,7 @@ export type Database = {
           id: string
           name: string
           order_index: number
-          project_id: string | null
+          project_id: string
           source_type: string | null
         }
         Insert: {
@@ -84,7 +84,7 @@ export type Database = {
           id?: string
           name: string
           order_index: number
-          project_id?: string | null
+          project_id: string
           source_type?: string | null
         }
         Update: {
@@ -94,7 +94,7 @@ export type Database = {
           id?: string
           name?: string
           order_index?: number
-          project_id?: string | null
+          project_id?: string
           source_type?: string | null
         }
         Relationships: [
@@ -115,8 +115,8 @@ export type Database = {
           expected_date: string | null
           id: string
           order_index: number
-          project_id: string | null
-          status: string | null
+          project_id: string
+          status: string
           title: string
         }
         Insert: {
@@ -126,8 +126,8 @@ export type Database = {
           expected_date?: string | null
           id?: string
           order_index: number
-          project_id?: string | null
-          status?: string | null
+          project_id: string
+          status?: string
           title: string
         }
         Update: {
@@ -137,8 +137,8 @@ export type Database = {
           expected_date?: string | null
           id?: string
           order_index?: number
-          project_id?: string | null
-          status?: string | null
+          project_id?: string
+          status?: string
           title?: string
         }
         Relationships: [
@@ -156,21 +156,21 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
-          project_id: string | null
+          project_id: string
           update_date: string | null
         }
         Insert: {
           content: string
           created_at?: string | null
           id?: string
-          project_id?: string | null
+          project_id: string
           update_date?: string | null
         }
         Update: {
           content?: string
           created_at?: string | null
           id?: string
-          project_id?: string | null
+          project_id?: string
           update_date?: string | null
         }
         Relationships: [
@@ -272,9 +272,9 @@ export type Database = {
           order_index: number
           people_capacity: string | null
           price_per_sf: string | null
-          project_id: string | null
+          project_id: string
           sf: string | null
-          status: string | null
+          status: string
           suggestion: string | null
           tour_datetime: string | null
           tour_location: string | null
@@ -301,9 +301,9 @@ export type Database = {
           order_index: number
           people_capacity?: string | null
           price_per_sf?: string | null
-          project_id?: string | null
+          project_id: string
           sf?: string | null
-          status?: string | null
+          status?: string
           suggestion?: string | null
           tour_datetime?: string | null
           tour_location?: string | null
@@ -330,9 +330,9 @@ export type Database = {
           order_index?: number
           people_capacity?: string | null
           price_per_sf?: string | null
-          project_id?: string | null
+          project_id?: string
           sf?: string | null
-          status?: string | null
+          status?: string
           suggestion?: string | null
           tour_datetime?: string | null
           tour_location?: string | null
@@ -368,8 +368,8 @@ export type Database = {
       get_public_project: {
         Args: { share_id: string }
         Returns: {
-          title: string
           id: string
+          title: string
           status: string
           start_date: string
           desired_move_in_date: string
@@ -390,28 +390,28 @@ export type Database = {
       get_public_project_documents: {
         Args: { share_id: string }
         Returns: {
-          order_index: number
-          created_at: string
           id: string
           project_id: string
           name: string
           file_type: string
           document_url: string
           source_type: string
+          order_index: number
+          created_at: string
         }[]
       }
       get_public_project_roadmap: {
         Args: { share_id: string }
         Returns: {
-          id: string
-          project_id: string
-          title: string
-          description: string
-          status: string
-          expected_date: string
-          completed_date: string
-          order_index: number
           created_at: string
+          order_index: number
+          completed_date: string
+          expected_date: string
+          status: string
+          description: string
+          title: string
+          project_id: string
+          id: string
         }[]
       }
       get_public_project_updates: {
@@ -427,16 +427,17 @@ export type Database = {
       get_public_properties: {
         Args: { share_id: string }
         Returns: {
-          order_index: number
+          id: string
+          project_id: string
+          name: string
+          address: string
+          sf: string
           people_capacity: string
           price_per_sf: string
           monthly_cost: string
           expected_monthly_cost: string
           contract_term: string
           availability: string
-          decline_reason: string
-          updated_at: string
-          created_at: string
           lease_type: string
           lease_structure: string
           current_state: string
@@ -445,15 +446,14 @@ export type Database = {
           virtual_tour_url: string
           suggestion: string
           flier_url: string
-          tour_status: string
           tour_datetime: string
+          tour_status: string
           tour_location: string
           status: string
-          id: string
-          project_id: string
-          name: string
-          address: string
-          sf: string
+          decline_reason: string
+          order_index: number
+          created_at: string
+          updated_at: string
         }[]
       }
     }

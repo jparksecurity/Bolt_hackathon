@@ -20,8 +20,7 @@ import {
 interface UpdateSuggestion {
   id: string;
   type: "project" | "property" | "client_requirement";
-  action: "create" | "update";
-  entityId?: string;
+  entityId: string;
   entityName: string;
   field: string;
   currentValue: string | null;
@@ -130,8 +129,8 @@ export function AutomatedUpdatePage() {
 
     setProcessing(true);
     try {
-      // Helper function to coerce values to appropriate types
-      const coerceValue = (value: string, field: string) => {
+      // Helper function to coerce values to appropriate types with validation
+      const coerceValue = (value: string, field: string): string | number | null => {
         // Numeric fields that should be converted to numbers
         const numericFields = [
           'expected_fee', 'broker_commission', 'monthly_cost', 
@@ -141,112 +140,101 @@ export function AutomatedUpdatePage() {
         
         if (numericFields.includes(field)) {
           const numValue = parseFloat(value);
-          return isNaN(numValue) ? value : numValue;
+          return isNaN(numValue) ? null : numValue;
         }
         
-        return value;
+        // Validate constrained fields
+        if (field === 'status') {
+          const validStatuses = ['active', 'new', 'pending', 'declined'];
+          return validStatuses.includes(value.toLowerCase()) ? value.toLowerCase() : 'new';
+        }
+        
+        if (field === 'current_state') {
+          const validStates = ['Available', 'Under Review', 'Negotiating', 'On Hold', 'Declined'];
+          return validStates.includes(value) ? value : null; // Default to null if invalid
+        }
+        
+        if (field === 'tour_status') {
+          const validTourStatuses = ['Scheduled', 'Completed', 'Cancelled', 'Rescheduled'];
+          return validTourStatuses.includes(value) ? value : null;
+        }
+        
+        return value || null;
       };
 
-      // Process all suggestions in parallel for better performance
-      const operations = approvedSuggestionsList.map(async (suggestion) => {
-        const coercedValue = coerceValue(suggestion.suggestedValue, suggestion.field);
+      // Process all suggestions in parallel with error tracking
+      const updatePromises = approvedSuggestionsList.map(async (suggestion) => {
+        try {
+          const updateData: Record<string, string | number | null> = {
+            [suggestion.field]: coerceValue(suggestion.suggestedValue, suggestion.field),
+            updated_at: new Date().toISOString()
+          };
 
-        if (suggestion.type === "project") {
-          if (suggestion.action === "create") {
-            // Create new project
-            const projectData = {
-              title: suggestion.entityName,
-              [suggestion.field]: coercedValue,
-              status: 'active',
-              clerk_user_id: user?.id,
-            };
-            
-            const { error } = await supabase
-              .from("projects")
-              .insert(projectData);
-            
-            if (error) throw new Error(`Failed to create project "${suggestion.entityName}": ${error.message}`);
+          let tableName: string;
+          if (suggestion.type === "project") {
+            tableName = "projects";
+          } else if (suggestion.type === "property") {
+            tableName = "properties";
           } else {
-            // Update existing project
-            if (!suggestion.entityId) {
-              throw new Error(`Missing entityId for project update: ${suggestion.entityName}`);
-            }
-            
-            const { error } = await supabase
-              .from("projects")
-              .update({ [suggestion.field]: coercedValue })
-              .eq("id", suggestion.entityId);
-            
-            if (error) throw new Error(`Failed to update project "${suggestion.entityName}": ${error.message}`);
+            tableName = "client_requirements";
+            // Client requirements don't need updated_at
+            delete updateData.updated_at;
           }
-        } else if (suggestion.type === "property") {
-          if (suggestion.action === "create") {
-            // Create new property
-            if (!suggestion.entityId) {
-              throw new Error(`Missing project ID for new property: ${suggestion.entityName}`);
-            }
-            
-            const propertyData = {
-              name: suggestion.entityName,
-              project_id: suggestion.entityId, // entityId should be the project_id for new properties
-              [suggestion.field]: coercedValue,
-              order_index: 0, // Default order
-            };
-            
-            const { error } = await supabase
-              .from("properties")
-              .insert(propertyData);
-            
-            if (error) throw new Error(`Failed to create property "${suggestion.entityName}": ${error.message}`);
-          } else {
-            // Update existing property
-            if (!suggestion.entityId) {
-              throw new Error(`Missing entityId for property update: ${suggestion.entityName}`);
-            }
-            
-            const { error } = await supabase
-              .from("properties")
-              .update({ [suggestion.field]: coercedValue })
-              .eq("id", suggestion.entityId);
-            
-            if (error) throw new Error(`Failed to update property "${suggestion.entityName}": ${error.message}`);
+
+          const { error } = await supabase
+            .from(tableName)
+            .update(updateData)
+            .eq("id", suggestion.entityId);
+
+          if (error) {
+            throw new Error(`Failed to update ${suggestion.type} "${suggestion.entityName}": ${error.message}`);
           }
-        } else if (suggestion.type === "client_requirement") {
-          if (suggestion.action === "create") {
-            // Create new client requirement
-            if (!suggestion.entityId) {
-              throw new Error(`Missing project ID for new client requirement: ${suggestion.entityName}`);
-            }
-            
-            const { error } = await supabase
-              .from("client_requirements")
-              .insert({
-                project_id: suggestion.entityId, // entityId should be the project_id
-                category: suggestion.field,
-                requirement_text: suggestion.suggestedValue,
-              });
-            
-            if (error) throw new Error(`Failed to create client requirement for "${suggestion.entityName}": ${error.message}`);
-          } else {
-            // Update existing client requirement
-            if (!suggestion.entityId) {
-              throw new Error(`Missing entityId for client requirement update: ${suggestion.entityName}`);
-            }
-            
-            const { error } = await supabase
-              .from("client_requirements")
-              .update({ [suggestion.field]: coercedValue })
-              .eq("id", suggestion.entityId);
-            
-            if (error) throw new Error(`Failed to update client requirement for "${suggestion.entityName}": ${error.message}`);
-          }
+
+          return {
+            success: true,
+            name: `${suggestion.entityName} (${suggestion.field})`,
+            suggestion
+          };
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+          console.error(`Error processing suggestion for ${suggestion.entityName}:`, error);
+          return {
+            success: false,
+            error: errorMessage,
+            suggestion
+          };
         }
       });
 
-      // Execute all operations in parallel and wait for completion
-      await Promise.all(operations);
+      // Wait for all updates to complete
+      const results = await Promise.all(updatePromises);
+      
+      // Separate successful and failed results
+      const successful = results
+        .filter(result => result.success)
+        .map(result => result.name as string);
+      
+      const failed = results
+        .filter(result => !result.success)
+        .map(result => ({
+          suggestion: result.suggestion,
+          error: result.error as string
+        }));
 
-      alert(`Successfully applied ${approvedSuggestionsList.length} updates!`);
+      // Provide success/error feedback
+      if (failed.length === 0) {
+        alert(`Successfully updated ${successful.length} fields.}`);
+      } else {
+        if (successful.length > 0) {
+          alert(`Partially successful: ${successful.length} updates applied, ${failed.length} failed. Check console for details.`);
+        } else {
+          alert(`All ${failed.length} updates failed. Check console for details.`);
+        }
+        
+        // Log detailed error information
+        console.error("Failed suggestions:", failed);
+      }
+
       setShowSuggestions(false);
       setSuggestions([]);
       setInputText("");
@@ -344,7 +332,7 @@ export function AutomatedUpdatePage() {
                 AI-Powered Data Updates
               </h2>
               <p className="text-gray-600">
-                Automatically extract and update project information using AI
+                Automatically extract and update existing project information using AI
               </p>
             </div>
           </div>
@@ -362,9 +350,9 @@ export function AutomatedUpdatePage() {
                   </li>
                   <li>2. Optionally add instructions on what to extract</li>
                   <li>3. Click "Process with AI" and wait for analysis</li>
-                  <li>4. Review AI-generated suggestions</li>
-                  <li>5. Approve or reject each suggestion</li>
-                  <li>6. Apply approved updates to your projects</li>
+                  <li>4. Review AI-generated update suggestions for existing records</li>
+                  <li>5. Approve or reject each suggested update</li>
+                  <li>6. Apply approved updates to your existing projects</li>
                 </ul>
               </div>
             </div>
@@ -479,9 +467,7 @@ export function AutomatedUpdatePage() {
                                   {suggestion.type}
                                 </span>
                                 <span>•</span>
-                                <span className="capitalize">
-                                  {suggestion.action}
-                                </span>
+                                <span>Update</span>
                               </div>
                             </div>
                           </div>

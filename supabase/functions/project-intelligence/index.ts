@@ -11,15 +11,52 @@ import { corsHeaders } from '../_shared/cors.ts'
 
 // Zod schema as single source of truth
 const UpdateSuggestionSchema = z.object({
-  id: z.string(),
-  type: z.enum(['project', 'property', 'client_requirement']),
-  action: z.enum(['create', 'update']),
-  entityId: z.string().optional(),
-  entityName: z.string(),
-  field: z.string(),
-  currentValue: z.string().optional(),
-  suggestedValue: z.string(),
-  reasoning: z.string(),
+  /**
+   * A unique identifier generated for each AI suggestion. This **does not**
+   * correspond to any record in the database – it is only used for tracking
+   * the suggestion in the UI (e.g. as a React key).
+   */
+  id: z.string().describe('Unique identifier for this suggestion (not a DB entity id)'),
+
+  /**
+   * The kind of entity that will be affected when the suggestion is applied.
+   * Determines which table the update should target on the frontend.
+   */
+  type: z.enum(['project', 'property', 'client_requirement']).describe('Target entity type'),
+
+
+
+  /**
+   * The primary-key ID of the existing entity that should be updated.
+   */
+  entityId: z.string().describe('Database id of the entity to update'),
+
+  /**
+   * Human-readable name of the entity – e.g. the project title or property
+   * name – useful for showing in the UI and for AI reasoning.
+   */
+  entityName: z.string().describe('Display name of the entity'),
+
+  /**
+   * The specific field/column that is being suggested for change.
+   */
+  field: z.string().describe('Field to be updated'),
+
+  /**
+   * The current value in the database for this field (may be omitted if null
+   * or unknown at suggestion-time).
+   */
+  currentValue: z.string().optional().describe('Existing value (if any)'),
+
+  /**
+   * The value the AI recommends setting.
+   */
+  suggestedValue: z.string().describe('AI-proposed new value'),
+
+  /**
+   * Explanation from the AI about why this change is being proposed.
+   */
+  reasoning: z.string().describe('Rationale for the suggestion'),
 });
 
 // Infer TypeScript type from Zod schema
@@ -27,7 +64,8 @@ type UpdateSuggestion = z.infer<typeof UpdateSuggestionSchema>;
 
 const UpdateSuggestionsArraySchema = z.array(UpdateSuggestionSchema);
 
-interface Project {
+// Basic types for update operations
+interface ProjectRecord {
   id: string;
   title: string;
   company_name?: string | null;
@@ -38,60 +76,34 @@ interface Project {
   desired_move_in_date?: string | null;
   expected_fee?: number | null;
   broker_commission?: number | null;
-  commission_paid_by?: string | null;
-  payment_due?: string | null;
   expected_headcount?: string | null;
   status: string;
   start_date?: string | null;
-  clerk_user_id: string;
-  public_share_id?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  deleted_at?: string | null;
 }
 
-interface Property {
+interface PropertyRecord {
   id: string;
   name: string;
   project_id?: string | null;
   address?: string | null;
   sf?: string | null;
   monthly_cost?: string | null;
-  expected_monthly_cost?: string | null;
   price_per_sf?: string | null;
   people_capacity?: string | null;
-  availability?: string | null;
-  condition?: string | null;
   lease_type?: string | null;
-  lease_structure?: string | null;
   contract_term?: string | null;
   status?: string | null;
   current_state?: string | null;
-  decline_reason?: string | null;
-  suggestion?: string | null;
-  misc_notes?: string | null;
-  flier_url?: string | null;
-  virtual_tour_url?: string | null;
+  availability?: string | null;
   tour_status?: string | null;
   tour_datetime?: string | null;
-  tour_location?: string | null;
-  order_index: number;
-  created_at?: string | null;
-  updated_at?: string | null;
 }
 
-interface ClientRequirement {
+interface ClientRequirementRecord {
   id: string;
   project_id?: string | null;
   category: string;
   requirement_text: string;
-  created_at?: string | null;
-}
-
-interface ProjectData {
-  projects: Project[];
-  properties: Property[];
-  clientRequirements: ClientRequirement[];
 }
 
 // Request validation schema
@@ -99,8 +111,7 @@ const ProcessRequestSchema = z.object({
   inputText: z.string().min(1, 'Input text is required'),
 });
 
-const generateAISuggestions = async (text: string, data: ProjectData): Promise<UpdateSuggestion[]> => {
-  const { projects, properties, clientRequirements } = data;
+const generateAISuggestions = async (text: string, projects: ProjectRecord[], properties: PropertyRecord[], clientRequirements: ClientRequirementRecord[]): Promise<UpdateSuggestion[]> => {
   
   // Initialize LangChain with Google Generative AI
   const model = new ChatGoogleGenerativeAI({
@@ -114,10 +125,10 @@ const generateAISuggestions = async (text: string, data: ProjectData): Promise<U
 
   // Create streamlined context with only fields useful for AI suggestions
   const context = {
-    projects: projects.map(project => {
+    projects: projects.map((project) => {
       // Get all related data for this specific project
-      const projectProperties = properties.filter(p => p.project_id === project.id);
-      const projectRequirements = clientRequirements.filter(cr => cr.project_id === project.id);
+      const projectProperties = properties.filter((p) => p.project_id === project.id);
+      const projectRequirements = clientRequirements.filter((cr) => cr.project_id === project.id);
 
       return {
         // Essential project info
@@ -178,19 +189,19 @@ INPUT TEXT TO ANALYZE:
 CURRENT PROJECT DATA CONTEXT:
 ${JSON.stringify(context, null, 2)}
 
-Your task: Generate intelligent suggestions for updating project data based on the input text. 
+Your task: Generate intelligent suggestions for updating existing project data based on the input text. 
 
 IMPORTANT INSTRUCTIONS:
-1. Only suggest updates for fields that have clear, confident matches in the input text
-2. For new client requirements, extract specific, actionable requirements
+1. ONLY suggest updates to existing entities - do not create new records
+2. Only suggest updates for fields that have clear, confident matches in the input text
 3. Suggest realistic values that match the field data types
 4. Provide clear reasoning for each suggestion
-5. Return an array of suggestions
+5. Return an array of update suggestions
 6. If the entity has no existing value for a field, omit the "currentValue" property entirely
 
 Focus on extracting and updating:
 
-**PROJECT FIELDS:**
+**PROJECT FIELDS (for existing projects):**
 - Contact information (contact_name, contact_email, contact_phone, contact_title)
 - Company details (company_name)
 - Financial data (expected_fee, broker_commission, commission_paid_by, payment_due)
@@ -198,7 +209,7 @@ Focus on extracting and updating:
 - Requirements (expected_headcount)
 - Status updates
 
-**PROPERTY FIELDS:**
+**PROPERTY FIELDS (for existing properties):**
 - Basic details (name, address, sf, people_capacity)
 - Financial (monthly_cost, expected_monthly_cost, price_per_sf)
 - Lease terms (lease_type, lease_structure, contract_term)
@@ -206,13 +217,20 @@ Focus on extracting and updating:
 - Additional info (suggestion, misc_notes, decline_reason)
 - Tour details (tour_status, tour_datetime, tour_location)
 
-**RELATED DATA:**
-- Client requirements (new requirements based on "need", "require", "must have")
+**CLIENT REQUIREMENT FIELDS (for existing requirements):**
+- Update requirement text or category based on new information
+
+**IDENTIFIERS:**
+- For **every** suggestion:
+  - id should be a unique suggestion identifier (can be any string) – _not_ a DB id.
+  - entityId must be the DB primary-key of the existing entity you intend to update.
+
+If you cannot confidently determine the appropriate entityId for an existing entity, do **not** emit the suggestion.
 
 **RELATIONSHIP AWARENESS:**
 - Each project contains its own nested properties and requirements
 - When suggesting updates, consider the specific project context and its related data
-- Avoid duplicate client requirements by checking existing requirements within each project
+- Only suggest updates to entities that already exist in the provided context
 - Consider property-specific details when making property suggestions within a project context`;
 
   try {
@@ -335,14 +353,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const projectData: ProjectData = {
-      projects: projects,
-      properties: propertiesResult.data || [],
-      clientRequirements: clientRequirementsResult.data || []
-    };
-
     // Generate AI-powered suggestions based on the input text and all project data
-    const suggestions = await generateAISuggestions(inputText, projectData);
+    const suggestions = await generateAISuggestions(
+      inputText, 
+      projects, 
+      propertiesResult.data || [], 
+      clientRequirementsResult.data || []
+    );
 
     const data = {
       success: true,
