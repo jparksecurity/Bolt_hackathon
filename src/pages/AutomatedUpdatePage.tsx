@@ -119,41 +119,130 @@ export function AutomatedUpdatePage() {
 
     setProcessing(true);
     try {
-      for (const suggestion of approvedSuggestionsList) {
+      // Helper function to coerce values to appropriate types
+      const coerceValue = (value: string, field: string) => {
+        // Numeric fields that should be converted to numbers
+        const numericFields = [
+          'expected_fee', 'broker_commission', 'monthly_cost', 
+          'expected_monthly_cost', 'price_per_sf', 'people_capacity',
+          'expected_headcount', 'order_index'
+        ];
+        
+        if (numericFields.includes(field)) {
+          const numValue = parseFloat(value);
+          return isNaN(numValue) ? value : numValue;
+        }
+        
+        return value;
+      };
+
+      // Process all suggestions in parallel for better performance
+      const operations = approvedSuggestionsList.map(async (suggestion) => {
+        const coercedValue = coerceValue(suggestion.suggestedValue, suggestion.field);
+
         if (suggestion.type === "project") {
-          await supabase
-            .from("projects")
-            .update({ [suggestion.field]: suggestion.suggestedValue })
-            .eq("id", suggestion.entityId);
+          if (suggestion.action === "create") {
+            // Create new project
+            const projectData = {
+              title: suggestion.entityName,
+              [suggestion.field]: coercedValue,
+              status: 'active',
+              clerk_user_id: user?.id,
+            };
+            
+            const { error } = await supabase
+              .from("projects")
+              .insert(projectData);
+            
+            if (error) throw new Error(`Failed to create project "${suggestion.entityName}": ${error.message}`);
+          } else {
+            // Update existing project
+            if (!suggestion.entityId) {
+              throw new Error(`Missing entityId for project update: ${suggestion.entityName}`);
+            }
+            
+            const { error } = await supabase
+              .from("projects")
+              .update({ [suggestion.field]: coercedValue })
+              .eq("id", suggestion.entityId);
+            
+            if (error) throw new Error(`Failed to update project "${suggestion.entityName}": ${error.message}`);
+          }
         } else if (suggestion.type === "property") {
-          await supabase
-            .from("properties")
-            .update({ [suggestion.field]: suggestion.suggestedValue })
-            .eq("id", suggestion.entityId);
+          if (suggestion.action === "create") {
+            // Create new property
+            if (!suggestion.entityId) {
+              throw new Error(`Missing project ID for new property: ${suggestion.entityName}`);
+            }
+            
+            const propertyData = {
+              name: suggestion.entityName,
+              project_id: suggestion.entityId, // entityId should be the project_id for new properties
+              [suggestion.field]: coercedValue,
+              order_index: 0, // Default order
+            };
+            
+            const { error } = await supabase
+              .from("properties")
+              .insert(propertyData);
+            
+            if (error) throw new Error(`Failed to create property "${suggestion.entityName}": ${error.message}`);
+          } else {
+            // Update existing property
+            if (!suggestion.entityId) {
+              throw new Error(`Missing entityId for property update: ${suggestion.entityName}`);
+            }
+            
+            const { error } = await supabase
+              .from("properties")
+              .update({ [suggestion.field]: coercedValue })
+              .eq("id", suggestion.entityId);
+            
+            if (error) throw new Error(`Failed to update property "${suggestion.entityName}": ${error.message}`);
+          }
         } else if (suggestion.type === "client_requirement") {
           if (suggestion.action === "create") {
-            await supabase
+            // Create new client requirement
+            if (!suggestion.entityId) {
+              throw new Error(`Missing project ID for new client requirement: ${suggestion.entityName}`);
+            }
+            
+            const { error } = await supabase
               .from("client_requirements")
               .insert({
-                project_id: suggestion.entityId,
+                project_id: suggestion.entityId, // entityId should be the project_id
                 category: suggestion.field,
                 requirement_text: suggestion.suggestedValue,
               });
+            
+            if (error) throw new Error(`Failed to create client requirement for "${suggestion.entityName}": ${error.message}`);
           } else {
-            await supabase
+            // Update existing client requirement
+            if (!suggestion.entityId) {
+              throw new Error(`Missing entityId for client requirement update: ${suggestion.entityName}`);
+            }
+            
+            const { error } = await supabase
               .from("client_requirements")
-              .update({ [suggestion.field]: suggestion.suggestedValue })
+              .update({ [suggestion.field]: coercedValue })
               .eq("id", suggestion.entityId);
+            
+            if (error) throw new Error(`Failed to update client requirement for "${suggestion.entityName}": ${error.message}`);
           }
         }
-      }
+      });
+
+      // Execute all operations in parallel and wait for completion
+      await Promise.all(operations);
 
       alert(`Successfully applied ${approvedSuggestionsList.length} updates!`);
       setShowSuggestions(false);
       setSuggestions([]);
       setInputText("");
-    } catch {
-      setError("Failed to apply some updates. Please try again.");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      setError(`Failed to apply updates: ${errorMessage}`);
+      console.error("Error applying suggestions:", error);
     } finally {
       setProcessing(false);
     }
