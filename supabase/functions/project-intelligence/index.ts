@@ -231,7 +231,18 @@ If you cannot confidently determine the appropriate entityId for an existing ent
 - Each project contains its own nested properties and requirements
 - When suggesting updates, consider the specific project context and its related data
 - Only suggest updates to entities that already exist in the provided context
-- Consider property-specific details when making property suggestions within a project context`;
+- Consider property-specific details when making property suggestions within a project context
+
+### DATA FORMAT RULES (MANDATORY)
+- **Numeric & Monetary fields** (expected_fee, broker_commission, monthly_cost, expected_monthly_cost, price_per_sf, sf, people_capacity, expected_headcount, etc.) → return a *pure number* with no currency symbols, commas, or units. Example: 46 (not "$46", "46 NNN", or "46 per sf").
+- **Date fields** (desired_move_in_date, start_date, tour_datetime) → use ISO-8601 format YYYY-MM-DD.
+- **Enum-constrained fields** – return the value exactly as listed below (case sensitive):
+  • status: "active" | "new" | "pending" | "declined"
+  • current_state: "Available" | "Under Review" | "Negotiating" | "On Hold" | "Declined"
+  • tour_status: "Scheduled" | "Completed" | "Cancelled" | "Rescheduled"
+- If the input text suggests a value that does **not** conform to these rules, **omit** that suggestion entirely.
+
+These formatting rules are critical for downstream processing – any suggestion that violates them will be discarded.`;
 
   try {
     const suggestions = await structuredModel.invoke(prompt);
