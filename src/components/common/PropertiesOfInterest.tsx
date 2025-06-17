@@ -1,29 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  Building2,
+  Building,
+  MapPin,
+  Users,
+  DollarSign,
   Calendar,
   Plus,
   Edit3,
-  X,
   Trash2,
+  X,
   Save,
-  MapPin,
-  Users,
-  FileText,
   ExternalLink,
-  Eye,
+  Car,
   Clock,
   CheckCircle,
   AlertCircle,
   XCircle,
-  RotateCcw,
-  Car,
-  Building,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
+import { formatDate } from "../../utils/dateUtils";
+
+interface PropertiesOfInterestProps {
+  projectId?: string;
+  shareId?: string;
+  readonly?: boolean;
+}
 
 interface Property {
   id: string;
@@ -36,27 +40,10 @@ interface Property {
   expected_monthly_cost?: string | null;
   contract_term?: string | null;
   availability?: string | null;
-  lease_type?:
-    | "Direct Lease"
-    | "Sublease"
-    | "Sub-sublease"
-    | "Coworking"
-    | null;
-  lease_structure?: "NNN" | "Full Service" | null;
-  current_state?:
-    | "Available"
-    | "Under Review"
-    | "Negotiating"
-    | "On Hold"
-    | "Declined"
-    | null;
-  condition?:
-    | "Plug & Play"
-    | "Built-out"
-    | "White Box"
-    | "Shell Space"
-    | "Turnkey"
-    | null;
+  lease_type?: string | null;
+  lease_structure?: string | null;
+  current_state?: string | null;
+  condition?: string | null;
   cam_rate?: string | null;
   parking_rate?: string | null;
   misc_notes?: string | null;
@@ -65,12 +52,12 @@ interface Property {
   flier_url?: string | null;
   tour_datetime?: string | null;
   tour_location?: string | null;
-  tour_status?: "Scheduled" | "Completed" | "Cancelled" | "Rescheduled" | null;
-  status: "active" | "new" | "pending" | "declined";
+  tour_status?: string | null;
+  status: string;
   decline_reason?: string | null;
+  order_index?: number | null;
   created_at: string;
   updated_at: string;
-  order_index?: number | null;
 }
 
 interface PropertyFormData {
@@ -83,22 +70,10 @@ interface PropertyFormData {
   expected_monthly_cost: string;
   contract_term: string;
   availability: string;
-  lease_type: "Direct Lease" | "Sublease" | "Sub-sublease" | "Coworking" | "";
-  lease_structure: "NNN" | "Full Service" | "";
-  current_state:
-    | "Available"
-    | "Under Review"
-    | "Negotiating"
-    | "On Hold"
-    | "Declined"
-    | "";
-  condition:
-    | "Plug & Play"
-    | "Built-out"
-    | "White Box"
-    | "Shell Space"
-    | "Turnkey"
-    | "";
+  lease_type: string;
+  lease_structure: string;
+  current_state: string;
+  condition: string;
   cam_rate: string;
   parking_rate: string;
   misc_notes: string;
@@ -107,14 +82,9 @@ interface PropertyFormData {
   flier_url: string;
   tour_datetime: string;
   tour_location: string;
-  tour_status: "Scheduled" | "Completed" | "Cancelled" | "Rescheduled" | "";
-  status: "active" | "new" | "pending" | "declined";
-}
-
-interface PropertiesOfInterestProps {
-  projectId?: string;
-  shareId?: string;
-  readonly?: boolean;
+  tour_status: string;
+  status: string;
+  decline_reason: string;
 }
 
 export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
@@ -150,83 +120,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     tour_location: "",
     tour_status: "",
     status: "new",
+    decline_reason: "",
   });
   const [saving, setSaving] = useState(false);
 
-  // Use the unified data hook for properties
+  // Use unified data hook for both public and authenticated modes
   const {
     data: properties,
-    loading: propertiesLoading,
+    loading,
     refetch: fetchProperties,
   } = useProjectData<Property>({
     projectId,
     shareId,
     dataType: "properties",
   });
-
-  const loading = propertiesLoading;
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "new":
-        return "bg-blue-100 text-blue-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "declined":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case "Plug & Play":
-        return "bg-green-100 text-green-800";
-      case "Built-out":
-        return "bg-blue-100 text-blue-800";
-      case "White Box":
-        return "bg-gray-100 text-gray-800";
-      case "Shell Space":
-        return "bg-orange-100 text-orange-800";
-      case "Turnkey":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getTourStatusColor = (status: string) => {
-    switch (status) {
-      case "Scheduled":
-        return "bg-blue-100 text-blue-800";
-      case "Completed":
-        return "bg-green-100 text-green-800";
-      case "Cancelled":
-        return "bg-red-100 text-red-800";
-      case "Rescheduled":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getTourStatusIcon = (status: string) => {
-    switch (status) {
-      case "Scheduled":
-        return Clock;
-      case "Completed":
-        return CheckCircle;
-      case "Cancelled":
-        return XCircle;
-      case "Rescheduled":
-        return RotateCcw;
-      default:
-        return AlertCircle;
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -253,6 +160,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       tour_location: "",
       tour_status: "",
       status: "new",
+      decline_reason: "",
     });
     setEditingProperty(null);
   };
@@ -263,16 +171,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   };
 
   const openEditModal = (property: Property) => {
-    // Convert UTC datetime to local datetime-local format (YYYY-MM-DDTHH:MM)
-    const datetimeLocal = property.tour_datetime
-      ? new Date(
-          new Date(property.tour_datetime).getTime() -
-            new Date(property.tour_datetime).getTimezoneOffset() * 60000,
-        )
-          .toISOString()
-          .slice(0, 16)
-      : "";
-
     setFormData({
       name: property.name,
       address: property.address || "",
@@ -293,10 +191,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       virtual_tour_url: property.virtual_tour_url || "",
       suggestion: property.suggestion || "",
       flier_url: property.flier_url || "",
-      tour_datetime: datetimeLocal,
+      tour_datetime: property.tour_datetime
+        ? new Date(property.tour_datetime).toISOString().slice(0, 16)
+        : "",
       tour_location: property.tour_location || "",
       tour_status: property.tour_status || "",
       status: property.status,
+      decline_reason: property.decline_reason || "",
     });
     setEditingProperty(property);
     setIsModalOpen(true);
@@ -340,14 +241,14 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         tour_location: formData.tour_location.trim() || null,
         tour_status: formData.tour_status || null,
         status: formData.status,
-        updated_at: new Date().toISOString(),
+        decline_reason: formData.decline_reason.trim() || null,
         order_index: editingProperty
           ? editingProperty.order_index
           : properties.length,
+        updated_at: new Date().toISOString(),
       };
 
       if (editingProperty) {
-        // Update existing property
         const { error } = await supabase
           .from("properties")
           .update(propertyData)
@@ -355,7 +256,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
         if (error) throw error;
       } else {
-        // Create new property
         const { error } = await supabase
           .from("properties")
           .insert([propertyData]);
@@ -374,8 +274,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
   const handleDelete = async (propertyId: string) => {
     if (
-      !confirm("Are you sure you want to delete this property?") ||
-      readonly
+      readonly ||
+      !confirm("Are you sure you want to delete this property?")
     ) {
       return;
     }
@@ -415,6 +315,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }));
 
     try {
+      // Update each property's order_index in the database
       for (const update of updates) {
         const { error } = await supabase
           .from("properties")
@@ -424,448 +325,639 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         if (error) throw error;
       }
 
+      // Refresh the data
       await fetchProperties();
     } catch {
       alert("Error reordering properties. Please try again.");
-      await fetchProperties(); // Refresh to get correct order
+      // Refresh on error to revert optimistic update
+      await fetchProperties();
     }
   };
 
-  const openGoogleMaps = (address: string) => {
-    if (address) {
-      const encodedAddress = encodeURIComponent(address);
-      window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`,
-        "_blank",
-      );
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "new":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "declined":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getCurrentStateColor = (state: string) => {
+    switch (state) {
+      case "Available":
+        return "bg-green-100 text-green-800";
+      case "Under Review":
+        return "bg-blue-100 text-blue-800";
+      case "Negotiating":
+        return "bg-purple-100 text-purple-800";
+      case "On Hold":
+        return "bg-yellow-100 text-yellow-800";
+      case "Declined":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getTourStatusIcon = (status: string) => {
+    switch (status) {
+      case "Scheduled":
+        return <Clock className="w-4 h-4 text-blue-600" />;
+      case "Completed":
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case "Cancelled":
+        return <XCircle className="w-4 h-4 text-red-600" />;
+      case "Rescheduled":
+        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+      default:
+        return null;
     }
   };
 
   const openUrl = (url: string) => {
     if (url) {
-      // Add https:// if no protocol is specified
-      const fullUrl = url.startsWith("http") ? url : `https://${url}`;
-      window.open(fullUrl, "_blank", "noopener,noreferrer");
+      window.open(url, "_blank", "noopener,noreferrer");
     }
-  };
-
-  const renderProperty = (property: Property) => {
-    return (
-      <div className="border border-gray-200 rounded-xl p-6 bg-white hover:shadow-lg transition-shadow">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
-              {property.name}
-            </h3>
-            <div className="flex items-center space-x-3 mb-3 flex-wrap">
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                  property.status,
-                )}`}
-              >
-                {property.status.charAt(0).toUpperCase() +
-                  property.status.slice(1)}
-              </span>
-              {property.condition && (
-                <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getConditionColor(
-                    property.condition,
-                  )}`}
-                >
-                  {property.condition}
-                </span>
-              )}
-            </div>
-            {property.address && (
-              <button
-                onClick={() => openGoogleMaps(property.address!)}
-                className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors mb-4"
-              >
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm font-medium">{property.address}</span>
-                <ExternalLink className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-          {!readonly && (
-            <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => openEditModal(property)}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-50"
-                title="Edit property"
-              >
-                <Edit3 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleDelete(property.id)}
-                className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
-                title="Delete property"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Tour Information Section */}
-        {(property.tour_datetime || property.tour_status) && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-blue-900 flex items-center space-x-2">
-                <Calendar className="w-4 h-4" />
-                <span>Property Tour</span>
-              </h4>
-              {property.tour_status && (
-                <span
-                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getTourStatusColor(
-                    property.tour_status,
-                  )}`}
-                >
-                  {React.createElement(
-                    getTourStatusIcon(property.tour_status),
-                    { className: "w-3 h-3 mr-1" },
-                  )}
-                  {property.tour_status}
-                </span>
-              )}
-            </div>
-            <div className="space-y-2 text-sm">
-              {property.tour_datetime && (
-                <div className="flex items-center space-x-2 text-blue-800">
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    {new Date(property.tour_datetime).toLocaleString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                      timeZoneName: "short",
-                    })}
-                  </span>
-                </div>
-              )}
-              {property.tour_location && (
-                <div className="flex items-center space-x-2 text-blue-800">
-                  <MapPin className="w-4 h-4" />
-                  <span>{property.tour_location}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Property Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-          {property.sf && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">Square Feet</p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  {property.sf}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {property.people_capacity && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <Users className="w-4 h-4 text-green-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium"># of People</p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  {property.people_capacity}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {property.price_per_sf && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">
-                  Ask Rate ( $ /SF)
-                </p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  {property.price_per_sf}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {property.monthly_cost && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">
-                  $$ / Month - Asking
-                </p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  {property.monthly_cost}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {property.expected_monthly_cost && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">
-                  Expected Monthly Cost
-                </p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  {property.expected_monthly_cost}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {property.cam_rate && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Building className="w-4 h-4 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">
-                  CAM Rate ($/SF)
-                </p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  {property.cam_rate}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {property.parking_rate && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Car className="w-4 h-4 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">
-                  Parking Rate ($/SF)
-                </p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  {property.parking_rate}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {property.contract_term && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-4 h-4 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">
-                  Contract Term
-                </p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  {property.contract_term}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {property.availability && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-cyan-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">
-                  Availability
-                </p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  {property.availability}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Lease Type, Structure, and Condition */}
-        <div className="mb-4 flex flex-wrap gap-4">
-          {property.lease_type && (
-            <div>
-              <p className="text-xs text-gray-500 font-medium mb-1">
-                Lease Type
-              </p>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                {property.lease_type}
-              </span>
-            </div>
-          )}
-          {property.lease_structure && (
-            <div>
-              <p className="text-xs text-gray-500 font-medium mb-1">
-                Lease Structure
-              </p>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {property.lease_structure}
-              </span>
-            </div>
-          )}
-          {property.condition && (
-            <div>
-              <p className="text-xs text-gray-500 font-medium mb-1">
-                Condition
-              </p>
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getConditionColor(property.condition)}`}
-              >
-                {property.condition}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Misc Notes */}
-        {property.misc_notes && (
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 font-medium mb-2">Notes</p>
-            <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-              {property.misc_notes}
-            </p>
-          </div>
-        )}
-
-        {/* Suggestion */}
-        {property.suggestion && (
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 font-medium mb-2">Suggestion</p>
-            <p className="text-sm text-gray-700 bg-blue-50 rounded-lg p-3 border-l-4 border-blue-400">
-              {property.suggestion}
-            </p>
-          </div>
-        )}
-
-        {/* Action Links */}
-        <div className="flex items-center space-x-4 mb-4">
-          {property.virtual_tour_url && (
-            <button
-              onClick={() => openUrl(property.virtual_tour_url!)}
-              className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
-            >
-              <Eye className="w-4 h-4" />
-              <span className="text-sm font-medium">Virtual Tour</span>
-            </button>
-          )}
-          {property.flier_url && (
-            <button
-              onClick={() => openUrl(property.flier_url!)}
-              className="flex items-center space-x-2 text-green-600 hover:text-green-800 transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              <span className="text-sm font-medium">Flier</span>
-            </button>
-          )}
-        </div>
-
-        {/* Decline Reason */}
-        {property.status === "declined" && property.decline_reason && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-xs text-red-600 font-medium mb-1">
-              Decline Reason
-            </p>
-            <p className="text-sm text-red-700">{property.decline_reason}</p>
-          </div>
-        )}
-      </div>
-    );
   };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Properties of Interest
-        </h2>
-        <div className="text-center py-8">
-          <div className="text-gray-500">Loading properties...</div>
-        </div>
+      <div className="bg-white p-6 border border-gray-200 rounded-lg">
+        <div className="text-center text-gray-500">Loading properties...</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2">
-            <Building2 className="w-5 h-5 text-gray-400" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Properties of Interest
-            </h2>
-          </div>
-          {!readonly && (
-            <button
-              onClick={openAddModal}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Property</span>
-            </button>
-          )}
-        </div>
-
-        {properties.length === 0 ? (
-          <div className="text-center py-12">
-            <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">No properties added yet</p>
-            {!readonly && (
-              <button
-                onClick={openAddModal}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add First Property</span>
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {readonly ? (
-              // Static view for readonly mode
-              properties.map((property) => (
-                <div key={property.id}>{renderProperty(property)}</div>
-              ))
-            ) : (
-              // Interactive view for authenticated mode
-              <DragDropList items={properties} onReorder={handleReorder}>
-                {(property) => renderProperty(property)}
-              </DragDropList>
-            )}
-          </div>
+    <div className="bg-white p-6 border border-gray-200 rounded-lg">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-gray-900">
+          Properties of Interest
+        </h3>
+        {!readonly && (
+          <button
+            onClick={openAddModal}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="text-sm">Add Property</span>
+          </button>
         )}
       </div>
 
-      {/* Add/Edit Modal - only show if not readonly */}
+      {properties.length === 0 ? (
+        <div className="text-center py-12">
+          <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h4 className="text-lg font-semibold text-gray-900 mb-2">
+            No properties yet
+          </h4>
+          <p className="text-gray-600 mb-6">
+            {readonly
+              ? "No properties have been added to this project"
+              : "Add properties of interest to track your options"}
+          </p>
+          {!readonly && (
+            <button
+              onClick={openAddModal}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors mx-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add First Property</span>
+            </button>
+          )}
+        </div>
+      ) : readonly ? (
+        // Static view for readonly mode
+        <div className="space-y-4">
+          {properties.map((property) => (
+            <div
+              key={property.id}
+              className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      {property.name}
+                    </h4>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                        property.status,
+                      )}`}
+                    >
+                      {property.status}
+                    </span>
+                    {property.current_state && (
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getCurrentStateColor(
+                          property.current_state,
+                        )}`}
+                      >
+                        {property.current_state}
+                      </span>
+                    )}
+                  </div>
+                  {property.address && (
+                    <div className="flex items-center space-x-2 text-gray-600 mb-3">
+                      <MapPin className="w-4 h-4" />
+                      <span className="text-sm">{property.address}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Property Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                {property.sf && (
+                  <div className="flex items-center space-x-2">
+                    <Building className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {property.sf} sq ft
+                    </span>
+                  </div>
+                )}
+                {property.people_capacity && (
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {property.people_capacity} people
+                    </span>
+                  </div>
+                )}
+                {property.price_per_sf && (
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-gray-600">
+                      {property.price_per_sf}/sq ft
+                    </span>
+                  </div>
+                )}
+                {property.monthly_cost && (
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm text-gray-600">
+                      {property.monthly_cost}/month
+                    </span>
+                  </div>
+                )}
+                {property.expected_monthly_cost && (
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm text-gray-600">
+                      Expected: {property.expected_monthly_cost}/month
+                    </span>
+                  </div>
+                )}
+                {property.cam_rate && (
+                  <div className="flex items-center space-x-2">
+                    <Building className="w-4 h-4 text-yellow-600" />
+                    <span className="text-sm text-gray-600">
+                      CAM: {property.cam_rate}/sq ft
+                    </span>
+                  </div>
+                )}
+                {property.parking_rate && (
+                  <div className="flex items-center space-x-2">
+                    <Car className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">
+                      Parking: {property.parking_rate}/sq ft
+                    </span>
+                  </div>
+                )}
+                {property.availability && (
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {property.availability}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Tour Information */}
+              {(property.tour_datetime ||
+                property.tour_status ||
+                property.tour_location) && (
+                <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                  <h5 className="font-medium text-blue-900 mb-2 flex items-center space-x-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>Tour Information</span>
+                    {property.tour_status &&
+                      getTourStatusIcon(property.tour_status)}
+                  </h5>
+                  <div className="space-y-1 text-sm text-blue-800">
+                    {property.tour_datetime && (
+                      <div>
+                        <strong>Date & Time:</strong>{" "}
+                        {formatDate(property.tour_datetime.split("T")[0])} at{" "}
+                        {new Date(property.tour_datetime).toLocaleTimeString(
+                          [],
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
+                      </div>
+                    )}
+                    {property.tour_location && (
+                      <div>
+                        <strong>Location:</strong> {property.tour_location}
+                      </div>
+                    )}
+                    {property.tour_status && (
+                      <div>
+                        <strong>Status:</strong> {property.tour_status}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Information */}
+              {(property.lease_type ||
+                property.lease_structure ||
+                property.condition ||
+                property.contract_term) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
+                  {property.lease_type && (
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Lease Type:
+                      </span>{" "}
+                      <span className="text-gray-600">{property.lease_type}</span>
+                    </div>
+                  )}
+                  {property.lease_structure && (
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Structure:
+                      </span>{" "}
+                      <span className="text-gray-600">
+                        {property.lease_structure}
+                      </span>
+                    </div>
+                  )}
+                  {property.condition && (
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Condition:
+                      </span>{" "}
+                      <span className="text-gray-600">{property.condition}</span>
+                    </div>
+                  )}
+                  {property.contract_term && (
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Contract Term:
+                      </span>{" "}
+                      <span className="text-gray-600">
+                        {property.contract_term}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Notes and Suggestions */}
+              {property.misc_notes && (
+                <div className="mb-4">
+                  <h5 className="font-medium text-gray-700 mb-1">Notes:</h5>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                    {property.misc_notes}
+                  </p>
+                </div>
+              )}
+
+              {property.suggestion && (
+                <div className="mb-4">
+                  <h5 className="font-medium text-gray-700 mb-1">
+                    Broker Suggestion:
+                  </h5>
+                  <p className="text-sm text-gray-600 bg-yellow-50 p-3 rounded border-l-4 border-yellow-400">
+                    {property.suggestion}
+                  </p>
+                </div>
+              )}
+
+              {property.decline_reason && (
+                <div className="mb-4">
+                  <h5 className="font-medium text-red-700 mb-1">
+                    Decline Reason:
+                  </h5>
+                  <p className="text-sm text-red-600 bg-red-50 p-3 rounded border-l-4 border-red-400">
+                    {property.decline_reason}
+                  </p>
+                </div>
+              )}
+
+              {/* Action Links */}
+              <div className="flex items-center space-x-4 pt-4 border-t border-gray-200">
+                {property.virtual_tour_url && (
+                  <button
+                    onClick={() => openUrl(property.virtual_tour_url!)}
+                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>Virtual Tour</span>
+                  </button>
+                )}
+                {property.flier_url && (
+                  <button
+                    onClick={() => openUrl(property.flier_url!)}
+                    className="flex items-center space-x-1 text-green-600 hover:text-green-800 text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>Property Flier</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        // Interactive view for authenticated mode
+        <DragDropList items={properties} onReorder={handleReorder}>
+          {(property) => (
+            <div
+              key={property.id}
+              className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow group"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      {property.name}
+                    </h4>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                        property.status,
+                      )}`}
+                    >
+                      {property.status}
+                    </span>
+                    {property.current_state && (
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getCurrentStateColor(
+                          property.current_state,
+                        )}`}
+                      >
+                        {property.current_state}
+                      </span>
+                    )}
+                  </div>
+                  {property.address && (
+                    <div className="flex items-center space-x-2 text-gray-600 mb-3">
+                      <MapPin className="w-4 h-4" />
+                      <span className="text-sm">{property.address}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => openEditModal(property)}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Edit property"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(property.id)}
+                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Delete property"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Property Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                {property.sf && (
+                  <div className="flex items-center space-x-2">
+                    <Building className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {property.sf} sq ft
+                    </span>
+                  </div>
+                )}
+                {property.people_capacity && (
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {property.people_capacity} people
+                    </span>
+                  </div>
+                )}
+                {property.price_per_sf && (
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-gray-600">
+                      {property.price_per_sf}/sq ft
+                    </span>
+                  </div>
+                )}
+                {property.monthly_cost && (
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm text-gray-600">
+                      {property.monthly_cost}/month
+                    </span>
+                  </div>
+                )}
+                {property.expected_monthly_cost && (
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm text-gray-600">
+                      Expected: {property.expected_monthly_cost}/month
+                    </span>
+                  </div>
+                )}
+                {property.cam_rate && (
+                  <div className="flex items-center space-x-2">
+                    <Building className="w-4 h-4 text-yellow-600" />
+                    <span className="text-sm text-gray-600">
+                      CAM: {property.cam_rate}/sq ft
+                    </span>
+                  </div>
+                )}
+                {property.parking_rate && (
+                  <div className="flex items-center space-x-2">
+                    <Car className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-600">
+                      Parking: {property.parking_rate}/sq ft
+                    </span>
+                  </div>
+                )}
+                {property.availability && (
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {property.availability}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Tour Information */}
+              {(property.tour_datetime ||
+                property.tour_status ||
+                property.tour_location) && (
+                <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                  <h5 className="font-medium text-blue-900 mb-2 flex items-center space-x-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>Tour Information</span>
+                    {property.tour_status &&
+                      getTourStatusIcon(property.tour_status)}
+                  </h5>
+                  <div className="space-y-1 text-sm text-blue-800">
+                    {property.tour_datetime && (
+                      <div>
+                        <strong>Date & Time:</strong>{" "}
+                        {formatDate(property.tour_datetime.split("T")[0])} at{" "}
+                        {new Date(property.tour_datetime).toLocaleTimeString(
+                          [],
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
+                      </div>
+                    )}
+                    {property.tour_location && (
+                      <div>
+                        <strong>Location:</strong> {property.tour_location}
+                      </div>
+                    )}
+                    {property.tour_status && (
+                      <div>
+                        <strong>Status:</strong> {property.tour_status}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Information */}
+              {(property.lease_type ||
+                property.lease_structure ||
+                property.condition ||
+                property.contract_term) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
+                  {property.lease_type && (
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Lease Type:
+                      </span>{" "}
+                      <span className="text-gray-600">{property.lease_type}</span>
+                    </div>
+                  )}
+                  {property.lease_structure && (
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Structure:
+                      </span>{" "}
+                      <span className="text-gray-600">
+                        {property.lease_structure}
+                      </span>
+                    </div>
+                  )}
+                  {property.condition && (
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Condition:
+                      </span>{" "}
+                      <span className="text-gray-600">{property.condition}</span>
+                    </div>
+                  )}
+                  {property.contract_term && (
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Contract Term:
+                      </span>{" "}
+                      <span className="text-gray-600">
+                        {property.contract_term}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Notes and Suggestions */}
+              {property.misc_notes && (
+                <div className="mb-4">
+                  <h5 className="font-medium text-gray-700 mb-1">Notes:</h5>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                    {property.misc_notes}
+                  </p>
+                </div>
+              )}
+
+              {property.suggestion && (
+                <div className="mb-4">
+                  <h5 className="font-medium text-gray-700 mb-1">
+                    Broker Suggestion:
+                  </h5>
+                  <p className="text-sm text-gray-600 bg-yellow-50 p-3 rounded border-l-4 border-yellow-400">
+                    {property.suggestion}
+                  </p>
+                </div>
+              )}
+
+              {property.decline_reason && (
+                <div className="mb-4">
+                  <h5 className="font-medium text-red-700 mb-1">
+                    Decline Reason:
+                  </h5>
+                  <p className="text-sm text-red-600 bg-red-50 p-3 rounded border-l-4 border-red-400">
+                    {property.decline_reason}
+                  </p>
+                </div>
+              )}
+
+              {/* Action Links */}
+              <div className="flex items-center space-x-4 pt-4 border-t border-gray-200">
+                {property.virtual_tour_url && (
+                  <button
+                    onClick={() => openUrl(property.virtual_tour_url!)}
+                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>Virtual Tour</span>
+                  </button>
+                )}
+                {property.flier_url && (
+                  <button
+                    onClick={() => openUrl(property.flier_url!)}
+                    className="flex items-center space-x-1 text-green-600 hover:text-green-800 text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>Property Flier</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </DragDropList>
+      )}
+
+      {/* Add/Edit Modal */}
       {isModalOpen && !readonly && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900">
-                {editingProperty ? "Edit Property" : "Add Property"}
+                {editingProperty ? "Edit Property" : "Add New Property"}
               </h3>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -888,8 +980,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter property name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="e.g., Downtown Tech Tower"
                       required
                     />
                   </div>
@@ -903,77 +995,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, address: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter property address"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="e.g., 123 Main Street, Downtown"
                     />
-                  </div>
-                </div>
-              </div>
-
-              {/* Tour Details */}
-              <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-4">
-                  Tour Details
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tour Date & Time
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={formData.tour_datetime}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          tour_datetime: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tour Location
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.tour_location}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          tour_location: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., Meet at main lobby"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tour Status
-                    </label>
-                    <select
-                      value={formData.tour_status}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          tour_status: e.target.value as
-                            | "Scheduled"
-                            | "Completed"
-                            | "Cancelled"
-                            | "Rescheduled"
-                            | "",
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select tour status</option>
-                      <option value="Scheduled">Scheduled</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
-                      <option value="Rescheduled">Rescheduled</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -994,7 +1018,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, sf: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                       placeholder="e.g., 15,000 sq ft"
                     />
                   </div>
@@ -1011,7 +1035,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                           people_capacity: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                       placeholder="e.g., 75-100 people"
                     />
                   </div>
@@ -1023,29 +1047,23 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       type="text"
                       value={formData.price_per_sf}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          price_per_sf: e.target.value,
-                        })
+                        setFormData({ ...formData, price_per_sf: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                       placeholder="e.g., $24/sq ft"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      $$ / Month - Asking
+                      $ / Month Lease
                     </label>
                     <input
                       type="text"
                       value={formData.monthly_cost}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          monthly_cost: e.target.value,
-                        })
+                        setFormData({ ...formData, monthly_cost: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                       placeholder="e.g., $30,000/month"
                     />
                   </div>
@@ -1062,42 +1080,8 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                           expected_monthly_cost: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                       placeholder="e.g., $28,000/month"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      CAM Rate ($/SF)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.cam_rate}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          cam_rate: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., $3.50/sq ft"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Parking Rate ($/SF)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.parking_rate}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          parking_rate: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., $2.00/sq ft"
                     />
                   </div>
                   <div>
@@ -1113,8 +1097,36 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                           contract_term: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                       placeholder="e.g., 3-5 years"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      CAM Rate ($/SF)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cam_rate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, cam_rate: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="e.g., $3.50/sq ft"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Parking Rate ($/SF)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.parking_rate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, parking_rate: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="e.g., $2.00/sq ft"
                     />
                   </div>
                   <div>
@@ -1125,24 +1137,21 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       type="text"
                       value={formData.availability}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          availability: e.target.value,
-                        })
+                        setFormData({ ...formData, availability: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                       placeholder="e.g., Available March 2024"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Status and Type */}
+              {/* Lease Information */}
               <div>
                 <h4 className="text-md font-semibold text-gray-900 mb-4">
-                  Status & Type
+                  Lease Information
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Lease Type
@@ -1150,17 +1159,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <select
                       value={formData.lease_type}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          lease_type: e.target.value as
-                            | "Direct Lease"
-                            | "Sublease"
-                            | "Sub-sublease"
-                            | "Coworking"
-                            | "",
-                        })
+                        setFormData({ ...formData, lease_type: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                     >
                       <option value="">Select lease type</option>
                       <option value="Direct Lease">Direct Lease</option>
@@ -1178,15 +1179,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          lease_structure: e.target.value as
-                            | "NNN"
-                            | "Full Service"
-                            | "",
+                          lease_structure: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                     >
-                      <option value="">Select lease structure</option>
+                      <option value="">Select structure</option>
                       <option value="NNN">NNN</option>
                       <option value="Full Service">Full Service</option>
                     </select>
@@ -1198,18 +1196,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <select
                       value={formData.condition}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          condition: e.target.value as
-                            | "Plug & Play"
-                            | "Built-out"
-                            | "White Box"
-                            | "Shell Space"
-                            | "Turnkey"
-                            | "",
-                        })
+                        setFormData({ ...formData, condition: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                     >
                       <option value="">Select condition</option>
                       <option value="Plug & Play">Plug & Play</option>
@@ -1219,6 +1208,15 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       <option value="Turnkey">Turnkey</option>
                     </select>
                   </div>
+                </div>
+              </div>
+
+              {/* Status Information */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                  Status Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Status
@@ -1226,16 +1224,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     <select
                       value={formData.status}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          status: e.target.value as
-                            | "active"
-                            | "new"
-                            | "pending"
-                            | "declined",
-                        })
+                        setFormData({ ...formData, status: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                     >
                       <option value="new">New</option>
                       <option value="active">Active</option>
@@ -1243,10 +1234,95 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       <option value="declined">Declined</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current State
+                    </label>
+                    <select
+                      value={formData.current_state}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          current_state: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    >
+                      <option value="">Select state</option>
+                      <option value="Available">Available</option>
+                      <option value="Under Review">Under Review</option>
+                      <option value="Negotiating">Negotiating</option>
+                      <option value="On Hold">On Hold</option>
+                      <option value="Declined">Declined</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Links and Resources */}
+              {/* Tour Information */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                  Tour Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tour Date & Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.tour_datetime}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          tour_datetime: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tour Location
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.tour_location}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          tour_location: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="e.g., Meet at main lobby"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tour Status
+                    </label>
+                    <select
+                      value={formData.tour_status}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          tour_status: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    >
+                      <option value="">Select status</option>
+                      <option value="Scheduled">Scheduled</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                      <option value="Rescheduled">Rescheduled</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Links */}
               <div>
                 <h4 className="text-md font-semibold text-gray-900 mb-4">
                   Links & Resources
@@ -1265,13 +1341,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                           virtual_tour_url: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="https://example.com/virtual-tour"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="https://..."
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Flier URL
+                      Property Flier URL
                     </label>
                     <input
                       type="url"
@@ -1279,14 +1355,14 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       onChange={(e) =>
                         setFormData({ ...formData, flier_url: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="https://example.com/property-flier.pdf"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="https://..."
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Notes and Suggestions */}
+              {/* Notes */}
               <div>
                 <h4 className="text-md font-semibold text-gray-900 mb-4">
                   Additional Information
@@ -1294,32 +1370,51 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Misc Notes
+                      Notes
                     </label>
                     <textarea
                       value={formData.misc_notes}
                       onChange={(e) =>
                         setFormData({ ...formData, misc_notes: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
-                      placeholder="Any additional notes about this property..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="Additional notes about this property..."
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Suggestion
+                      Broker Suggestion
                     </label>
                     <textarea
                       value={formData.suggestion}
                       onChange={(e) =>
                         setFormData({ ...formData, suggestion: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={3}
-                      placeholder="Recommendations or suggestions for this property..."
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="Your recommendation for this property..."
                     />
                   </div>
+                  {formData.status === "declined" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Decline Reason
+                      </label>
+                      <textarea
+                        value={formData.decline_reason}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            decline_reason: e.target.value,
+                          })
+                        }
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        placeholder="Reason for declining this property..."
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1327,26 +1422,23 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving || !formData.name.trim()}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {saving ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      <span>{editingProperty ? "Update" : "Add Property"}</span>
-                    </>
-                  )}
+                  <Save className="w-4 h-4" />
+                  <span>
+                    {saving
+                      ? "Saving..."
+                      : editingProperty
+                        ? "Update Property"
+                        : "Add Property"}
+                  </span>
                 </button>
               </div>
             </form>
