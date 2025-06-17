@@ -8,6 +8,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ChatGoogleGenerativeAI } from 'npm:@langchain/google-genai'
 import { z } from 'npm:zod'
 import { corsHeaders } from '../_shared/cors.ts'
+import { createRemoteJWKSet, jwtVerify } from 'npm:jose'
 
 // Zod schema as single source of truth
 const UpdateSuggestionSchema = z.object({
@@ -260,15 +261,74 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create Supabase client with Auth context
+    // Verify Clerk JWT manually since Edge Functions don't support third-party auth
+    const authHeader = req.headers.get('Authorization');
+    let clerkUserId: string | null = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7); // Remove 'Bearer ' prefix
+      
+      // Get potential Clerk domains from environment
+      const clerkDomain = Deno.env.get('CLERK_DOMAIN');
+      const clerkDomain2 = Deno.env.get('CLERK_DOMAIN_2'); // Second instance
+      
+      const domainsToTry = [clerkDomain, clerkDomain2].filter(Boolean);
+      
+      if (domainsToTry.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'No Clerk domains configured' }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          },
+        );
+      }
+      
+      let lastError: Error | null = null;
+      
+      // Try each Clerk domain until one works
+      for (const domain of domainsToTry) {
+        try {
+          console.log(`Attempting to verify JWT with Clerk domain: ${domain}`);
+          
+          // Verify the JWT with Clerk's JWKS
+          const issuer = `https://${domain}`;
+          const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
+          
+          const { payload } = await jwtVerify(token, jwks, {
+            issuer,
+          });
+          
+          clerkUserId = payload.sub || null;
+          console.log(`Successfully verified Clerk JWT for user: ${clerkUserId} using domain: ${domain}`);
+          break; // Success, exit the loop
+        } catch (error) {
+          console.error(`Failed to verify JWT with domain ${domain}:`, error);
+          lastError = error as Error;
+          continue; // Try the next domain
+        }
+      }
+      
+      // If all domains failed, return error
+      if (!clerkUserId && lastError) {
+        console.error('All Clerk domains failed JWT verification:', lastError);
+        return new Response(
+          JSON.stringify({ error: 'Invalid or expired JWT token' }),
+          { 
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          },
+        );
+      }
+    }
+
+    // Create Supabase client with optional auth context
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      clerkUserId ? {
+        accessToken: async () => authHeader?.slice(7) || null,
+      } : {}
     );
 
     // Parse and validate request body
