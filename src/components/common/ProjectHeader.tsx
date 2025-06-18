@@ -51,6 +51,8 @@ interface ProjectFormData {
   broker_commission: string;
   commission_paid_by: string;
   payment_due: string;
+  city: string;
+  state: string;
 }
 
 interface RequirementFormData {
@@ -90,6 +92,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     broker_commission: "",
     commission_paid_by: "",
     payment_due: "",
+    city: "",
+    state: "",
   });
 
   // Contact data is now directly in project object
@@ -131,6 +135,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       broker_commission: project.broker_commission?.toString() || "",
       commission_paid_by: project.commission_paid_by || "",
       payment_due: project.payment_due || "",
+      city: project.city || "",
+      state: project.state || "",
     });
   };
 
@@ -161,6 +167,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           : null,
         commission_paid_by: projectFormData.commission_paid_by.trim() || null,
         payment_due: projectFormData.payment_due.trim() || null,
+        city: projectFormData.city.trim() || null,
+        state: projectFormData.state.trim() || null,
         updated_at: new Date().toISOString(),
       };
 
@@ -309,6 +317,17 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     }
   };
 
+  // Helper function to format location display
+  const formatLocation = (city?: string | null, state?: string | null) => {
+    if (!city && !state) return null;
+    if (city && state) return `${city}, ${state}`;
+    if (city) return city;
+    if (state) return state;
+    return null;
+  };
+
+  const locationDisplay = formatLocation(project.city, project.state);
+
   return (
     <div className="dashboard-card p-8">
       <div className="flex items-start justify-between mb-8">
@@ -317,6 +336,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <h1 className="text-3xl font-bold text-gray-900">
               {project.title}
             </h1>
+            {locationDisplay && (
+              <div className="flex items-center space-x-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                <MapPin className="w-3 h-3" />
+                <span>{locationDisplay}</span>
+              </div>
+            )}
             {!readonly && (
               <button
                 onClick={openProjectModal}
@@ -561,7 +586,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Project Title
               </label>
@@ -601,6 +626,57 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Company Name
+              </label>
+              <input
+                type="text"
+                value={projectFormData.company_name}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    company_name: e.target.value,
+                  })
+                }
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="Enter company name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                City
+              </label>
+              <input
+                type="text"
+                value={projectFormData.city}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    city: e.target.value,
+                  })
+                }
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="e.g., San Francisco"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                State
+              </label>
+              <input
+                type="text"
+                value={projectFormData.state}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    state: e.target.value,
+                  })
+                }
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="e.g., CA"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Start Date
               </label>
               <input
@@ -629,23 +705,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                   })
                 }
                 className="form-input w-full px-4 py-3 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Company Name
-              </label>
-              <input
-                type="text"
-                value={projectFormData.company_name}
-                onChange={(e) =>
-                  setProjectFormData({
-                    ...projectFormData,
-                    company_name: e.target.value,
-                  })
-                }
-                className="form-input w-full px-4 py-3 rounded-lg"
-                placeholder="Enter company name"
               />
             </div>
             <div>

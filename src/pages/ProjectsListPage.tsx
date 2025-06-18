@@ -12,6 +12,7 @@ import {
   X,
   Search,
   Filter,
+  MapPin,
 } from "lucide-react";
 import { ProjectStatus, BaseProjectData } from "../types/project";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
@@ -157,8 +158,21 @@ export function ProjectsListPage() {
     (project) =>
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (project.company_name &&
-        project.company_name.toLowerCase().includes(searchTerm.toLowerCase())),
+        project.company_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (project.city &&
+        project.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (project.state &&
+        project.state.toLowerCase().includes(searchTerm.toLowerCase())),
   );
+
+  // Helper function to format location display
+  const formatLocation = (city?: string | null, state?: string | null) => {
+    if (!city && !state) return null;
+    if (city && state) return `${city}, ${state}`;
+    if (city) return city;
+    if (state) return state;
+    return null;
+  };
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -242,83 +256,93 @@ export function ProjectsListPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <div key={project.id} className="project-card group">
-              {/* Delete button */}
-              <button
-                onClick={(e) => handleDeleteClick(project.id, project.title, e)}
-                disabled={deleting === project.id}
-                className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 disabled:opacity-50"
-                title="Delete project"
-              >
-                {deleting === project.id ? (
-                  <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Trash2 className="w-4 h-4" />
-                )}
-              </button>
+          {filteredProjects.map((project) => {
+            const locationDisplay = formatLocation(project.city, project.state);
+            
+            return (
+              <div key={project.id} className="project-card group">
+                {/* Delete button */}
+                <button
+                  onClick={(e) => handleDeleteClick(project.id, project.title, e)}
+                  disabled={deleting === project.id}
+                  className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 disabled:opacity-50"
+                  title="Delete project"
+                >
+                  {deleting === project.id ? (
+                    <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
 
-              {/* Project content */}
-              <Link to={`/projects/${project.id}`} className="block">
-                {/* Status badge */}
-                <div className="flex justify-start mb-4">
-                  <span
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-full text-white ${getStatusColor(
-                      project.status,
-                    )}`}
-                  >
-                    {project.status}
-                  </span>
-                </div>
-
-                {/* Title and company */}
-                <div className="mb-6 pr-8">
-                  <h3
-                    className="text-lg font-bold text-gray-900 mb-2 line-clamp-2"
-                    title={project.title}
-                  >
-                    {project.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 font-medium">
-                    {project.company_name || "No company specified"}
-                  </p>
-                </div>
-
-                {/* Project details */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <User className="w-4 h-4" />
-                      <span>
-                        {project.expected_headcount || "Not specified"}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(project.start_date) || "Not set"}</span>
-                    </div>
+                {/* Project content */}
+                <Link to={`/projects/${project.id}`} className="block">
+                  {/* Status badge and location */}
+                  <div className="flex justify-between items-start mb-4">
+                    <span
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-full text-white ${getStatusColor(
+                        project.status,
+                      )}`}
+                    >
+                      {project.status}
+                    </span>
+                    {locationDisplay && (
+                      <div className="flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        <MapPin className="w-3 h-3" />
+                        <span>{locationDisplay}</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Broker Commission */}
-                  <div className="pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">
-                        Broker Commission
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        <DollarSign className="w-4 h-4 text-green-600" />
-                        <span className="text-lg font-bold text-green-600">
-                          {project.broker_commission != null
-                            ? `${project.broker_commission.toLocaleString()}`
-                            : "Not set"}
+                  {/* Title and company */}
+                  <div className="mb-6 pr-8">
+                    <h3
+                      className="text-lg font-bold text-gray-900 mb-2 line-clamp-2"
+                      title={project.title}
+                    >
+                      {project.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 font-medium">
+                      {project.company_name || "No company specified"}
+                    </p>
+                  </div>
+
+                  {/* Project details */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <User className="w-4 h-4" />
+                        <span>
+                          {project.expected_headcount || "Not specified"}
                         </span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDate(project.start_date) || "Not set"}</span>
+                      </div>
+                    </div>
+
+                    {/* Broker Commission */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600">
+                          Broker Commission
+                        </span>
+                        <div className="flex items-center space-x-1">
+                          <DollarSign className="w-4 h-4 text-green-600" />
+                          <span className="text-lg font-bold text-green-600">
+                            {project.broker_commission != null
+                              ? `${project.broker_commission.toLocaleString()}`
+                              : "Not set"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            </div>
-          ))}
+                </Link>
+              </div>
+            );
+          })}
         </div>
       )}
 

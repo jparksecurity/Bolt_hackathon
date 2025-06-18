@@ -21,6 +21,8 @@ export interface BaseProjectData {
   contact_title?: string | null;
   contact_phone?: string | null;
   contact_email?: string | null;
+  city?: string | null;
+  state?: string | null;
   public_share_id?: string | null;
   created_at: string;
   updated_at: string;
