@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Edit3, Plus, X, Trash2, Save, Clock } from "lucide-react";
+import { Edit3, Plus, X, Trash2, Save, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
 import { useProjectData } from "../../hooks/useProjectData";
@@ -37,6 +37,7 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
     update_date: new Date().toISOString().split("T")[0],
   });
   const [saving, setSaving] = useState(false);
+  const [showAllUpdates, setShowAllUpdates] = useState(false);
 
   const {
     data: updates,
@@ -132,6 +133,14 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
     }
   };
 
+  const toggleShowAllUpdates = () => {
+    setShowAllUpdates(!showAllUpdates);
+  };
+
+  // Determine which updates to display
+  const displayedUpdates = showAllUpdates ? updates : updates.slice(0, 2);
+  const hasMoreUpdates = updates.length > 2;
+
   if (loading) {
     return (
       <div className="dashboard-card p-6">
@@ -186,41 +195,65 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            {updates.map((update) => (
-              <div
-                key={update.id}
-                className="border-l-4 border-blue-200 pl-4 py-3 bg-slate-50 rounded-r-lg group"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="text-sm text-slate-600 font-medium">
-                    {formatDateWithOptions(update.update_date)}
-                  </div>
-                  {!readonly && (
-                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                      <button
-                        onClick={() => openEditModal(update)}
-                        className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
-                        title="Edit update"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(update.id)}
-                        className="p-1 text-slate-400 hover:text-red-600 transition-colors"
-                        title="Delete update"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+          <>
+            <div className="space-y-4">
+              {displayedUpdates.map((update) => (
+                <div
+                  key={update.id}
+                  className="border-l-4 border-blue-200 pl-4 py-3 bg-slate-50 rounded-r-lg group"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="text-sm text-slate-600 font-medium">
+                      {formatDateWithOptions(update.update_date)}
                     </div>
-                  )}
+                    {!readonly && (
+                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                        <button
+                          onClick={() => openEditModal(update)}
+                          className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
+                          title="Edit update"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(update.id)}
+                          className="p-1 text-slate-400 hover:text-red-600 transition-colors"
+                          title="Delete update"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-slate-900 whitespace-pre-wrap">
+                    {update.content}
+                  </p>
                 </div>
-                <p className="text-slate-900 whitespace-pre-wrap">
-                  {update.content}
-                </p>
+              ))}
+            </div>
+
+            {/* Show More/Less Button */}
+            {hasMoreUpdates && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={toggleShowAllUpdates}
+                  className="flex items-center space-x-2 mx-auto px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  {showAllUpdates ? (
+                    <>
+                      <ChevronUp className="w-4 h-4" />
+                      <span>Show Less Updates</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4" />
+                      <span>Show {updates.length - 2} More Updates</span>
+                    </>
+                  )}
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 
