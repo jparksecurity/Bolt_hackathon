@@ -62,6 +62,22 @@ export const ClientTourAvailabilityModal: React.FC<
       return;
     }
 
+    // Validate business hours (9 AM - 5 PM)
+    const [, timePart] = selectedDateTime.split('T');
+    const [hours, minutes] = timePart.split(':').map(Number);
+    const timeInMinutes = hours * 60 + minutes;
+    
+    if (timeInMinutes < 9 * 60 || timeInMinutes > 17 * 60) {
+      setError("Please select a time between 9:00 AM and 5:00 PM.");
+      return;
+    }
+
+    // Validate 30-minute intervals
+    if (minutes % 30 !== 0) {
+      setError("Please select a time in 30-minute intervals (e.g., 9:00, 9:30, 10:00).");
+      return;
+    }
+
     const datetime = `${selectedDateTime}:00`;
 
     // Check if this datetime is already selected
@@ -287,6 +303,9 @@ export const ClientTourAvailabilityModal: React.FC<
                 </button>
               </div>
             </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Times must be between 9:00 AM - 5:00 PM in 30-minute intervals
+            </p>
           </div>
 
           {/* Selected Date Times */}
