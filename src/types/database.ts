@@ -17,8 +17,8 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          query?: string;
           operationName?: string;
+          query?: string;
           variables?: Json;
           extensions?: Json;
         };
@@ -458,9 +458,9 @@ export type Database = {
       get_public_project_documents: {
         Args: { share_id: string };
         Returns: {
-          name: string;
           id: string;
           project_id: string;
+          name: string;
           file_type: string;
           document_url: string;
           source_type: string;
@@ -516,12 +516,12 @@ export type Database = {
           flier_url: string;
           tour_datetime: string;
           tour_location: string;
-          decline_reason: string;
-          status: Database["public"]["Enums"]["property_status"];
           tour_status: Database["public"]["Enums"]["tour_status"];
-          updated_at: string;
-          created_at: string;
+          status: Database["public"]["Enums"]["property_status"];
+          decline_reason: string;
           order_index: number;
+          created_at: string;
+          updated_at: string;
         }[];
       };
       submit_client_tour_availability: {

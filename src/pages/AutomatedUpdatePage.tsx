@@ -17,6 +17,11 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import {
+  PROPERTY_STATUSES,
+  PROPERTY_CURRENT_STATES,
+  TOUR_STATUSES,
+} from "../utils/validation";
 
 interface UpdateSuggestion {
   id: string;
@@ -154,31 +159,25 @@ export function AutomatedUpdatePage() {
 
         // Validate constrained fields
         if (field === "status") {
-          const validStatuses = ["active", "new", "pending", "declined"];
-          return validStatuses.includes(value.toLowerCase())
+          return PROPERTY_STATUSES.includes(
+            value.toLowerCase() as (typeof PROPERTY_STATUSES)[number],
+          )
             ? value.toLowerCase()
             : "new";
         }
 
         if (field === "current_state") {
-          const validStates = [
-            "Available",
-            "Under Review",
-            "Negotiating",
-            "On Hold",
-            "Declined",
-          ];
-          return validStates.includes(value) ? value : null; // Default to null if invalid
+          return PROPERTY_CURRENT_STATES.includes(
+            value as (typeof PROPERTY_CURRENT_STATES)[number],
+          )
+            ? value
+            : null;
         }
 
         if (field === "tour_status") {
-          const validTourStatuses = [
-            "Scheduled",
-            "Completed",
-            "Cancelled",
-            "Rescheduled",
-          ];
-          return validTourStatuses.includes(value) ? value : null;
+          return TOUR_STATUSES.includes(value as (typeof TOUR_STATUSES)[number])
+            ? value
+            : null;
         }
 
         return value || null;

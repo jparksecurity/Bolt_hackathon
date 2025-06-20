@@ -15,6 +15,7 @@ import type { Database } from "../types/database";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { formatDate } from "../utils/dateUtils";
 import { getStatusColor } from "../utils/displayUtils";
+import { PROJECT_STATUSES } from "../utils/validation";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 // Dashboard only needs a subset of property fields
@@ -52,12 +53,7 @@ export function DashboardPage() {
 
       // Get IDs of projects that need property data (Active/Pending/Completed)
       const relevantProjectIds = allProjects
-        .filter(
-          (p) =>
-            p.status === "Active" ||
-            p.status === "Pending" ||
-            p.status === "Completed",
-        )
+        .filter((p) => PROJECT_STATUSES.includes(p.status))
         .map((p) => p.id);
 
       // Fetch properties for relevant projects only
@@ -92,12 +88,7 @@ export function DashboardPage() {
   // Calculate total square feet from properties of completed and in-progress projects
   const calculateTotalSquareFeet = () => {
     const relevantProjectIds = projects
-      .filter(
-        (p) =>
-          p.status === "Active" ||
-          p.status === "Pending" ||
-          p.status === "Completed",
-      )
+      .filter((p) => PROJECT_STATUSES.includes(p.status))
       .map((p) => p.id);
 
     return properties
@@ -112,8 +103,8 @@ export function DashboardPage() {
       }, 0);
   };
 
-  const ongoingProjects = projects.filter(
-    (p) => p.status === "Active" || p.status === "Pending",
+  const ongoingProjects = projects.filter((p) =>
+    ["Active", "Pending"].includes(p.status),
   );
   const totalValue = projects.reduce(
     (sum, p) => sum + (p.expected_fee || 0),

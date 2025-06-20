@@ -19,6 +19,7 @@ import { getCurrentDateString } from "../../utils/dateUtils";
 import { Database } from "../../types/database";
 
 import { useReorderState } from "../../hooks/useReorderState";
+import { ROADMAP_STATUSES } from "../../utils/validation";
 
 interface ProjectRoadmapProps {
   projectId?: string;
@@ -497,9 +498,13 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
-                  <option value="pending">Pending</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
+                  {ROADMAP_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status === "in-progress"
+                        ? "In Progress"
+                        : status.charAt(0).toUpperCase() + status.slice(1)}
+                    </option>
+                  ))}
                 </select>
               </div>
 

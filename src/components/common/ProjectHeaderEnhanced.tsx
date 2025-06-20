@@ -23,6 +23,8 @@ import {
   validateAgainstDatabase,
   getValidationErrors,
   isValidProjectStatus,
+  PROJECT_STATUSES,
+  projectStatusSchema,
 } from "../../utils/validation";
 
 // Type aliases for better readability
@@ -39,7 +41,7 @@ interface ProjectHeaderEnhancedProps {
 // Form schema for client-side validation
 const ProjectFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  status: z.enum(["Active", "Pending", "Completed", "On Hold"]),
+  status: projectStatusSchema,
   start_date: z.string().optional(),
   desired_move_in_date: z.string().optional(),
   company_name: z.string().optional(),
@@ -326,13 +328,11 @@ export const ProjectHeaderEnhanced: React.FC<ProjectHeaderEnhancedProps> = ({
                   errors.status ? "border-red-500" : ""
                 }`}
               >
-                {(["Active", "Pending", "Completed", "On Hold"] as const).map(
-                  (status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ),
-                )}
+                {PROJECT_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
               </select>
               <FieldError error={errors.status?.message} />
             </div>

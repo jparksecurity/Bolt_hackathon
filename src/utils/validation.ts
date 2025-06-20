@@ -1,54 +1,52 @@
 import { z } from "zod";
-import { Database } from "../types/database";
+import { Database, Constants } from "../types/database";
 
-// Enum schemas that match the database
-export const ProjectStatusSchema = z.enum([
-  "Active",
-  "Pending",
-  "Completed",
-  "On Hold",
-]);
-export const RoadmapStatusSchema = z.enum([
-  "completed",
-  "in-progress",
-  "pending",
-]);
-export const DocumentSourceTypeSchema = z.enum([
-  "upload",
-  "google_drive",
-  "onedrive",
-  "url",
-]);
-export const PropertyStatusSchema = z.enum([
-  "new",
-  "active",
-  "pending",
-  "under_review",
-  "negotiating",
-  "on_hold",
-  "declined",
-  "accepted",
-]);
-export const PropertyCurrentStateSchema = z.enum([
-  "Available",
-  "Under Review",
-  "Negotiating",
-  "On Hold",
-  "Declined",
-]);
-export const TourStatusSchema = z.enum([
-  "Scheduled",
-  "Completed",
-  "Cancelled",
-  "Rescheduled",
-]);
+// Use the Constants from the database schema for type safety
+export const PROJECT_STATUSES = Constants.public.Enums.project_status;
+
+export const ROADMAP_STATUSES = Constants.public.Enums.roadmap_status;
+
+export const DOCUMENT_SOURCE_TYPES =
+  Constants.public.Enums.document_source_type;
+
+export const PROPERTY_STATUSES = Constants.public.Enums.property_status;
+
+export const PROPERTY_CURRENT_STATES =
+  Constants.public.Enums.property_current_state;
+
+export const TOUR_STATUSES = Constants.public.Enums.tour_status;
+
+// Zod schemas using the Constants
+export const projectStatusSchema = z.enum(
+  PROJECT_STATUSES as readonly [string, ...string[]],
+);
+
+export const roadmapStatusSchema = z.enum(
+  ROADMAP_STATUSES as readonly [string, ...string[]],
+);
+
+export const documentSourceTypeSchema = z.enum(
+  DOCUMENT_SOURCE_TYPES as readonly [string, ...string[]],
+);
+
+export const propertyStatusSchema = z.enum(
+  PROPERTY_STATUSES as readonly [string, ...string[]],
+);
+
+export const propertyCurrentStateSchema = z.enum(
+  PROPERTY_CURRENT_STATES as readonly [string, ...string[]],
+);
+
+export const tourStatusSchema = z.enum(
+  TOUR_STATUSES as readonly [string, ...string[]],
+);
 
 // Base schemas for database tables
 export const ProjectSchema = z.object({
   id: z.string().uuid(),
   clerk_user_id: z.string(),
   title: z.string().min(1, "Title is required"),
-  status: ProjectStatusSchema,
+  status: projectStatusSchema,
   start_date: z.string().nullable(),
   desired_move_in_date: z.string().nullable(),
   expected_fee: z.number().min(0, "Fee must be non-negative").nullable(),
@@ -83,7 +81,7 @@ export const ProjectInsertSchema = ProjectSchema.omit({
   .extend({
     clerk_user_id: z.string(),
     title: z.string().min(1, "Title is required"),
-    status: ProjectStatusSchema,
+    status: projectStatusSchema,
   });
 
 export const ProjectUpdateSchema = ProjectSchema.partial().omit({
@@ -98,7 +96,7 @@ export const ProjectDocumentSchema = z.object({
   name: z.string().min(1, "Document name is required"),
   file_type: z.string(),
   document_url: z.string().url("Invalid URL"),
-  source_type: DocumentSourceTypeSchema,
+  source_type: documentSourceTypeSchema,
   order_index: z.number().int().min(0),
   created_at: z.string().nullable(),
 });
@@ -113,7 +111,7 @@ export const ProjectDocumentInsertSchema = ProjectDocumentSchema.omit({
     name: z.string().min(1, "Document name is required"),
     file_type: z.string(),
     document_url: z.string().url("Invalid URL"),
-    source_type: DocumentSourceTypeSchema,
+    source_type: documentSourceTypeSchema,
     order_index: z.number().int().min(0),
   });
 
@@ -122,7 +120,7 @@ export const RoadmapStepSchema = z.object({
   project_id: z.string().uuid(),
   title: z.string().min(1, "Title is required"),
   description: z.string().nullable(),
-  status: RoadmapStatusSchema,
+  status: roadmapStatusSchema,
   expected_date: z.string().nullable(),
   completed_date: z.string().nullable(),
   order_index: z.number().int().min(0),
@@ -137,7 +135,7 @@ export const RoadmapStepInsertSchema = RoadmapStepSchema.omit({
   .extend({
     project_id: z.string().uuid(),
     title: z.string().min(1, "Title is required"),
-    status: RoadmapStatusSchema,
+    status: roadmapStatusSchema,
     order_index: z.number().int().min(0),
   });
 
@@ -155,7 +153,7 @@ export const PropertySchema = z.object({
   availability: z.string().nullable(),
   lease_type: z.string().nullable(),
   lease_structure: z.string().nullable(),
-  current_state: PropertyCurrentStateSchema,
+  current_state: propertyCurrentStateSchema,
   condition: z.string().nullable(),
   cam_rate: z.string().nullable(),
   parking_rate: z.string().nullable(),
@@ -165,8 +163,8 @@ export const PropertySchema = z.object({
   flier_url: z.string().url("Invalid URL").nullable().or(z.literal("")),
   tour_datetime: z.string().nullable(),
   tour_location: z.string().nullable(),
-  tour_status: TourStatusSchema.nullable(),
-  status: PropertyStatusSchema,
+  tour_status: tourStatusSchema.nullable(),
+  status: propertyStatusSchema,
   decline_reason: z.string().nullable(),
   order_index: z.number().int().min(0),
   created_at: z.string().nullable(),
@@ -182,8 +180,8 @@ export const PropertyInsertSchema = PropertySchema.omit({
   .extend({
     project_id: z.string().uuid(),
     name: z.string().min(1, "Property name is required"),
-    current_state: PropertyCurrentStateSchema,
-    status: PropertyStatusSchema,
+    current_state: propertyCurrentStateSchema,
+    status: propertyStatusSchema,
     order_index: z.number().int().min(0),
   });
 
@@ -215,37 +213,37 @@ export function validateAgainstDatabase<T>(
 export function isValidProjectStatus(
   value: string,
 ): value is Database["public"]["Enums"]["project_status"] {
-  return ProjectStatusSchema.safeParse(value).success;
+  return projectStatusSchema.safeParse(value).success;
 }
 
 export function isValidRoadmapStatus(
   value: string,
 ): value is Database["public"]["Enums"]["roadmap_status"] {
-  return RoadmapStatusSchema.safeParse(value).success;
+  return roadmapStatusSchema.safeParse(value).success;
 }
 
 export function isValidDocumentSourceType(
   value: string,
 ): value is Database["public"]["Enums"]["document_source_type"] {
-  return DocumentSourceTypeSchema.safeParse(value).success;
+  return documentSourceTypeSchema.safeParse(value).success;
 }
 
 export function isValidPropertyStatus(
   value: string,
 ): value is Database["public"]["Enums"]["property_status"] {
-  return PropertyStatusSchema.safeParse(value).success;
+  return propertyStatusSchema.safeParse(value).success;
 }
 
 export function isValidPropertyCurrentState(
   value: string,
 ): value is Database["public"]["Enums"]["property_current_state"] {
-  return PropertyCurrentStateSchema.safeParse(value).success;
+  return propertyCurrentStateSchema.safeParse(value).success;
 }
 
 export function isValidTourStatus(
   value: string,
 ): value is Database["public"]["Enums"]["tour_status"] {
-  return TourStatusSchema.safeParse(value).success;
+  return tourStatusSchema.safeParse(value).success;
 }
 
 // Form validation helpers
