@@ -29,12 +29,15 @@ interface ClientTourAvailabilityCardProps {
   readonly?: boolean;
 }
 
-
 export const ClientTourAvailabilityCard: React.FC<
   ClientTourAvailabilityCardProps
 > = ({ projectId, shareId, readonly = false }) => {
   const supabase = useSupabaseClient();
-  const { data: availabilities, loading, refetch } = useProjectData<TourAvailability>({
+  const {
+    data: availabilities,
+    loading,
+    refetch,
+  } = useProjectData<TourAvailability>({
     projectId,
     shareId,
     dataType: "client_tour_availability",
@@ -106,7 +109,6 @@ export const ClientTourAvailabilityCard: React.FC<
     setEditDateTime("");
   };
 
-
   const groupAvailabilitiesByClient = () => {
     const grouped: { [key: string]: TourAvailability[] } = {};
 
@@ -155,10 +157,9 @@ export const ClientTourAvailabilityCard: React.FC<
           <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">No availability requests yet</p>
           <p className="text-gray-400 text-sm mt-2">
-            {readonly 
+            {readonly
               ? "Be the first to submit your tour availability!"
-              : "Clients can submit their availability through the shared project link"
-            }
+              : "Clients can submit their availability through the shared project link"}
           </p>
         </div>
       </div>

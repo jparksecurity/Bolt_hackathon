@@ -24,7 +24,6 @@ interface ClientTourAvailabilityModalProps {
   shareId: string;
 }
 
-
 export const ClientTourAvailabilityModal: React.FC<
   ClientTourAvailabilityModalProps
 > = ({ isOpen, onClose, shareId }) => {
@@ -44,8 +43,8 @@ export const ClientTourAvailabilityModal: React.FC<
   const getMinDateTime = () => {
     const today = new Date();
     const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-    const day = today.getDate().toString().padStart(2, '0');
+    const month = (today.getMonth() + 1).toString().padStart(2, "0");
+    const day = today.getDate().toString().padStart(2, "0");
     return `${year}-${month}-${day}T09:00`;
   };
 
@@ -53,8 +52,8 @@ export const ClientTourAvailabilityModal: React.FC<
     const future = new Date();
     future.setFullYear(future.getFullYear() + 1);
     const year = future.getFullYear();
-    const month = (future.getMonth() + 1).toString().padStart(2, '0');
-    const day = future.getDate().toString().padStart(2, '0');
+    const month = (future.getMonth() + 1).toString().padStart(2, "0");
+    const day = future.getDate().toString().padStart(2, "0");
     return `${year}-${month}-${day}T17:00`;
   };
 
@@ -65,10 +64,10 @@ export const ClientTourAvailabilityModal: React.FC<
     }
 
     // Validate business hours (9 AM - 5 PM)
-    const [, timePart] = selectedDateTime.split('T');
-    const [hours, minutes] = timePart.split(':').map(Number);
+    const [, timePart] = selectedDateTime.split("T");
+    const [hours, minutes] = timePart.split(":").map(Number);
     const timeInMinutes = hours * 60 + minutes;
-    
+
     if (timeInMinutes < 9 * 60 || timeInMinutes > 17 * 60) {
       setError("Please select a time between 9:00 AM and 5:00 PM.");
       return;
@@ -76,7 +75,9 @@ export const ClientTourAvailabilityModal: React.FC<
 
     // Validate 30-minute intervals
     if (minutes % 30 !== 0) {
-      setError("Please select a time in 30-minute intervals (e.g., 9:00, 9:30, 10:00).");
+      setError(
+        "Please select a time in 30-minute intervals (e.g., 9:00, 9:30, 10:00).",
+      );
       return;
     }
 
@@ -91,8 +92,8 @@ export const ClientTourAvailabilityModal: React.FC<
 
     const date = new Date(datetime);
     const newDateTime: SelectedDateTime = {
-      date: date.toISOString().split('T')[0],
-      time: date.toTimeString().split(' ')[0].substring(0, 5),
+      date: date.toISOString().split("T")[0],
+      time: date.toTimeString().split(" ")[0].substring(0, 5),
       datetime: datetime,
     };
 
@@ -106,7 +107,6 @@ export const ClientTourAvailabilityModal: React.FC<
       selectedDateTimes.filter((dt) => dt.datetime !== datetime),
     );
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,16 +126,13 @@ export const ClientTourAvailabilityModal: React.FC<
         return date.toISOString();
       });
 
-      const { error } = await supabase.rpc(
-        "submit_client_tour_availability",
-        {
-          share_id: shareId,
-          proposed_slots: proposedSlots,
-          client_name: clientName.trim() || null,
-          client_email: clientEmail.trim() || null,
-          notes: notes.trim() || null,
-        },
-      );
+      const { error } = await supabase.rpc("submit_client_tour_availability", {
+        share_id: shareId,
+        proposed_slots: proposedSlots,
+        client_name: clientName.trim() || null,
+        client_email: clientEmail.trim() || null,
+        notes: notes.trim() || null,
+      });
 
       if (error) {
         throw new Error(error.message || "Failed to submit availability");

@@ -484,7 +484,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   <div className="text-sm text-blue-800">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4" />
-                      <span>{formatDisplayDateTime(property.tour_datetime)}</span>
+                      <span>
+                        {formatDisplayDateTime(property.tour_datetime)}
+                      </span>
                     </div>
                     {property.tour_location && (
                       <div className="flex items-center space-x-2 mt-1">
@@ -668,7 +670,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   <div className="text-sm text-blue-800">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4" />
-                      <span>{formatDisplayDateTime(property.tour_datetime)}</span>
+                      <span>
+                        {formatDisplayDateTime(property.tour_datetime)}
+                      </span>
                     </div>
                     {property.tour_location && (
                       <div className="flex items-center space-x-2 mt-1">

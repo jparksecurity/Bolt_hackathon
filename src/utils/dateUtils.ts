@@ -65,7 +65,7 @@ export const formatDateTime = (datetime: string) => {
 
 /**
  * Formats datetime as a single display string for lists
- * @param datetime - ISO datetime string  
+ * @param datetime - ISO datetime string
  * @returns Formatted string like "Thu, Jun 20, 2024 at 2:30 PM"
  */
 export const formatDisplayDateTime = (datetime: string): string => {

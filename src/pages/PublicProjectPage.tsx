@@ -17,7 +17,7 @@ const DEFAULT_CARD_ORDER: ProjectCard[] = [
   { id: "updates", type: "updates", title: "Recent Updates", order_index: 0 },
   {
     id: "availability",
-    type: "availability", 
+    type: "availability",
     title: "Client Tour Availability",
     order_index: 1,
   },
@@ -93,13 +93,19 @@ export function PublicProjectPage() {
     switch (card.type) {
       case "updates":
         return (
-          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+          <div
+            key={card.id}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6"
+          >
             <RecentUpdates shareId={shareId!} readonly={true} />
           </div>
         );
       case "availability":
         return (
-          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+          <div
+            key={card.id}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6"
+          >
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
@@ -119,7 +125,10 @@ export function PublicProjectPage() {
         );
       case "properties":
         return (
-          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+          <div
+            key={card.id}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6"
+          >
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">
                 Properties of Interest
@@ -130,13 +139,19 @@ export function PublicProjectPage() {
         );
       case "roadmap":
         return (
-          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+          <div
+            key={card.id}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6"
+          >
             <ProjectRoadmap shareId={shareId!} readonly={true} />
           </div>
         );
       case "documents":
         return (
-          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+          <div
+            key={card.id}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6"
+          >
             <ProjectDocuments shareId={shareId!} readonly={true} />
           </div>
         );
@@ -191,7 +206,9 @@ export function PublicProjectPage() {
   }
 
   // Sort cards by order_index
-  const sortedCards = [...cardOrder].sort((a, b) => a.order_index - b.order_index);
+  const sortedCards = [...cardOrder].sort(
+    (a, b) => a.order_index - b.order_index,
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
