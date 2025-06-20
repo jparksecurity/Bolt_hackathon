@@ -10,6 +10,30 @@ import { PropertiesOfInterest } from "../components/common/PropertiesOfInterest"
 import { ProjectRoadmap } from "../components/common/ProjectRoadmap";
 import { ProjectDocuments } from "../components/common/ProjectDocuments";
 import { ClientTourAvailabilityModal } from "../components/common/ClientTourAvailabilityModal";
+import { ProjectCard } from "../types/project";
+
+const DEFAULT_CARD_ORDER: ProjectCard[] = [
+  { id: "updates", type: "updates", title: "Recent Updates", order_index: 0 },
+  {
+    id: "availability",
+    type: "availability", 
+    title: "Client Tour Availability",
+    order_index: 1,
+  },
+  {
+    id: "properties",
+    type: "properties",
+    title: "Properties of Interest",
+    order_index: 2,
+  },
+  { id: "roadmap", type: "roadmap", title: "Project Roadmap", order_index: 3 },
+  {
+    id: "documents",
+    type: "documents",
+    title: "Project Documents",
+    order_index: 4,
+  },
+];
 
 export function PublicProjectPage() {
   const { shareId } = useParams<{ shareId: string }>();
@@ -20,6 +44,7 @@ export function PublicProjectPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [cardOrder, setCardOrder] = useState<ProjectCard[]>(DEFAULT_CARD_ORDER);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -44,7 +69,13 @@ export function PublicProjectPage() {
           return;
         }
 
-        setProject(data[0]);
+        const projectData = data[0];
+        setProject(projectData);
+
+        // Load dashboard card order from database if available
+        if (projectData.dashboard_card_order) {
+          setCardOrder(projectData.dashboard_card_order as ProjectCard[]);
+        }
       } catch {
         setError("An error occurred while loading the project");
       } finally {
@@ -54,6 +85,66 @@ export function PublicProjectPage() {
 
     fetchProject();
   }, [shareId, supabase]);
+
+  const renderCard = (card: ProjectCard) => {
+    if (!project) return null;
+
+    switch (card.type) {
+      case "updates":
+        return (
+          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <RecentUpdates shareId={shareId!} readonly={true} />
+          </div>
+        );
+      case "availability":
+        return (
+          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Tour Availability
+                </h3>
+                <button
+                  onClick={() => setShowAvailabilityModal(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>I'm Available for Tours</span>
+                </button>
+              </div>
+              <p className="text-gray-600">
+                Click the button above to submit your tour availability.
+              </p>
+            </div>
+          </div>
+        );
+      case "properties":
+        return (
+          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">
+                Properties of Interest
+              </h3>
+              <PropertiesOfInterest shareId={shareId!} readonly={true} />
+            </div>
+          </div>
+        );
+      case "roadmap":
+        return (
+          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <ProjectRoadmap shareId={shareId!} readonly={true} />
+          </div>
+        );
+      case "documents":
+        return (
+          <div key={card.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <ProjectDocuments shareId={shareId!} readonly={true} />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   if (loading) {
     return (
@@ -100,6 +191,9 @@ export function PublicProjectPage() {
     );
   }
 
+  // Sort cards by order_index
+  const sortedCards = [...cardOrder].sort((a, b) => a.order_index - b.order_index);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Logo and Navigation */}
@@ -116,38 +210,8 @@ export function PublicProjectPage() {
         <ProjectHeader project={project} readonly={true} shareId={shareId!} />
 
         <div className="p-6">
-          {/* Recent Updates - Full Width */}
-          <div className="mb-6">
-            <RecentUpdates shareId={shareId!} readonly={true} />
-          </div>
-        </div>
-
-        {/* Properties Section with Tour Availability Button */}
-        <div className="px-6 pb-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-900">
-              Properties of Interest
-            </h3>
-            <button
-              onClick={() => setShowAvailabilityModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Calendar className="w-4 h-4" />
-              <span>I'm Available for Tours</span>
-            </button>
-          </div>
-
-          <PropertiesOfInterest shareId={shareId!} readonly={true} />
-        </div>
-
-        {/* Project Roadmap - Full Width */}
-        <div className="px-6 pb-6">
-          <ProjectRoadmap shareId={shareId!} readonly={true} />
-        </div>
-
-        {/* Project Documents - Full Width at Bottom */}
-        <div className="px-6 pb-6">
-          <ProjectDocuments shareId={shareId!} readonly={true} />
+          {/* Render cards in order */}
+          {sortedCards.map((card) => renderCard(card))}
         </div>
       </div>
 
