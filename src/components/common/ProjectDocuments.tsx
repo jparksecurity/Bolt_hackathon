@@ -120,6 +120,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
       if (
         !user ||
         readonly ||
+        !projectId ||
         !documentForm.name.trim() ||
         !documentForm.url.trim()
       ) {

@@ -130,7 +130,7 @@ export const ProjectHeaderEnhanced: React.FC<ProjectHeaderEnhancedProps> = ({
       // Transform form data to database update format
       const updateData: ProjectUpdate = {
         title: formData.title.trim(),
-        status: formData.status,
+        status: formData.status as Database["public"]["Enums"]["project_status"],
         start_date: formData.start_date || null,
         desired_move_in_date: formData.desired_move_in_date || null,
         company_name: formData.company_name?.trim() || null,

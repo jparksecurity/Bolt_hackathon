@@ -120,7 +120,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !formData.title.trim() || readonly) return;
+    if (!user || !formData.title.trim() || readonly || !projectId) return;
 
     setSaving(true);
     try {
