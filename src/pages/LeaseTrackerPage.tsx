@@ -9,6 +9,7 @@ import { ProjectRoadmap } from "../components/common/ProjectRoadmap";
 import { ProjectDocuments } from "../components/common/ProjectDocuments";
 import { PropertiesOfInterest } from "../components/common/PropertiesOfInterest";
 import { RecentUpdates } from "../components/common/RecentUpdates";
+import { ClientTourAvailabilityCard } from "../components/common/ClientTourAvailabilityCard";
 import { BaseProjectData } from "../types/project";
 
 interface ProjectData extends BaseProjectData {
@@ -203,6 +204,9 @@ export function LeaseTrackerPage() {
 
         {/* Recent Updates */}
         <RecentUpdates projectId={project.id} />
+
+        {/* Client Tour Availability Card */}
+        <ClientTourAvailabilityCard projectId={project.id} />
 
         {/* Properties Section */}
         <PropertiesOfInterest projectId={project.id} />

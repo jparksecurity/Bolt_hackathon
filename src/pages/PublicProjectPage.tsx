@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Eye, Lock } from "lucide-react";
+import { Eye, Lock, Calendar } from "lucide-react";
 import { useSupabaseClient } from "../services/supabase";
 import { BaseProjectData } from "../types/project";
 import { Header } from "../components/layout/Header";
@@ -9,7 +9,7 @@ import { RecentUpdates } from "../components/common/RecentUpdates";
 import { PropertiesOfInterest } from "../components/common/PropertiesOfInterest";
 import { ProjectRoadmap } from "../components/common/ProjectRoadmap";
 import { ProjectDocuments } from "../components/common/ProjectDocuments";
-import { ClientAvailabilitySection } from "../components/common/ClientAvailabilitySection";
+import { ClientTourAvailabilityModal } from "../components/common/ClientTourAvailabilityModal";
 
 export function PublicProjectPage() {
   const { shareId } = useParams<{ shareId: string }>();
@@ -17,6 +17,7 @@ export function PublicProjectPage() {
   const [project, setProject] = useState<BaseProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -119,23 +120,21 @@ export function PublicProjectPage() {
           </div>
         </div>
 
-        {/* Properties Section with Client Availability */}
+        {/* Properties Section with Tour Availability Button */}
         <div className="px-6 pb-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-gray-900">
               Properties of Interest
             </h3>
+            <button
+              onClick={() => setShowAvailabilityModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Calendar className="w-4 h-4" />
+              <span>I'm Available for Tours</span>
+            </button>
           </div>
           
-          {/* Client Availability Section */}
-          <div className="mb-6">
-            <ClientAvailabilitySection 
-              projectId={project.id} 
-              shareId={shareId!} 
-            />
-          </div>
-          
-          {/* Properties List */}
           <PropertiesOfInterest shareId={shareId!} readonly={true} />
         </div>
 
@@ -149,6 +148,14 @@ export function PublicProjectPage() {
           <ProjectDocuments shareId={shareId!} readonly={true} />
         </div>
       </div>
+
+      {/* Tour Availability Modal */}
+      <ClientTourAvailabilityModal
+        isOpen={showAvailabilityModal}
+        onClose={() => setShowAvailabilityModal(false)}
+        projectId={project.id}
+        shareId={shareId!}
+      />
     </div>
   );
 }
