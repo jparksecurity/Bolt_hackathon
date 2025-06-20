@@ -21,9 +21,14 @@ import {
 } from "lucide-react";
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
-import { formatDisplayDateTime } from "../../utils/dateUtils";
+import {
+  formatDisplayDateTime,
+  isoToDateTimeLocal,
+  dateTimeLocalToISO,
+} from "../../utils/dateUtils";
 import type { Database } from "../../types/database";
 import { useReorderState } from "../../hooks/useReorderState";
+import { nowISO } from "../../utils/dateUtils";
 
 interface PropertiesOfInterestProps {
   projectId?: string;
@@ -209,7 +214,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       suggestion: property.suggestion || "",
       flier_url: property.flier_url || "",
       tour_datetime: property.tour_datetime
-        ? new Date(property.tour_datetime).toISOString().slice(0, 16)
+        ? isoToDateTimeLocal(property.tour_datetime)
         : "",
       tour_location: property.tour_location || "",
       tour_status: property.tour_status || "",
@@ -253,7 +258,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         suggestion: formData.suggestion.trim() || null,
         flier_url: formData.flier_url.trim() || null,
         tour_datetime: formData.tour_datetime
-          ? new Date(formData.tour_datetime).toISOString()
+          ? dateTimeLocalToISO(formData.tour_datetime)
           : null,
         tour_location: formData.tour_location.trim() || null,
         tour_status: formData.tour_status || null,
@@ -262,7 +267,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         order_index: editingProperty
           ? editingProperty.order_index
           : properties.length,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       if (editingProperty) {

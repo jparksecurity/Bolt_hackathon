@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../services/supabase";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
+import { nowISO } from "../utils/dateUtils";
 import {
   Bot,
   Send,
@@ -191,7 +192,7 @@ export function AutomatedUpdatePage() {
               suggestion.suggestedValue,
               suggestion.field,
             ),
-            updated_at: new Date().toISOString(),
+            updated_at: nowISO(),
           };
 
           let tableName: string;

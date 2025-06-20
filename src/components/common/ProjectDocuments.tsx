@@ -20,6 +20,7 @@ import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
 import { Database } from "../../types/database";
 import { updateItemOrder } from "../../utils/updateOrder";
+import { DateTime } from "luxon";
 
 interface ProjectDocumentsProps {
   projectId?: string;
@@ -335,7 +336,9 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                     <div className="text-xs text-gray-500">
                       {getSourceLabel(doc.source_type)} •{" "}
                       {doc.created_at
-                        ? new Date(doc.created_at).toLocaleDateString()
+                        ? DateTime.fromISO(doc.created_at, { zone: "utc" })
+                            .toLocal()
+                            .toLocaleString(DateTime.DATE_SHORT)
                         : "No date"}
                     </div>
                   </div>
@@ -375,7 +378,9 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                     <div className="text-xs text-gray-500">
                       {getSourceLabel(doc.source_type)} •{" "}
                       {doc.created_at
-                        ? new Date(doc.created_at).toLocaleDateString()
+                        ? DateTime.fromISO(doc.created_at, { zone: "utc" })
+                            .toLocal()
+                            .toLocaleString(DateTime.DATE_SHORT)
                         : "No date"}
                     </div>
                   </div>

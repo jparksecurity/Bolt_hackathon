@@ -9,8 +9,16 @@ import {
   MessageSquare,
   X,
 } from "lucide-react";
-import { formatDisplayDateTime } from "../../utils/dateUtils";
+import {
+  formatDisplayDateTime,
+  dateTimeLocalToISO,
+} from "../../utils/dateUtils";
+import {
+  isWithinBusinessHours,
+  isThirtyMinuteInterval,
+} from "../../utils/timeValidation";
 import { useSupabaseClient } from "../../services/supabase";
+import { DateTime } from "luxon";
 
 interface SelectedDateTime {
   date: string;
@@ -39,22 +47,13 @@ export const ClientTourAvailabilityModal: React.FC<
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get min and max datetime for the input
+  // Get min and max datetime for the input using Luxon
   const getMinDateTime = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, "0");
-    const day = today.getDate().toString().padStart(2, "0");
-    return `${year}-${month}-${day}T09:00`;
+    return DateTime.now().toFormat("yyyy-MM-dd'T'09:00");
   };
 
   const getMaxDateTime = () => {
-    const future = new Date();
-    future.setFullYear(future.getFullYear() + 1);
-    const year = future.getFullYear();
-    const month = (future.getMonth() + 1).toString().padStart(2, "0");
-    const day = future.getDate().toString().padStart(2, "0");
-    return `${year}-${month}-${day}T17:00`;
+    return DateTime.now().plus({ years: 1 }).toFormat("yyyy-MM-dd'T'16:30");
   };
 
   const addDateTime = () => {
@@ -63,37 +62,46 @@ export const ClientTourAvailabilityModal: React.FC<
       return;
     }
 
-    // Validate business hours (9 AM - 5 PM)
-    const [, timePart] = selectedDateTime.split("T");
-    const [hours, minutes] = timePart.split(":").map(Number);
-    const timeInMinutes = hours * 60 + minutes;
-
-    if (timeInMinutes < 9 * 60 || timeInMinutes > 17 * 60) {
-      setError("Please select a time between 9:00 AM and 5:00 PM.");
+    // Parse the datetime using Luxon
+    const dt = DateTime.fromISO(selectedDateTime);
+    if (!dt.isValid) {
+      setError("Invalid date and time selected.");
       return;
     }
 
-    // Validate 30-minute intervals
-    if (minutes % 30 !== 0) {
+    // Extract time for validation
+    const timeString = dt.toFormat("HH:mm");
+
+    // Validate business hours using utility function
+    if (!isWithinBusinessHours(timeString)) {
+      setError(
+        "Please select a time between 9:00 AM and 4:30 PM (tours must finish by 5:00 PM).",
+      );
+      return;
+    }
+
+    // Validate 30-minute intervals using utility function
+    if (!isThirtyMinuteInterval(timeString)) {
       setError(
         "Please select a time in 30-minute intervals (e.g., 9:00, 9:30, 10:00).",
       );
       return;
     }
 
-    const datetime = `${selectedDateTime}:00`;
+    const datetime = dateTimeLocalToISO(selectedDateTime);
 
     // Check if this datetime is already selected
-    const exists = selectedDateTimes.some((dt) => dt.datetime === datetime);
+    const exists = selectedDateTimes.some(
+      (selectedDt) => selectedDt.datetime === datetime,
+    );
     if (exists) {
       setError("This date and time combination is already selected.");
       return;
     }
 
-    const date = new Date(datetime);
     const newDateTime: SelectedDateTime = {
-      date: date.toISOString().split("T")[0],
-      time: date.toTimeString().split(" ")[0].substring(0, 5),
+      date: dt.toISODate() || "",
+      time: timeString,
       datetime: datetime,
     };
 
@@ -120,11 +128,8 @@ export const ClientTourAvailabilityModal: React.FC<
     setError(null);
 
     try {
-      // Convert selected datetimes to ISO strings
-      const proposedSlots = selectedDateTimes.map((dt) => {
-        const date = new Date(dt.datetime);
-        return date.toISOString();
-      });
+      // Convert selected datetimes to ISO strings - they're already in ISO format
+      const proposedSlots = selectedDateTimes.map((dt) => dt.datetime);
 
       const { error } = await supabase.rpc("submit_client_tour_availability", {
         share_id: shareId,
@@ -270,7 +275,7 @@ export const ClientTourAvailabilityModal: React.FC<
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="w-4 h-4 inline mr-1" />
-                  Date & Time (9:00 AM - 5:00 PM only)
+                  Date & Time (business hours: 9:00 AM - 5:00 PM)
                 </label>
                 <input
                   type="datetime-local"
@@ -295,7 +300,8 @@ export const ClientTourAvailabilityModal: React.FC<
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Times must be between 9:00 AM - 5:00 PM in 30-minute intervals
+              Business hours: 9:00 AM - 5:00 PM. Latest tour start: 4:30 PM
+              (30-minute tours)
             </p>
           </div>
 

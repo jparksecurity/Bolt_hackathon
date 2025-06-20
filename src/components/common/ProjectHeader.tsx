@@ -18,7 +18,7 @@ import { useProjectData } from "../../hooks/useProjectData";
 import { ClientRequirementsSection } from "./ClientRequirementsSection";
 import { Modal } from "../ui/Modal";
 import { FormButton } from "../ui/FormButton";
-import { formatDate } from "../../utils/dateUtils";
+import { formatDate, nowISO } from "../../utils/dateUtils";
 import { formatLocation, getStatusColor } from "../../utils/displayUtils";
 
 // Type aliases for better readability
@@ -175,7 +175,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         payment_due: projectFormData.payment_due.trim() || null,
         city: projectFormData.city.trim() || null,
         state: projectFormData.state.trim() || null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       const { error } = await supabase
@@ -262,7 +262,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         contact_title: contactFormData.title.trim() || null,
         contact_phone: contactFormData.phone.trim() || null,
         contact_email: contactFormData.email.trim() || null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       const { error } = await supabase
@@ -291,7 +291,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         contact_title: null,
         contact_phone: null,
         contact_email: null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       const { error } = await supabase

@@ -12,8 +12,10 @@ import {
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
 import { useProjectData } from "../../hooks/useProjectData";
-import { formatDateWithOptions } from "../../utils/dateUtils";
-import { getCurrentDateString } from "../../utils/dateUtils";
+import {
+  formatDateWithOptions,
+  getCurrentDateString,
+} from "../../utils/dateUtils";
 import type { Database } from "../../types/database";
 
 interface RecentUpdatesProps {

@@ -18,6 +18,7 @@ import type { Database } from "../types/database";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { formatDate } from "../utils/dateUtils";
 import { formatLocation, getStatusColor } from "../utils/displayUtils";
+import { nowISO } from "../utils/dateUtils";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
@@ -100,7 +101,7 @@ export function ProjectsListPage() {
 
         const { error } = await supabase
           .from("projects")
-          .update({ deleted_at: new Date().toISOString() })
+          .update({ deleted_at: nowISO() })
           .eq("id", projectId)
           .eq("clerk_user_id", user.id);
 

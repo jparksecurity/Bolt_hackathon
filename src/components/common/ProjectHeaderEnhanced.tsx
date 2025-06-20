@@ -17,6 +17,7 @@ import { Modal } from "../ui/Modal";
 import { FormButton } from "../ui/FormButton";
 import { formatDate } from "../../utils/dateUtils";
 import { formatLocation, getStatusColor } from "../../utils/displayUtils";
+import { nowISO } from "../../utils/dateUtils";
 import {
   ProjectUpdateSchema,
   validateAgainstDatabase,
@@ -142,7 +143,7 @@ export const ProjectHeaderEnhanced: React.FC<ProjectHeaderEnhancedProps> = ({
         payment_due: formData.payment_due?.trim() || null,
         city: formData.city?.trim() || null,
         state: formData.state?.trim() || null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       // Additional runtime validation

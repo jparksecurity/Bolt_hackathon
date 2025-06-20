@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Calendar,
   Clock,
@@ -12,7 +12,11 @@ import {
 } from "lucide-react";
 import { useSupabaseClient } from "../../services/supabase";
 import { useProjectData } from "../../hooks/useProjectData";
-import { formatDateTime } from "../../utils/dateUtils";
+import {
+  formatDateTime,
+  isoToDateTimeLocal,
+  dateTimeLocalToISO,
+} from "../../utils/dateUtils";
 
 interface TourAvailability {
   id: string;
@@ -69,13 +73,8 @@ export const ClientTourAvailabilityCard: React.FC<
 
   const handleEdit = (availability: TourAvailability) => {
     setEditingId(availability.id);
-    // Convert to local datetime format for input
-    const date = new Date(availability.proposed_datetime);
-    const localDateTime = new Date(
-      date.getTime() - date.getTimezoneOffset() * 60000,
-    )
-      .toISOString()
-      .slice(0, 16);
+    // Convert ISO datetime to datetime-local format using Luxon
+    const localDateTime = isoToDateTimeLocal(availability.proposed_datetime);
     setEditDateTime(localDateTime);
   };
 
@@ -87,7 +86,7 @@ export const ClientTourAvailabilityCard: React.FC<
       const { error } = await supabase
         .from("client_tour_availability")
         .update({
-          proposed_datetime: new Date(editDateTime).toISOString(),
+          proposed_datetime: dateTimeLocalToISO(editDateTime),
         })
         .eq("id", editingId);
 
@@ -109,7 +108,7 @@ export const ClientTourAvailabilityCard: React.FC<
     setEditDateTime("");
   };
 
-  const groupAvailabilitiesByClient = () => {
+  const groupedAvailabilities = useMemo(() => {
     const grouped: { [key: string]: TourAvailability[] } = {};
 
     availabilities.forEach((availability) => {
@@ -122,7 +121,7 @@ export const ClientTourAvailabilityCard: React.FC<
     });
 
     return grouped;
-  };
+  }, [availabilities]);
 
   if (loading) {
     return (
@@ -165,8 +164,6 @@ export const ClientTourAvailabilityCard: React.FC<
       </div>
     );
   }
-
-  const groupedAvailabilities = groupAvailabilitiesByClient();
 
   return (
     <div className="dashboard-card p-6">
