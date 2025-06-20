@@ -12,10 +12,7 @@ import {
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
-
-interface ClientTourAvailabilityCardProps {
-  projectId: string;
-}
+import { formatDateTime } from "../../utils/dateUtils";
 
 interface TourAvailability {
   id: string;
@@ -25,6 +22,11 @@ interface TourAvailability {
   notes?: string | null;
   created_at: string;
 }
+
+interface ClientTourAvailabilityCardProps {
+  projectId: string;
+}
+
 
 export const ClientTourAvailabilityCard: React.FC<
   ClientTourAvailabilityCardProps
@@ -123,21 +125,6 @@ export const ClientTourAvailabilityCard: React.FC<
     setEditDateTime("");
   };
 
-  const formatDateTime = (datetime: string) => {
-    const date = new Date(datetime);
-    const dateStr = date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    const timeStr = date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-    return { dateStr, timeStr };
-  };
 
   const groupAvailabilitiesByClient = () => {
     const grouped: { [key: string]: TourAvailability[] } = {};

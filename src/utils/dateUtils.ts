@@ -41,3 +41,34 @@ export const formatDateWithOptions = (
 export const getCurrentDateString = (): string => {
   return new Date().toLocaleDateString("en-CA");
 };
+
+/**
+ * Formats datetime for tour availability display
+ * @param datetime - ISO datetime string
+ * @returns Object with dateStr and timeStr for flexible display
+ */
+export const formatDateTime = (datetime: string) => {
+  const date = new Date(datetime);
+  const dateStr = date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const timeStr = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return { dateStr, timeStr };
+};
+
+/**
+ * Formats datetime as a single display string for lists
+ * @param datetime - ISO datetime string  
+ * @returns Formatted string like "Thu, Jun 20, 2024 at 2:30 PM"
+ */
+export const formatDisplayDateTime = (datetime: string): string => {
+  const { dateStr, timeStr } = formatDateTime(datetime);
+  return `${dateStr} at ${timeStr}`;
+};

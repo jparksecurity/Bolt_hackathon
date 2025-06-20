@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Calendar,
-  Clock,
   Send,
   CheckCircle,
   AlertCircle,
@@ -10,18 +9,7 @@ import {
   MessageSquare,
   X,
 } from "lucide-react";
-import { getCurrentDateString } from "../../utils/dateUtils";
-
-interface ClientTourAvailabilityModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  shareId: string;
-}
-
-interface TimeSlot {
-  time: string;
-  label: string;
-}
+import { formatDisplayDateTime } from "../../utils/dateUtils";
 
 interface SelectedDateTime {
   date: string;
@@ -29,11 +17,17 @@ interface SelectedDateTime {
   datetime: string;
 }
 
+interface ClientTourAvailabilityModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  shareId: string;
+}
+
+
 export const ClientTourAvailabilityModal: React.FC<
   ClientTourAvailabilityModalProps
 > = ({ isOpen, onClose, shareId }) => {
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedDateTime, setSelectedDateTime] = useState("");
   const [selectedDateTimes, setSelectedDateTimes] = useState<
     SelectedDateTime[]
   >([]);
@@ -44,33 +38,31 @@ export const ClientTourAvailabilityModal: React.FC<
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Generate 30-minute time slots from 9:00 AM to 5:00 PM
-  const generateTimeSlots = (): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    for (let hour = 9; hour <= 17; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        if (hour === 17 && minute > 0) break; // Stop at 5:00 PM
-
-        const time24 = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-        const ampm = hour >= 12 ? "PM" : "AM";
-        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        const label = `${displayHour}:${minute.toString().padStart(2, "0")} ${ampm}`;
-
-        slots.push({ time: time24, label });
-      }
-    }
-    return slots;
+  // Get min and max datetime for the input
+  const getMinDateTime = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const day = today.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}T09:00`;
   };
 
-  const timeSlots = generateTimeSlots();
+  const getMaxDateTime = () => {
+    const future = new Date();
+    future.setFullYear(future.getFullYear() + 1);
+    const year = future.getFullYear();
+    const month = (future.getMonth() + 1).toString().padStart(2, '0');
+    const day = future.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}T17:00`;
+  };
 
   const addDateTime = () => {
-    if (!selectedDate || !selectedTime) {
-      setError("Please select both date and time.");
+    if (!selectedDateTime) {
+      setError("Please select a date and time.");
       return;
     }
 
-    const datetime = `${selectedDate}T${selectedTime}:00`;
+    const datetime = `${selectedDateTime}:00`;
 
     // Check if this datetime is already selected
     const exists = selectedDateTimes.some((dt) => dt.datetime === datetime);
@@ -79,15 +71,15 @@ export const ClientTourAvailabilityModal: React.FC<
       return;
     }
 
+    const date = new Date(datetime);
     const newDateTime: SelectedDateTime = {
-      date: selectedDate,
-      time: selectedTime,
+      date: date.toISOString().split('T')[0],
+      time: date.toTimeString().split(' ')[0].substring(0, 5),
       datetime: datetime,
     };
 
     setSelectedDateTimes([...selectedDateTimes, newDateTime]);
-    setSelectedDate("");
-    setSelectedTime("");
+    setSelectedDateTime("");
     setError(null);
   };
 
@@ -97,20 +89,6 @@ export const ClientTourAvailabilityModal: React.FC<
     );
   };
 
-  const formatDisplayDateTime = (datetime: string) => {
-    const date = new Date(datetime);
-    const dateStr = date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-    const timeStr = date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-    return `${dateStr} at ${timeStr}`;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,8 +133,7 @@ export const ClientTourAvailabilityModal: React.FC<
 
       setSubmitted(true);
       // Reset form
-      setSelectedDate("");
-      setSelectedTime("");
+      setSelectedDateTime("");
       setSelectedDateTimes([]);
       setClientName("");
       setClientEmail("");
@@ -171,8 +148,7 @@ export const ClientTourAvailabilityModal: React.FC<
   };
 
   const resetAndClose = () => {
-    setSelectedDate("");
-    setSelectedTime("");
+    setSelectedDateTime("");
     setSelectedDateTimes([]);
     setClientName("");
     setClientEmail("");
@@ -283,43 +259,28 @@ export const ClientTourAvailabilityModal: React.FC<
             <h4 className="font-medium text-gray-900 mb-4">
               Add Available Date & Time
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="w-4 h-4 inline mr-1" />
-                  Date
+                  Date & Time (9:00 AM - 5:00 PM only)
                 </label>
                 <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  min={getCurrentDateString()}
+                  type="datetime-local"
+                  value={selectedDateTime}
+                  onChange={(e) => setSelectedDateTime(e.target.value)}
+                  min={getMinDateTime()}
+                  max={getMaxDateTime()}
+                  step="1800"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Select date and time"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Clock className="w-4 h-4 inline mr-1" />
-                  Time
-                </label>
-                <select
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select time</option>
-                  {timeSlots.map((slot) => (
-                    <option key={slot.time} value={slot.time}>
-                      {slot.label}
-                    </option>
-                  ))}
-                </select>
               </div>
               <div>
                 <button
                   type="button"
                   onClick={addDateTime}
-                  disabled={!selectedDate || !selectedTime}
+                  disabled={!selectedDateTime}
                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Add Time
