@@ -244,7 +244,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         availability: formData.availability.trim() || null,
         lease_type: formData.lease_type || null,
         lease_structure: formData.lease_structure || null,
-        current_state: (formData.current_state as Database["public"]["Enums"]["property_current_state"]) || "Available",
+        current_state:
+          (formData.current_state as Database["public"]["Enums"]["property_current_state"]) ||
+          "Available",
         condition: formData.condition || null,
         cam_rate: formData.cam_rate.trim() || null,
         parking_rate: formData.parking_rate.trim() || null,
@@ -256,8 +258,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           ? dateTimeLocalToISO(formData.tour_datetime)
           : null,
         tour_location: formData.tour_location.trim() || null,
-        tour_status: formData.tour_status ? (formData.tour_status as Database["public"]["Enums"]["tour_status"]) : null,
-        status: (formData.status as Database["public"]["Enums"]["property_status"]) || "new",
+        tour_status: formData.tour_status
+          ? (formData.tour_status as Database["public"]["Enums"]["tour_status"])
+          : null,
+        status:
+          (formData.status as Database["public"]["Enums"]["property_status"]) ||
+          "new",
         decline_reason: formData.decline_reason.trim() || null,
         order_index: editingProperty
           ? editingProperty.order_index

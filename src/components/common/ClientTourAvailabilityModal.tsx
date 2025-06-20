@@ -134,9 +134,9 @@ export const ClientTourAvailabilityModal: React.FC<
       const { error } = await supabase.rpc("submit_client_tour_availability", {
         share_id: shareId,
         proposed_slots: proposedSlots,
-        client_name: clientName.trim() || null,
-        client_email: clientEmail.trim() || null,
-        notes: notes.trim() || null,
+        client_name: clientName.trim() || undefined,
+        client_email: clientEmail.trim() || undefined,
+        notes: notes.trim() || undefined,
       });
 
       if (error) {

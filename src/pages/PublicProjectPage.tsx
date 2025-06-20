@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Eye, Lock, Calendar } from "lucide-react";
 import { useSupabaseClient } from "../services/supabase";
@@ -71,11 +71,19 @@ export function PublicProjectPage() {
         }
 
         const projectData = data[0];
-        setProject(projectData);
+        // Convert public project data to match the expected project type
+        setProject({
+          ...projectData,
+          clerk_user_id: "", // Not exposed in public API
+          deleted_at: null, // Not needed in public view
+          public_share_id: shareId, // We know this from the URL
+        } as Database["public"]["Tables"]["projects"]["Row"]);
 
         // Load dashboard card order from database if available
         if (projectData.dashboard_card_order) {
-          setCardOrder(projectData.dashboard_card_order as ProjectCard[]);
+          setCardOrder(
+            projectData.dashboard_card_order as unknown as ProjectCard[],
+          );
         }
       } catch {
         setError("An error occurred while loading the project");

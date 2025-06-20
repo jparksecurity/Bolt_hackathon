@@ -10,7 +10,6 @@ interface UseProjectDataOptions {
     | "properties"
     | "roadmap"
     | "documents"
-    | "contacts"
     | "requirements"
     | "client_tour_availability";
 }
@@ -62,11 +61,6 @@ export function useProjectData<T = unknown>({
               share_id: shareId,
             });
             break;
-          case "contacts":
-            result = await supabase.rpc("get_public_project_contacts", {
-              share_id: shareId,
-            });
-            break;
           case "requirements":
             result = await supabase.rpc("get_public_client_requirements", {
               share_id: shareId,
@@ -111,13 +105,6 @@ export function useProjectData<T = unknown>({
               .eq("project_id", projectId)
               .order("order_index", { ascending: true });
             break;
-          case "contacts":
-            result = await supabase
-              .from("project_contacts")
-              .select("*")
-              .eq("project_id", projectId)
-              .order("is_primary", { ascending: false });
-            break;
           case "requirements":
             result = await supabase
               .from("client_requirements")
@@ -141,7 +128,7 @@ export function useProjectData<T = unknown>({
         throw result.error;
       }
 
-      setData(result?.data || []);
+      setData((result?.data || []) as T[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

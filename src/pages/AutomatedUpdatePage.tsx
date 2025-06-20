@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../services/supabase";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
@@ -194,7 +194,8 @@ export function AutomatedUpdatePage() {
             updated_at: nowISO(),
           };
 
-          let tableName: string;
+          // Determine table name and update data based on suggestion type
+          let tableName: "projects" | "properties" | "client_requirements";
           if (suggestion.type === "project") {
             tableName = "projects";
           } else if (suggestion.type === "property") {

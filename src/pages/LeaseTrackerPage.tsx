@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { Share, Check, ArrowLeft } from "lucide-react";
@@ -74,7 +74,17 @@ export function LeaseTrackerPage() {
 
       // Load dashboard card order from database if available
       if (data.dashboard_card_order) {
-        setCardOrder(data.dashboard_card_order as ProjectCard[]);
+        try {
+          const cardOrder = Array.isArray(data.dashboard_card_order)
+            ? (data.dashboard_card_order as unknown as ProjectCard[])
+            : (JSON.parse(
+                data.dashboard_card_order as string,
+              ) as ProjectCard[]);
+          setCardOrder(cardOrder);
+        } catch {
+          // If parsing fails, use default order
+          console.warn("Failed to parse dashboard card order, using default");
+        }
       }
     } catch {
       setError("An unexpected error occurred");

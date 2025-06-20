@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { User, Bell, Shield, Trash2, Save, Eye, EyeOff } from "lucide-react";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
