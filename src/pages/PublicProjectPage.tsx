@@ -10,6 +10,7 @@ import { PropertiesOfInterest } from "../components/common/PropertiesOfInterest"
 import { ProjectRoadmap } from "../components/common/ProjectRoadmap";
 import { ProjectDocuments } from "../components/common/ProjectDocuments";
 import { ClientTourAvailabilityModal } from "../components/common/ClientTourAvailabilityModal";
+import { ClientTourAvailabilityCard } from "../components/common/ClientTourAvailabilityCard";
 import { ProjectCard } from "../types/project";
 
 const DEFAULT_CARD_ORDER: ProjectCard[] = [
@@ -112,9 +113,7 @@ export function PublicProjectPage() {
                   <span>I'm Available for Tours</span>
                 </button>
               </div>
-              <p className="text-gray-600">
-                Click the button above to submit your tour availability.
-              </p>
+              <ClientTourAvailabilityCard shareId={shareId!} readonly={true} />
             </div>
           </div>
         );

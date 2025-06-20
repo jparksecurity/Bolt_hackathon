@@ -11,7 +11,8 @@ interface UseProjectDataOptions {
     | "roadmap"
     | "documents"
     | "contacts"
-    | "requirements";
+    | "requirements"
+    | "client_tour_availability";
 }
 
 export function useProjectData<T = unknown>({
@@ -71,6 +72,11 @@ export function useProjectData<T = unknown>({
               share_id: shareId,
             });
             break;
+          case "client_tour_availability":
+            result = await supabase.rpc("get_public_client_tour_availability", {
+              share_id: shareId,
+            });
+            break;
           default:
             throw new Error(`Unsupported data type: ${dataType}`);
         }
@@ -118,6 +124,13 @@ export function useProjectData<T = unknown>({
               .select("*")
               .eq("project_id", projectId)
               .order("category");
+            break;
+          case "client_tour_availability":
+            result = await supabase
+              .from("client_tour_availability")
+              .select("*")
+              .eq("project_id", projectId)
+              .order("proposed_datetime", { ascending: true });
             break;
           default:
             throw new Error(`Unsupported data type: ${dataType}`);

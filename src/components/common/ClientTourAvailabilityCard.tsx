@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Calendar,
   Clock,
@@ -10,8 +10,8 @@ import {
   X,
   Save,
 } from "lucide-react";
-import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
+import { useProjectData } from "../../hooks/useProjectData";
 import { formatDateTime } from "../../utils/dateUtils";
 
 interface TourAvailability {
@@ -24,43 +24,24 @@ interface TourAvailability {
 }
 
 interface ClientTourAvailabilityCardProps {
-  projectId: string;
+  projectId?: string;
+  shareId?: string;
+  readonly?: boolean;
 }
 
 
 export const ClientTourAvailabilityCard: React.FC<
   ClientTourAvailabilityCardProps
-> = ({ projectId }) => {
-  const { user } = useUser();
+> = ({ projectId, shareId, readonly = false }) => {
   const supabase = useSupabaseClient();
-  const [availabilities, setAvailabilities] = useState<TourAvailability[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: availabilities, loading, refetch } = useProjectData<TourAvailability>({
+    projectId,
+    shareId,
+    dataType: "client_tour_availability",
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDateTime, setEditDateTime] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const fetchAvailabilities = useCallback(async () => {
-    if (!user || !projectId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("client_tour_availability")
-        .select("*")
-        .eq("project_id", projectId)
-        .order("proposed_datetime", { ascending: true });
-
-      if (error) throw error;
-      setAvailabilities(data || []);
-    } catch (error) {
-      console.error("Error fetching tour availabilities:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, projectId, supabase]);
-
-  useEffect(() => {
-    fetchAvailabilities();
-  }, [fetchAvailabilities]);
 
   const handleDelete = async (id: string) => {
     if (
@@ -76,7 +57,7 @@ export const ClientTourAvailabilityCard: React.FC<
         .eq("id", id);
 
       if (error) throw error;
-      await fetchAvailabilities();
+      await refetch();
     } catch (error) {
       console.error("Error deleting availability:", error);
       alert("Failed to delete availability. Please try again.");
@@ -111,7 +92,7 @@ export const ClientTourAvailabilityCard: React.FC<
 
       setEditingId(null);
       setEditDateTime("");
-      await fetchAvailabilities();
+      await refetch();
     } catch (error) {
       console.error("Error updating availability:", error);
       alert("Failed to update availability. Please try again.");
@@ -174,8 +155,10 @@ export const ClientTourAvailabilityCard: React.FC<
           <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">No availability requests yet</p>
           <p className="text-gray-400 text-sm mt-2">
-            Clients can submit their availability through the shared project
-            link
+            {readonly 
+              ? "Be the first to submit your tour availability!"
+              : "Clients can submit their availability through the shared project link"
+            }
           </p>
         </div>
       </div>
@@ -312,7 +295,7 @@ export const ClientTourAvailabilityCard: React.FC<
                           )}
                         </div>
 
-                        {!isEditing && (
+                        {!isEditing && !readonly && (
                           <div className="flex items-center space-x-2 ml-4">
                             <button
                               onClick={() => handleEdit(availability)}
