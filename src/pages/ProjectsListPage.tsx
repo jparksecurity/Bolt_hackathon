@@ -14,13 +14,14 @@ import {
   Filter,
   MapPin,
 } from "lucide-react";
-import { ProjectStatus, BaseProjectData } from "../types/project";
+import type { Database } from "../types/database";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { formatDate } from "../utils/dateUtils";
+import { formatLocation, getStatusColor } from "../utils/displayUtils";
+import { nowISO } from "../utils/dateUtils";
 
-interface Project extends BaseProjectData {
-  deleted_at?: string | null;
-}
+type Project = Database["public"]["Tables"]["projects"]["Row"];
+type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
 
 export function ProjectsListPage() {
   const { user, isLoaded } = useUser();
@@ -67,10 +68,11 @@ export function ProjectsListPage() {
       setCreating(true);
       setError(null);
 
-      const newProject = {
+      // Use the generated Insert type for type safety
+      const newProject: ProjectInsert = {
         clerk_user_id: user.id,
         title: "Untitled Project",
-        status: ProjectStatus.PENDING,
+        status: "Pending",
       };
 
       const { error } = await supabase
@@ -99,7 +101,7 @@ export function ProjectsListPage() {
 
         const { error } = await supabase
           .from("projects")
-          .update({ deleted_at: new Date().toISOString() })
+          .update({ deleted_at: nowISO() })
           .eq("id", projectId)
           .eq("clerk_user_id", user.id);
 
@@ -139,40 +141,18 @@ export function ProjectsListPage() {
     setDeleteConfirmation({ show: false, projectId: "", projectTitle: "" });
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "status-active";
-      case "Pending":
-        return "status-pending";
-      case "Completed":
-        return "status-completed";
-      case "On Hold":
-        return "status-on-hold";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   const filteredProjects = projects.filter(
     (project) =>
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (project.company_name &&
-        project.company_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        project.company_name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
       (project.city &&
         project.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (project.state &&
         project.state.toLowerCase().includes(searchTerm.toLowerCase())),
   );
-
-  // Helper function to format location display
-  const formatLocation = (city?: string | null, state?: string | null) => {
-    if (!city && !state) return null;
-    if (city && state) return `${city}, ${state}`;
-    if (city) return city;
-    if (state) return state;
-    return null;
-  };
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -258,12 +238,14 @@ export function ProjectsListPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => {
             const locationDisplay = formatLocation(project.city, project.state);
-            
+
             return (
               <div key={project.id} className="project-card group">
                 {/* Delete button */}
                 <button
-                  onClick={(e) => handleDeleteClick(project.id, project.title, e)}
+                  onClick={(e) =>
+                    handleDeleteClick(project.id, project.title, e)
+                  }
                   disabled={deleting === project.id}
                   className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 disabled:opacity-50"
                   title="Delete project"
@@ -318,7 +300,9 @@ export function ProjectsListPage() {
                       </div>
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Calendar className="w-4 h-4" />
-                        <span>{formatDate(project.start_date) || "Not set"}</span>
+                        <span>
+                          {formatDate(project.start_date) || "Not set"}
+                        </span>
                       </div>
                     </div>
 

@@ -13,70 +13,12 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { SortableItem } from "../ui/SortableItem";
 
 interface DragDropItem {
   id: string;
   order_index?: number | null;
 }
-
-interface SortableItemProps {
-  id: string;
-  children: React.ReactNode;
-  disabled?: boolean;
-  showHandle?: boolean;
-}
-
-const SortableItem: React.FC<SortableItemProps> = ({
-  id,
-  children,
-  disabled = false,
-  showHandle = true,
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, disabled });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className="relative group">
-      <div className="flex items-stretch">
-        {showHandle && (
-          <div className="flex items-center">
-            <button
-              {...attributes}
-              {...listeners}
-              className={`p-3 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100 ${
-                disabled
-                  ? "cursor-not-allowed opacity-30"
-                  : "cursor-grab active:cursor-grabbing"
-              }`}
-              disabled={disabled}
-              aria-label="Drag to reorder"
-            >
-              <GripVertical className="w-5 h-5" />
-            </button>
-          </div>
-        )}
-        <div className={`flex-1 ${showHandle ? '' : 'pl-8'}`}>
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 interface DragDropListProps<T extends DragDropItem> {
   items: T[];
@@ -138,9 +80,9 @@ export function DragDropList<T extends DragDropItem>({
       >
         <div className="space-y-4">
           {sortedItems.map((item, index) => (
-            <SortableItem 
-              key={item.id} 
-              id={item.id} 
+            <SortableItem
+              key={item.id}
+              id={item.id}
               disabled={disabled}
               showHandle={showHandle}
             >

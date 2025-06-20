@@ -13,15 +13,20 @@ import {
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
-import { ProjectStatus, BaseProjectData } from "../../types/project";
+import type { Database } from "../../types/database";
 import { useProjectData } from "../../hooks/useProjectData";
 import { ClientRequirementsSection } from "./ClientRequirementsSection";
 import { Modal } from "../ui/Modal";
 import { FormButton } from "../ui/FormButton";
-import { formatDate } from "../../utils/dateUtils";
+import { formatDate, nowISO } from "../../utils/dateUtils";
+import { formatLocation, getStatusColor } from "../../utils/displayUtils";
+
+// Type aliases for better readability
+type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+type ProjectUpdate = Database["public"]["Tables"]["projects"]["Update"];
 
 interface ProjectHeaderProps {
-  project: BaseProjectData;
+  project: ProjectRow;
   onProjectUpdate?: () => void;
   readonly?: boolean;
   shareId?: string;
@@ -42,7 +47,7 @@ interface Requirement {
 
 interface ProjectFormData {
   title: string;
-  status: ProjectStatus;
+  status: Database["public"]["Enums"]["project_status"];
   start_date: string;
   desired_move_in_date: string;
   company_name: string;
@@ -83,7 +88,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   const [projectFormData, setProjectFormData] = useState<ProjectFormData>({
     title: "",
-    status: ProjectStatus.ACTIVE,
+    status: "Pending" as Database["public"]["Enums"]["project_status"],
     start_date: "",
     desired_move_in_date: "",
     company_name: "",
@@ -126,7 +131,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const resetProjectForm = () => {
     setProjectFormData({
       title: project.title,
-      status: project.status,
+      status: project.status as Database["public"]["Enums"]["project_status"],
       start_date: project.start_date || "",
       desired_move_in_date: project.desired_move_in_date || "",
       company_name: project.company_name || "",
@@ -152,7 +157,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const saveProject = async () => {
     setSaving(true);
     try {
-      const updateData = {
+      // Use the generated Update type for type safety
+      const updateData: ProjectUpdate = {
         title: projectFormData.title.trim(),
         status: projectFormData.status,
         start_date: projectFormData.start_date || null,
@@ -169,7 +175,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         payment_due: projectFormData.payment_due.trim() || null,
         city: projectFormData.city.trim() || null,
         state: projectFormData.state.trim() || null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       const { error } = await supabase
@@ -226,21 +232,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     await refetchRequirements();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "status-active";
-      case "Pending":
-        return "status-pending";
-      case "Completed":
-        return "status-completed";
-      case "On Hold":
-        return "status-on-hold";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   const hasContact = project.contact_name;
 
   const resetContactForm = () => {
@@ -271,7 +262,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         contact_title: contactFormData.title.trim() || null,
         contact_phone: contactFormData.phone.trim() || null,
         contact_email: contactFormData.email.trim() || null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       const { error } = await supabase
@@ -300,7 +291,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         contact_title: null,
         contact_phone: null,
         contact_email: null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       const { error } = await supabase
@@ -315,15 +306,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     } finally {
       setSaving(false);
     }
-  };
-
-  // Helper function to format location display
-  const formatLocation = (city?: string | null, state?: string | null) => {
-    if (!city && !state) return null;
-    if (city && state) return `${city}, ${state}`;
-    if (city) return city;
-    if (state) return state;
-    return null;
   };
 
   const locationDisplay = formatLocation(project.city, project.state);
@@ -353,7 +335,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
           <div className="flex items-center space-x-4">
             <span
-              className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(project.status)}`}
+              className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(
+                project.status,
+              )}`}
             >
               {project.status}
             </span>
@@ -612,16 +596,19 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 onChange={(e) =>
                   setProjectFormData({
                     ...projectFormData,
-                    status: e.target.value as ProjectStatus,
+                    status: e.target
+                      .value as Database["public"]["Enums"]["project_status"],
                   })
                 }
                 className="form-input w-full px-4 py-3 rounded-lg"
               >
-                {Object.values(ProjectStatus).map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
+                {(["Active", "Pending", "Completed", "On Hold"] as const).map(
+                  (status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ),
+                )}
               </select>
             </div>
             <div>

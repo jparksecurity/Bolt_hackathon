@@ -614,15 +614,6 @@ h6 {
   opacity: 1;
 }
 
-/* Drag overlay styles */
-.drag-overlay {
-  background: var(--light-card);
-  border: 2px solid var(--primary-dark);
-  border-radius: 1rem;
-  box-shadow: 0 8px 25px 0 rgba(17, 24, 39, 0.15);
-  transform: rotate(5deg);
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
   .dashboard-layout {

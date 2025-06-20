@@ -9,6 +9,7 @@ import { ChatGoogleGenerativeAI } from "npm:@langchain/google-genai";
 import { z } from "npm:zod";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose";
+import { DateTime } from "npm:luxon";
 
 // Zod schema as single source of truth
 const UpdateSuggestionSchema = z.object({
@@ -82,6 +83,8 @@ interface ProjectRecord {
   expected_headcount?: string | null;
   status: string;
   start_date?: string | null;
+  city?: string | null;
+  state?: string | null;
 }
 
 interface PropertyRecord {
@@ -156,6 +159,10 @@ const generateAISuggestions = async (
         contact_phone: project.contact_phone,
         contact_title: project.contact_title,
 
+        // Location (commonly mentioned in communications)
+        city: project.city,
+        state: project.state,
+
         // Timeline (commonly mentioned in communications)
         desired_move_in_date: project.desired_move_in_date,
         start_date: project.start_date,
@@ -217,6 +224,7 @@ Focus on extracting and updating:
 **PROJECT FIELDS (for existing projects):**
 - Contact information (contact_name, contact_email, contact_phone, contact_title)
 - Company details (company_name)
+- Location information (city, state)
 - Financial data (expected_fee, broker_commission, commission_paid_by, payment_due)
 - Timeline (desired_move_in_date, start_date)
 - Requirements (expected_headcount)
@@ -248,7 +256,8 @@ If you cannot confidently determine the appropriate entityId for an existing ent
 
 ### DATA FORMAT RULES (MANDATORY)
 - **Numeric & Monetary fields** (expected_fee, broker_commission, monthly_cost, expected_monthly_cost, price_per_sf, sf, people_capacity, expected_headcount, etc.) → return a *pure number* with no currency symbols, commas, or units. Example: 46 (not "$46", "46 NNN", or "46 per sf").
-- **Date fields** (desired_move_in_date, start_date, tour_datetime) → use ISO-8601 format YYYY-MM-DD.
+- **Date fields** (desired_move_in_date, start_date) → use ISO-8601 format YYYY-MM-DD.
+- **DateTime fields** (tour_datetime) → use full ISO-8601 timestamp format YYYY-MM-DDTHH:mm:ss when time is known; otherwise YYYY-MM-DD.
 - **Enum-constrained fields** – return the value exactly as listed below (case sensitive):
   • status: "active" | "new" | "pending" | "declined"
   • current_state: "Available" | "Under Review" | "Negotiating" | "On Hold" | "Declined"
@@ -401,7 +410,7 @@ Deno.serve(async (req) => {
       const data = {
         success: true,
         suggestions: [],
-        processed_at: new Date().toISOString(),
+        processed_at: DateTime.now().toISO() || "",
         input_length: inputText.length,
       };
 
@@ -453,7 +462,7 @@ Deno.serve(async (req) => {
     const data = {
       success: true,
       suggestions,
-      processed_at: new Date().toISOString(),
+      processed_at: DateTime.now().toISO() || "",
       input_length: inputText.length,
     };
 

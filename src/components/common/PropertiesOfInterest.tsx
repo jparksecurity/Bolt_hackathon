@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
 import {
@@ -21,7 +21,14 @@ import {
 } from "lucide-react";
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
-import { formatDate } from "../../utils/dateUtils";
+import {
+  formatDisplayDateTime,
+  isoToDateTimeLocal,
+  dateTimeLocalToISO,
+} from "../../utils/dateUtils";
+import type { Database } from "../../types/database";
+import { useReorderState } from "../../hooks/useReorderState";
+import { nowISO } from "../../utils/dateUtils";
 
 interface PropertiesOfInterestProps {
   projectId?: string;
@@ -29,36 +36,7 @@ interface PropertiesOfInterestProps {
   readonly?: boolean;
 }
 
-interface Property {
-  id: string;
-  name: string;
-  address?: string | null;
-  sf?: string | null;
-  people_capacity?: string | null;
-  price_per_sf?: string | null;
-  monthly_cost?: string | null;
-  expected_monthly_cost?: string | null;
-  contract_term?: string | null;
-  availability?: string | null;
-  lease_type?: string | null;
-  lease_structure?: string | null;
-  current_state?: string | null;
-  condition?: string | null;
-  cam_rate?: string | null;
-  parking_rate?: string | null;
-  misc_notes?: string | null;
-  virtual_tour_url?: string | null;
-  suggestion?: string | null;
-  flier_url?: string | null;
-  tour_datetime?: string | null;
-  tour_location?: string | null;
-  tour_status?: string | null;
-  status: string;
-  decline_reason?: string | null;
-  order_index?: number | null;
-  created_at: string;
-  updated_at: string;
-}
+type Property = Database["public"]["Tables"]["properties"]["Row"];
 
 interface PropertyFormData {
   name: string;
@@ -88,12 +66,7 @@ interface PropertyFormData {
   decline_reason: string;
 }
 
-const leaseTypes = [
-  "Direct Lease",
-  "Sublease",
-  "Sub-sublease",
-  "Coworking",
-];
+const leaseTypes = ["Direct Lease", "Sublease", "Sub-sublease", "Coworking"];
 
 const leaseStructures = ["NNN", "Full Service"];
 
@@ -163,6 +136,25 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     dataType: "properties",
   });
 
+  const { handleReorder, isReordering, reorderError, clearError } =
+    useReorderState(
+      properties,
+      () => {
+        // Refetch will be handled in onSuccess callback
+      },
+      {
+        tableName: "properties",
+        supabase,
+        onSuccess: () => {
+          fetchProperties();
+        },
+        onError: (error) => {
+          console.error("Error reordering properties:", error);
+          alert("Error reordering properties. Please try again.");
+        },
+      },
+    );
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -222,7 +214,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       suggestion: property.suggestion || "",
       flier_url: property.flier_url || "",
       tour_datetime: property.tour_datetime
-        ? new Date(property.tour_datetime).toISOString().slice(0, 16)
+        ? isoToDateTimeLocal(property.tour_datetime)
         : "",
       tour_location: property.tour_location || "",
       tour_status: property.tour_status || "",
@@ -266,7 +258,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         suggestion: formData.suggestion.trim() || null,
         flier_url: formData.flier_url.trim() || null,
         tour_datetime: formData.tour_datetime
-          ? new Date(formData.tour_datetime).toISOString()
+          ? dateTimeLocalToISO(formData.tour_datetime)
           : null,
         tour_location: formData.tour_location.trim() || null,
         tour_status: formData.tour_status || null,
@@ -275,7 +267,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         order_index: editingProperty
           ? editingProperty.order_index
           : properties.length,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       if (editingProperty) {
@@ -326,43 +318,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
-  const handleReorder = async (oldIndex: number, newIndex: number) => {
-    if (readonly) return;
-
-    const sortedProperties = [...properties].sort((a, b) => {
-      const aOrder = a.order_index ?? 999999;
-      const bOrder = b.order_index ?? 999999;
-      return aOrder - bOrder;
-    });
-
-    const reorderedProperties = [...sortedProperties];
-    const [removed] = reorderedProperties.splice(oldIndex, 1);
-    reorderedProperties.splice(newIndex, 0, removed);
-
-    const updates = reorderedProperties.map((property, index) => ({
-      id: property.id,
-      order_index: index,
-    }));
-
-    try {
-      for (const update of updates) {
-        const { error } = await supabase
-          .from("properties")
-          .update({ order_index: update.order_index })
-          .eq("id", update.id);
-
-        if (error) throw error;
-      }
-
-      await fetchProperties();
-    } catch (error) {
-      console.error("Error reordering properties:", error);
-      alert("Error reordering properties. Please try again.");
-      await fetchProperties();
-    }
-  };
-
-  const getStatusColor = (status: string) => {
+  const getPropertyStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800";
@@ -469,7 +425,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       {property.name}
                     </h4>
                     <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getPropertyStatusColor(
                         property.status,
                       )}`}
                     >
@@ -532,7 +488,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   <div className="text-sm text-blue-800">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4" />
-                      <span>{formatDate(property.tour_datetime)}</span>
+                      <span>
+                        {formatDisplayDateTime(property.tour_datetime)}
+                      </span>
                     </div>
                     {property.tour_location && (
                       <div className="flex items-center space-x-2 mt-1">
@@ -610,12 +568,22 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           ))}
         </div>
       ) : (
-        <DragDropList items={properties} onReorder={handleReorder}>
+        <DragDropList
+          items={properties}
+          onReorder={handleReorder}
+          disabled={readonly || isReordering}
+        >
           {(property) => (
             <div
               key={property.id}
-              className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow group"
+              className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow group relative"
             >
+              {isReordering && (
+                <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-lg">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
@@ -623,7 +591,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       {property.name}
                     </h4>
                     <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getPropertyStatusColor(
                         property.status,
                       )}`}
                     >
@@ -646,22 +614,26 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => openEditModal(property)}
-                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Edit property"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(property.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                    title="Delete property"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                {!readonly && (
+                  <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => openEditModal(property)}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title="Edit property"
+                      disabled={isReordering}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(property.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Delete property"
+                      disabled={isReordering}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -702,7 +674,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   <div className="text-sm text-blue-800">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4" />
-                      <span>{formatDate(property.tour_datetime)}</span>
+                      <span>
+                        {formatDisplayDateTime(property.tour_datetime)}
+                      </span>
                     </div>
                     {property.tour_location && (
                       <div className="flex items-center space-x-2 mt-1">
@@ -779,6 +753,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
             </div>
           )}
         </DragDropList>
+      )}
+
+      {reorderError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-red-800">{reorderError}</span>
+            <button
+              onClick={clearError}
+              className="text-red-600 hover:text-red-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Add/Edit Modal */}

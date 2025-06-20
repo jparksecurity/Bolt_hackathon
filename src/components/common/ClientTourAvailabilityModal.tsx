@@ -1,17 +1,24 @@
 import React, { useState } from "react";
-import { Calendar, Clock, Send, CheckCircle, AlertCircle, User, Mail, MessageSquare, X } from "lucide-react";
-
-interface ClientTourAvailabilityModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  projectId: string;
-  shareId: string;
-}
-
-interface TimeSlot {
-  time: string;
-  label: string;
-}
+import {
+  Calendar,
+  Send,
+  CheckCircle,
+  AlertCircle,
+  User,
+  Mail,
+  MessageSquare,
+  X,
+} from "lucide-react";
+import {
+  formatDisplayDateTime,
+  dateTimeLocalToISO,
+} from "../../utils/dateUtils";
+import {
+  isWithinBusinessHours,
+  isThirtyMinuteInterval,
+} from "../../utils/timeValidation";
+import { useSupabaseClient } from "../../services/supabase";
+import { DateTime } from "luxon";
 
 interface SelectedDateTime {
   date: string;
@@ -19,15 +26,20 @@ interface SelectedDateTime {
   datetime: string;
 }
 
-export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalProps> = ({
-  isOpen,
-  onClose,
-  projectId,
-  shareId,
-}) => {
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
-  const [selectedDateTimes, setSelectedDateTimes] = useState<SelectedDateTime[]>([]);
+interface ClientTourAvailabilityModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  shareId: string;
+}
+
+export const ClientTourAvailabilityModal: React.FC<
+  ClientTourAvailabilityModalProps
+> = ({ isOpen, onClose, shareId }) => {
+  const supabase = useSupabaseClient();
+  const [selectedDateTime, setSelectedDateTime] = useState("");
+  const [selectedDateTimes, setSelectedDateTimes] = useState<
+    SelectedDateTime[]
+  >([]);
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -35,77 +47,78 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Generate 30-minute time slots from 9:00 AM to 5:00 PM
-  const generateTimeSlots = (): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    for (let hour = 9; hour <= 17; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        if (hour === 17 && minute > 0) break; // Stop at 5:00 PM
-        
-        const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const hour12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        const label = `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
-        
-        slots.push({ time: time24, label });
-      }
-    }
-    return slots;
+  // Get min and max datetime for the input using Luxon
+  const getMinDateTime = () => {
+    return DateTime.now().toFormat("yyyy-MM-dd'T'09:00");
   };
 
-  const timeSlots = generateTimeSlots();
+  const getMaxDateTime = () => {
+    return DateTime.now().plus({ years: 1 }).toFormat("yyyy-MM-dd'T'16:30");
+  };
 
   const addDateTime = () => {
-    if (!selectedDate || !selectedTime) {
-      setError("Please select both date and time.");
+    if (!selectedDateTime) {
+      setError("Please select a date and time.");
       return;
     }
 
-    const datetime = `${selectedDate}T${selectedTime}:00`;
-    const dateTimeObj = new Date(datetime);
-    
+    // Parse the datetime using Luxon
+    const dt = DateTime.fromISO(selectedDateTime);
+    if (!dt.isValid) {
+      setError("Invalid date and time selected.");
+      return;
+    }
+
+    // Extract time for validation
+    const timeString = dt.toFormat("HH:mm");
+
+    // Validate business hours using utility function
+    if (!isWithinBusinessHours(timeString)) {
+      setError(
+        "Please select a time between 9:00 AM and 4:30 PM (tours must finish by 5:00 PM).",
+      );
+      return;
+    }
+
+    // Validate 30-minute intervals using utility function
+    if (!isThirtyMinuteInterval(timeString)) {
+      setError(
+        "Please select a time in 30-minute intervals (e.g., 9:00, 9:30, 10:00).",
+      );
+      return;
+    }
+
+    const datetime = dateTimeLocalToISO(selectedDateTime);
+
     // Check if this datetime is already selected
-    const exists = selectedDateTimes.some(dt => dt.datetime === datetime);
+    const exists = selectedDateTimes.some(
+      (selectedDt) => selectedDt.datetime === datetime,
+    );
     if (exists) {
       setError("This date and time combination is already selected.");
       return;
     }
 
     const newDateTime: SelectedDateTime = {
-      date: selectedDate,
-      time: selectedTime,
+      date: dt.toISODate() || "",
+      time: timeString,
       datetime: datetime,
     };
 
     setSelectedDateTimes([...selectedDateTimes, newDateTime]);
-    setSelectedDate("");
-    setSelectedTime("");
+    setSelectedDateTime("");
     setError(null);
   };
 
   const removeDateTime = (datetime: string) => {
-    setSelectedDateTimes(selectedDateTimes.filter(dt => dt.datetime !== datetime));
-  };
-
-  const formatDisplayDateTime = (datetime: string) => {
-    const date = new Date(datetime);
-    const dateStr = date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-    const timeStr = date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
-    return `${dateStr} at ${timeStr}`;
+    setSelectedDateTimes(
+      selectedDateTimes.filter((dt) => dt.datetime !== datetime),
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (selectedDateTimes.length === 0) {
       setError("Please add at least one date and time.");
       return;
@@ -115,53 +128,39 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
     setError(null);
 
     try {
-      // Convert selected datetimes to ISO strings
-      const proposedSlots = selectedDateTimes.map(dt => {
-        const date = new Date(dt.datetime);
-        return date.toISOString();
+      // Convert selected datetimes to ISO strings - they're already in ISO format
+      const proposedSlots = selectedDateTimes.map((dt) => dt.datetime);
+
+      const { error } = await supabase.rpc("submit_client_tour_availability", {
+        share_id: shareId,
+        proposed_slots: proposedSlots,
+        client_name: clientName.trim() || null,
+        client_email: clientEmail.trim() || null,
+        notes: notes.trim() || null,
       });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-client-tour-availability`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            shareId,
-            clientName: clientName.trim() || undefined,
-            clientEmail: clientEmail.trim() || undefined,
-            proposedSlots,
-            notes: notes.trim() || undefined,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to submit availability");
+      if (error) {
+        throw new Error(error.message || "Failed to submit availability");
       }
 
       setSubmitted(true);
       // Reset form
-      setSelectedDate("");
-      setSelectedTime("");
+      setSelectedDateTime("");
       setSelectedDateTimes([]);
       setClientName("");
       setClientEmail("");
       setNotes("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit availability");
+      setError(
+        err instanceof Error ? err.message : "Failed to submit availability",
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   const resetAndClose = () => {
-    setSelectedDate("");
-    setSelectedTime("");
+    setSelectedDateTime("");
     setSelectedDateTimes([]);
     setClientName("");
     setClientEmail("");
@@ -269,50 +268,41 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
 
           {/* Date and Time Selection */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-4">Add Available Date & Time</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <h4 className="font-medium text-gray-900 mb-4">
+              Add Available Date & Time
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="w-4 h-4 inline mr-1" />
-                  Date
+                  Date & Time (business hours: 9:00 AM - 5:00 PM)
                 </label>
                 <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
+                  type="datetime-local"
+                  value={selectedDateTime}
+                  onChange={(e) => setSelectedDateTime(e.target.value)}
+                  min={getMinDateTime()}
+                  max={getMaxDateTime()}
+                  step="1800"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Select date and time"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Clock className="w-4 h-4 inline mr-1" />
-                  Time
-                </label>
-                <select
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select time</option>
-                  {timeSlots.map((slot) => (
-                    <option key={slot.time} value={slot.time}>
-                      {slot.label}
-                    </option>
-                  ))}
-                </select>
               </div>
               <div>
                 <button
                   type="button"
                   onClick={addDateTime}
-                  disabled={!selectedDate || !selectedTime}
+                  disabled={!selectedDateTime}
                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Add Time
                 </button>
               </div>
             </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Business hours: 9:00 AM - 5:00 PM. Latest tour start: 4:30 PM
+              (30-minute tours)
+            </p>
           </div>
 
           {/* Selected Date Times */}
