@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Calendar, Clock, Send, CheckCircle, AlertCircle, User, Mail, MessageSquare } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Send,
+  CheckCircle,
+  AlertCircle,
+  User,
+  Mail,
+  MessageSquare,
+} from "lucide-react";
 
 interface ClientAvailabilitySectionProps {
   shareId: string;
@@ -10,9 +19,9 @@ interface TimeSlot {
   label: string;
 }
 
-export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps> = ({
-  shareId,
-}) => {
+export const ClientAvailabilitySection: React.FC<
+  ClientAvailabilitySectionProps
+> = ({ shareId }) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
   const [clientName, setClientName] = useState("");
@@ -28,12 +37,12 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
     for (let hour = 9; hour <= 17; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         if (hour === 17 && minute > 0) break; // Stop at 5:00 PM
-        
-        const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const ampm = hour >= 12 ? 'PM' : 'AM';
+
+        const time24 = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+        const ampm = hour >= 12 ? "PM" : "AM";
         const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        const label = `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
-        
+        const label = `${displayHour}:${minute.toString().padStart(2, "0")} ${ampm}`;
+
         slots.push({ time: time24, label });
       }
     }
@@ -54,7 +63,7 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedDate || selectedSlots.size === 0) {
       setError("Please select a date and at least one time slot.");
       return;
@@ -65,7 +74,7 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
 
     try {
       // Convert selected slots to ISO datetime strings
-      const proposedSlots = Array.from(selectedSlots).map(time => {
+      const proposedSlots = Array.from(selectedSlots).map((time) => {
         const datetime = new Date(`${selectedDate}T${time}:00`);
         return datetime.toISOString();
       });
@@ -84,7 +93,7 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
             proposedSlots,
             notes: notes.trim() || undefined,
           }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -101,7 +110,9 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
       setClientEmail("");
       setNotes("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit availability");
+      setError(
+        err instanceof Error ? err.message : "Failed to submit availability",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -119,7 +130,8 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
               Availability Submitted Successfully!
             </h3>
             <p className="text-green-700">
-              Your tour availability has been sent to the broker. They will contact you soon to confirm the tour schedule.
+              Your tour availability has been sent to the broker. They will
+              contact you soon to confirm the tour schedule.
             </p>
           </div>
         </div>
@@ -144,7 +156,8 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
             I'm Available for Tours During These Times
           </h3>
           <p className="text-blue-700 text-sm">
-            Let us know when you're available for property tours. Select a date and your preferred time slots.
+            Let us know when you're available for property tours. Select a date
+            and your preferred time slots.
           </p>
         </div>
       </div>
@@ -190,7 +203,7 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toISOString().split("T")[0]}
             className="w-full md:w-auto px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             required
           />
@@ -221,7 +234,8 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
             </div>
             {selectedSlots.size > 0 && (
               <p className="text-sm text-blue-700 mt-2">
-                {selectedSlots.size} time slot{selectedSlots.size !== 1 ? 's' : ''} selected
+                {selectedSlots.size} time slot
+                {selectedSlots.size !== 1 ? "s" : ""} selected
               </p>
             )}
           </div>

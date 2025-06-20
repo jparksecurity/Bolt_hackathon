@@ -88,12 +88,7 @@ interface PropertyFormData {
   decline_reason: string;
 }
 
-const leaseTypes = [
-  "Direct Lease",
-  "Sublease",
-  "Sub-sublease",
-  "Coworking",
-];
+const leaseTypes = ["Direct Lease", "Sublease", "Sub-sublease", "Coworking"];
 
 const leaseStructures = ["NNN", "Full Service"];
 

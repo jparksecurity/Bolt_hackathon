@@ -1,5 +1,15 @@
 import React, { useState } from "react";
-import { Calendar, Clock, Send, CheckCircle, AlertCircle, User, Mail, MessageSquare, X } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Send,
+  CheckCircle,
+  AlertCircle,
+  User,
+  Mail,
+  MessageSquare,
+  X,
+} from "lucide-react";
 
 interface ClientTourAvailabilityModalProps {
   isOpen: boolean;
@@ -18,14 +28,14 @@ interface SelectedDateTime {
   datetime: string;
 }
 
-export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalProps> = ({
-  isOpen,
-  onClose,
-  shareId,
-}) => {
+export const ClientTourAvailabilityModal: React.FC<
+  ClientTourAvailabilityModalProps
+> = ({ isOpen, onClose, shareId }) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [selectedDateTimes, setSelectedDateTimes] = useState<SelectedDateTime[]>([]);
+  const [selectedDateTimes, setSelectedDateTimes] = useState<
+    SelectedDateTime[]
+  >([]);
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -39,12 +49,12 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
     for (let hour = 9; hour <= 17; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         if (hour === 17 && minute > 0) break; // Stop at 5:00 PM
-        
-        const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const ampm = hour >= 12 ? 'PM' : 'AM';
+
+        const time24 = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+        const ampm = hour >= 12 ? "PM" : "AM";
         const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        const label = `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
-        
+        const label = `${displayHour}:${minute.toString().padStart(2, "0")} ${ampm}`;
+
         slots.push({ time: time24, label });
       }
     }
@@ -60,9 +70,9 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
     }
 
     const datetime = `${selectedDate}T${selectedTime}:00`;
-    
+
     // Check if this datetime is already selected
-    const exists = selectedDateTimes.some(dt => dt.datetime === datetime);
+    const exists = selectedDateTimes.some((dt) => dt.datetime === datetime);
     if (exists) {
       setError("This date and time combination is already selected.");
       return;
@@ -81,27 +91,29 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
   };
 
   const removeDateTime = (datetime: string) => {
-    setSelectedDateTimes(selectedDateTimes.filter(dt => dt.datetime !== datetime));
+    setSelectedDateTimes(
+      selectedDateTimes.filter((dt) => dt.datetime !== datetime),
+    );
   };
 
   const formatDisplayDateTime = (datetime: string) => {
     const date = new Date(datetime);
-    const dateStr = date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
+    const dateStr = date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
     });
-    const timeStr = date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
+    const timeStr = date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
     return `${dateStr} at ${timeStr}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (selectedDateTimes.length === 0) {
       setError("Please add at least one date and time.");
       return;
@@ -112,7 +124,7 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
 
     try {
       // Convert selected datetimes to ISO strings
-      const proposedSlots = selectedDateTimes.map(dt => {
+      const proposedSlots = selectedDateTimes.map((dt) => {
         const date = new Date(dt.datetime);
         return date.toISOString();
       });
@@ -131,7 +143,7 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
             proposedSlots,
             notes: notes.trim() || undefined,
           }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -149,7 +161,9 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
       setClientEmail("");
       setNotes("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit availability");
+      setError(
+        err instanceof Error ? err.message : "Failed to submit availability",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -265,7 +279,9 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
 
           {/* Date and Time Selection */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-4">Add Available Date & Time</h4>
+            <h4 className="font-medium text-gray-900 mb-4">
+              Add Available Date & Time
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -276,7 +292,7 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={new Date().toISOString().split("T")[0]}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

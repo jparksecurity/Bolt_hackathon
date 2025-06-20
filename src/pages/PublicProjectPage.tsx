@@ -134,7 +134,7 @@ export function PublicProjectPage() {
               <span>I'm Available for Tours</span>
             </button>
           </div>
-          
+
           <PropertiesOfInterest shareId={shareId!} readonly={true} />
         </div>
 

@@ -70,9 +70,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
             </button>
           </div>
         )}
-        <div className={`flex-1 ${showHandle ? '' : 'pl-8'}`}>
-          {children}
-        </div>
+        <div className={`flex-1 ${showHandle ? "" : "pl-8"}`}>{children}</div>
       </div>
     </div>
   );
@@ -138,9 +136,9 @@ export function DragDropList<T extends DragDropItem>({
       >
         <div className="space-y-4">
           {sortedItems.map((item, index) => (
-            <SortableItem 
-              key={item.id} 
-              id={item.id} 
+            <SortableItem
+              key={item.id}
+              id={item.id}
               disabled={disabled}
               showHandle={showHandle}
             >

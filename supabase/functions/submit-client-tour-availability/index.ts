@@ -27,25 +27,27 @@ Deno.serve(async (req) => {
   try {
     // Parse request body
     const requestBody: SubmitAvailabilityRequest = await req.json();
-    const { shareId, clientName, clientEmail, proposedSlots, notes } = requestBody;
+    const { shareId, clientName, clientEmail, proposedSlots, notes } =
+      requestBody;
 
     // Validate required fields
     if (!shareId || !proposedSlots || proposedSlots.length === 0) {
       return new Response(
-        JSON.stringify({ 
-          error: "Missing required fields: shareId and proposedSlots are required" 
+        JSON.stringify({
+          error:
+            "Missing required fields: shareId and proposedSlots are required",
         }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
     // Create Supabase client (no auth needed for this operation)
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     );
 
     // First, verify that the shareId corresponds to a valid, publicly shared project
@@ -62,7 +64,7 @@ Deno.serve(async (req) => {
         {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -79,19 +81,19 @@ Deno.serve(async (req) => {
         validSlots.push(date);
       } catch {
         return new Response(
-          JSON.stringify({ 
-            error: `Invalid datetime format: ${slot}. Please use ISO format.` 
+          JSON.stringify({
+            error: `Invalid datetime format: ${slot}. Please use ISO format.`,
           }),
           {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
+          },
         );
       }
     }
 
     // Insert availability records for each proposed slot
-    const availabilityRecords = validSlots.map(datetime => ({
+    const availabilityRecords = validSlots.map((datetime) => ({
       project_id: projectId,
       client_name: clientName?.trim() || null,
       client_email: clientEmail?.trim() || null,
@@ -106,26 +108,27 @@ Deno.serve(async (req) => {
     if (insertError) {
       console.error("Error inserting availability records:", insertError);
       return new Response(
-        JSON.stringify({ error: "Failed to submit availability. Please try again." }),
+        JSON.stringify({
+          error: "Failed to submit availability. Please try again.",
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
     // Return success response
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: "Tour availability submitted successfully",
-        slotsSubmitted: validSlots.length
+        slotsSubmitted: validSlots.length,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
-
   } catch (error) {
     console.error("Error processing request:", error);
     return new Response(
@@ -136,7 +139,7 @@ Deno.serve(async (req) => {
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 });

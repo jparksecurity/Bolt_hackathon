@@ -158,7 +158,9 @@ export function ProjectsListPage() {
     (project) =>
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (project.company_name &&
-        project.company_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        project.company_name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
       (project.city &&
         project.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (project.state &&
@@ -258,12 +260,14 @@ export function ProjectsListPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => {
             const locationDisplay = formatLocation(project.city, project.state);
-            
+
             return (
               <div key={project.id} className="project-card group">
                 {/* Delete button */}
                 <button
-                  onClick={(e) => handleDeleteClick(project.id, project.title, e)}
+                  onClick={(e) =>
+                    handleDeleteClick(project.id, project.title, e)
+                  }
                   disabled={deleting === project.id}
                   className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 disabled:opacity-50"
                   title="Delete project"
@@ -318,7 +322,9 @@ export function ProjectsListPage() {
                       </div>
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Calendar className="w-4 h-4" />
-                        <span>{formatDate(project.start_date) || "Not set"}</span>
+                        <span>
+                          {formatDate(project.start_date) || "Not set"}
+                        </span>
                       </div>
                     </div>
 

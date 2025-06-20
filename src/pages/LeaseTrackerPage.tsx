@@ -19,17 +19,32 @@ interface ProjectData extends BaseProjectData {
 
 interface ProjectCard {
   id: string;
-  type: 'updates' | 'availability' | 'properties' | 'roadmap' | 'documents';
+  type: "updates" | "availability" | "properties" | "roadmap" | "documents";
   title: string;
   order_index: number;
 }
 
 const DEFAULT_CARD_ORDER: ProjectCard[] = [
-  { id: 'updates', type: 'updates', title: 'Recent Updates', order_index: 0 },
-  { id: 'availability', type: 'availability', title: 'Client Tour Availability', order_index: 1 },
-  { id: 'properties', type: 'properties', title: 'Properties of Interest', order_index: 2 },
-  { id: 'roadmap', type: 'roadmap', title: 'Project Roadmap', order_index: 3 },
-  { id: 'documents', type: 'documents', title: 'Project Documents', order_index: 4 },
+  { id: "updates", type: "updates", title: "Recent Updates", order_index: 0 },
+  {
+    id: "availability",
+    type: "availability",
+    title: "Client Tour Availability",
+    order_index: 1,
+  },
+  {
+    id: "properties",
+    type: "properties",
+    title: "Properties of Interest",
+    order_index: 2,
+  },
+  { id: "roadmap", type: "roadmap", title: "Project Roadmap", order_index: 3 },
+  {
+    id: "documents",
+    type: "documents",
+    title: "Project Documents",
+    order_index: 4,
+  },
 ];
 
 export function LeaseTrackerPage() {
@@ -84,26 +99,35 @@ export function LeaseTrackerPage() {
   }, [id]);
 
   // Save card order to localStorage
-  const saveCardOrder = useCallback((newOrder: ProjectCard[]) => {
-    if (id) {
-      localStorage.setItem(`project-card-order-${id}`, JSON.stringify(newOrder));
-    }
-  }, [id]);
+  const saveCardOrder = useCallback(
+    (newOrder: ProjectCard[]) => {
+      if (id) {
+        localStorage.setItem(
+          `project-card-order-${id}`,
+          JSON.stringify(newOrder),
+        );
+      }
+    },
+    [id],
+  );
 
-  const handleCardReorder = useCallback((oldIndex: number, newIndex: number) => {
-    const newOrder = [...cardOrder];
-    const [removed] = newOrder.splice(oldIndex, 1);
-    newOrder.splice(newIndex, 0, removed);
-    
-    // Update order_index for all cards
-    const updatedOrder = newOrder.map((card, index) => ({
-      ...card,
-      order_index: index,
-    }));
-    
-    setCardOrder(updatedOrder);
-    saveCardOrder(updatedOrder);
-  }, [cardOrder, saveCardOrder]);
+  const handleCardReorder = useCallback(
+    (oldIndex: number, newIndex: number) => {
+      const newOrder = [...cardOrder];
+      const [removed] = newOrder.splice(oldIndex, 1);
+      newOrder.splice(newIndex, 0, removed);
+
+      // Update order_index for all cards
+      const updatedOrder = newOrder.map((card, index) => ({
+        ...card,
+        order_index: index,
+      }));
+
+      setCardOrder(updatedOrder);
+      saveCardOrder(updatedOrder);
+    },
+    [cardOrder, saveCardOrder],
+  );
 
   const copyToClipboard = async (text: string): Promise<boolean> => {
     if (navigator.clipboard) {
@@ -182,24 +206,29 @@ export function LeaseTrackerPage() {
     }
   };
 
-  const renderCard = useCallback((card: ProjectCard) => {
-    if (!project) return null;
+  const renderCard = useCallback(
+    (card: ProjectCard) => {
+      if (!project) return null;
 
-    switch (card.type) {
-      case 'updates':
-        return <RecentUpdates key={card.id} projectId={project.id} />;
-      case 'availability':
-        return <ClientTourAvailabilityCard key={card.id} projectId={project.id} />;
-      case 'properties':
-        return <PropertiesOfInterest key={card.id} projectId={project.id} />;
-      case 'roadmap':
-        return <ProjectRoadmap key={card.id} projectId={project.id} />;
-      case 'documents':
-        return <ProjectDocuments key={card.id} projectId={project.id} />;
-      default:
-        return null;
-    }
-  }, [project]);
+      switch (card.type) {
+        case "updates":
+          return <RecentUpdates key={card.id} projectId={project.id} />;
+        case "availability":
+          return (
+            <ClientTourAvailabilityCard key={card.id} projectId={project.id} />
+          );
+        case "properties":
+          return <PropertiesOfInterest key={card.id} projectId={project.id} />;
+        case "roadmap":
+          return <ProjectRoadmap key={card.id} projectId={project.id} />;
+        case "documents":
+          return <ProjectDocuments key={card.id} projectId={project.id} />;
+        default:
+          return null;
+      }
+    },
+    [project],
+  );
 
   useEffect(() => {
     if (isLoaded && user && id) {
@@ -278,10 +307,7 @@ export function LeaseTrackerPage() {
 
         {/* Draggable Cards Section */}
         <div className="bg-gray-50 rounded-xl p-4">
-          <DragDropList 
-            items={cardOrder} 
-            onReorder={handleCardReorder}
-          >
+          <DragDropList items={cardOrder} onReorder={handleCardReorder}>
             {(card) => (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {renderCard(card)}
