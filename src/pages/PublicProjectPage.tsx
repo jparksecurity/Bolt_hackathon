@@ -9,6 +9,7 @@ import { RecentUpdates } from "../components/common/RecentUpdates";
 import { PropertiesOfInterest } from "../components/common/PropertiesOfInterest";
 import { ProjectRoadmap } from "../components/common/ProjectRoadmap";
 import { ProjectDocuments } from "../components/common/ProjectDocuments";
+import { ClientAvailabilitySection } from "../components/common/ClientAvailabilitySection";
 
 export function PublicProjectPage() {
   const { shareId } = useParams<{ shareId: string }>();
@@ -118,8 +119,23 @@ export function PublicProjectPage() {
           </div>
         </div>
 
-        {/* Properties Section - Full Width */}
+        {/* Properties Section with Client Availability */}
         <div className="px-6 pb-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900">
+              Properties of Interest
+            </h3>
+          </div>
+          
+          {/* Client Availability Section */}
+          <div className="mb-6">
+            <ClientAvailabilitySection 
+              projectId={project.id} 
+              shareId={shareId!} 
+            />
+          </div>
+          
+          {/* Properties List */}
           <PropertiesOfInterest shareId={shareId!} readonly={true} />
         </div>
 
