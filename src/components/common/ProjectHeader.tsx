@@ -13,15 +13,21 @@ import {
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
-import { ProjectStatus, BaseProjectData } from "../../types/project";
+import type { Database } from "../../types/database";
 import { useProjectData } from "../../hooks/useProjectData";
 import { ClientRequirementsSection } from "./ClientRequirementsSection";
 import { Modal } from "../ui/Modal";
 import { FormButton } from "../ui/FormButton";
-import { formatDate } from "../../utils/dateUtils";
+import { formatDate, nowISO } from "../../utils/dateUtils";
+import { formatLocation, getStatusColor } from "../../utils/displayUtils";
+import { PROJECT_STATUSES } from "../../utils/validation";
+
+// Type aliases for better readability
+type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+type ProjectUpdate = Database["public"]["Tables"]["projects"]["Update"];
 
 interface ProjectHeaderProps {
-  project: BaseProjectData;
+  project: ProjectRow;
   onProjectUpdate?: () => void;
   readonly?: boolean;
   shareId?: string;
@@ -42,7 +48,7 @@ interface Requirement {
 
 interface ProjectFormData {
   title: string;
-  status: ProjectStatus;
+  status: Database["public"]["Enums"]["project_status"];
   start_date: string;
   desired_move_in_date: string;
   company_name: string;
@@ -51,6 +57,8 @@ interface ProjectFormData {
   broker_commission: string;
   commission_paid_by: string;
   payment_due: string;
+  city: string;
+  state: string;
 }
 
 interface RequirementFormData {
@@ -81,7 +89,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
   const [projectFormData, setProjectFormData] = useState<ProjectFormData>({
     title: "",
-    status: ProjectStatus.ACTIVE,
+    status: "Pending" as Database["public"]["Enums"]["project_status"],
     start_date: "",
     desired_move_in_date: "",
     company_name: "",
@@ -90,6 +98,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     broker_commission: "",
     commission_paid_by: "",
     payment_due: "",
+    city: "",
+    state: "",
   });
 
   // Contact data is now directly in project object
@@ -122,7 +132,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const resetProjectForm = () => {
     setProjectFormData({
       title: project.title,
-      status: project.status,
+      status: project.status as Database["public"]["Enums"]["project_status"],
       start_date: project.start_date || "",
       desired_move_in_date: project.desired_move_in_date || "",
       company_name: project.company_name || "",
@@ -131,6 +141,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       broker_commission: project.broker_commission?.toString() || "",
       commission_paid_by: project.commission_paid_by || "",
       payment_due: project.payment_due || "",
+      city: project.city || "",
+      state: project.state || "",
     });
   };
 
@@ -146,7 +158,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const saveProject = async () => {
     setSaving(true);
     try {
-      const updateData = {
+      // Use the generated Update type for type safety
+      const updateData: ProjectUpdate = {
         title: projectFormData.title.trim(),
         status: projectFormData.status,
         start_date: projectFormData.start_date || null,
@@ -161,7 +174,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           : null,
         commission_paid_by: projectFormData.commission_paid_by.trim() || null,
         payment_due: projectFormData.payment_due.trim() || null,
-        updated_at: new Date().toISOString(),
+        city: projectFormData.city.trim() || null,
+        state: projectFormData.state.trim() || null,
+        updated_at: nowISO(),
       };
 
       const { error } = await supabase
@@ -218,21 +233,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     await refetchRequirements();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "status-active";
-      case "Pending":
-        return "status-pending";
-      case "Completed":
-        return "status-completed";
-      case "On Hold":
-        return "status-on-hold";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   const hasContact = project.contact_name;
 
   const resetContactForm = () => {
@@ -263,7 +263,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         contact_title: contactFormData.title.trim() || null,
         contact_phone: contactFormData.phone.trim() || null,
         contact_email: contactFormData.email.trim() || null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       const { error } = await supabase
@@ -292,7 +292,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         contact_title: null,
         contact_phone: null,
         contact_email: null,
-        updated_at: new Date().toISOString(),
+        updated_at: nowISO(),
       };
 
       const { error } = await supabase
@@ -309,6 +309,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     }
   };
 
+  const locationDisplay = formatLocation(project.city, project.state);
+
   return (
     <div className="dashboard-card p-8">
       <div className="flex items-start justify-between mb-8">
@@ -317,6 +319,12 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <h1 className="text-3xl font-bold text-gray-900">
               {project.title}
             </h1>
+            {locationDisplay && (
+              <div className="flex items-center space-x-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                <MapPin className="w-3 h-3" />
+                <span>{locationDisplay}</span>
+              </div>
+            )}
             {!readonly && (
               <button
                 onClick={openProjectModal}
@@ -328,7 +336,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
           <div className="flex items-center space-x-4">
             <span
-              className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(project.status)}`}
+              className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(
+                project.status,
+              )}`}
             >
               {project.status}
             </span>
@@ -561,7 +571,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Project Title
               </label>
@@ -587,17 +597,69 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 onChange={(e) =>
                   setProjectFormData({
                     ...projectFormData,
-                    status: e.target.value as ProjectStatus,
+                    status: e.target
+                      .value as Database["public"]["Enums"]["project_status"],
                   })
                 }
                 className="form-input w-full px-4 py-3 rounded-lg"
               >
-                {Object.values(ProjectStatus).map((status) => (
+                {PROJECT_STATUSES.map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Company Name
+              </label>
+              <input
+                type="text"
+                value={projectFormData.company_name}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    company_name: e.target.value,
+                  })
+                }
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="Enter company name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                City
+              </label>
+              <input
+                type="text"
+                value={projectFormData.city}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    city: e.target.value,
+                  })
+                }
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="e.g., San Francisco"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                State
+              </label>
+              <input
+                type="text"
+                value={projectFormData.state}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    state: e.target.value,
+                  })
+                }
+                className="form-input w-full px-4 py-3 rounded-lg"
+                placeholder="e.g., CA"
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -629,23 +691,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                   })
                 }
                 className="form-input w-full px-4 py-3 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Company Name
-              </label>
-              <input
-                type="text"
-                value={projectFormData.company_name}
-                onChange={(e) =>
-                  setProjectFormData({
-                    ...projectFormData,
-                    company_name: e.target.value,
-                  })
-                }
-                className="form-input w-full px-4 py-3 rounded-lg"
-                placeholder="Enter company name"
               />
             </div>
             <div>

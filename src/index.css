@@ -591,6 +591,29 @@ h6 {
   opacity: 1;
 }
 
+/* Drag and Drop Styles */
+.sortable-item {
+  transition: transform 0.2s ease;
+}
+
+.sortable-item.dragging {
+  z-index: 1000;
+  transform: rotate(5deg);
+}
+
+.sortable-item .drag-handle {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sortable-item:hover .drag-handle {
+  opacity: 1;
+}
+
+.sortable-item.dragging .drag-handle {
+  opacity: 1;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .dashboard-layout {

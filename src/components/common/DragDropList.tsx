@@ -13,68 +13,19 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { SortableItem } from "../ui/SortableItem";
 
 interface DragDropItem {
   id: string;
   order_index?: number | null;
 }
 
-interface SortableItemProps {
-  id: string;
-  children: React.ReactNode;
-  disabled?: boolean;
-}
-
-const SortableItem: React.FC<SortableItemProps> = ({
-  id,
-  children,
-  disabled = false,
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, disabled });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className="relative group">
-      <div className="flex items-center">
-        <button
-          {...attributes}
-          {...listeners}
-          className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-10 p-1 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100 ${
-            disabled
-              ? "cursor-not-allowed opacity-30"
-              : "cursor-grab active:cursor-grabbing"
-          }`}
-          disabled={disabled}
-          aria-label="Drag to reorder"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
-        <div className="pl-8 w-full">{children}</div>
-      </div>
-    </div>
-  );
-};
-
 interface DragDropListProps<T extends DragDropItem> {
   items: T[];
   onReorder: (oldIndex: number, newIndex: number) => void;
   children: (item: T, index: number) => React.ReactNode;
   disabled?: boolean;
+  showHandle?: boolean;
 }
 
 export function DragDropList<T extends DragDropItem>({
@@ -82,6 +33,7 @@ export function DragDropList<T extends DragDropItem>({
   onReorder,
   children,
   disabled = false,
+  showHandle = true,
 }: DragDropListProps<T>) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -126,9 +78,14 @@ export function DragDropList<T extends DragDropItem>({
         items={sortedItems.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-3">
+        <div className="space-y-4">
           {sortedItems.map((item, index) => (
-            <SortableItem key={item.id} id={item.id} disabled={disabled}>
+            <SortableItem
+              key={item.id}
+              id={item.id}
+              disabled={disabled}
+              showHandle={showHandle}
+            >
               {children(item, index)}
             </SortableItem>
           ))}

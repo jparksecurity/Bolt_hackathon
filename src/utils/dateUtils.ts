@@ -1,6 +1,14 @@
 /**
- * Utility functions for date formatting and manipulation
+ * Utility functions for date formatting and manipulation using Luxon
+ * All functions normalize to local timezone handling for consistent user experience
  */
+import { DateTime } from "luxon";
+
+// Common format constants
+export const INPUT_DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm";
+export const DISPLAY_DATE_FORMAT = "ccc, MMM d, yyyy";
+export const DISPLAY_TIME_FORMAT = "h:mm a";
+export const TIME_FORMAT = "HH:mm";
 
 /**
  * Formats a date string consistently across the application
@@ -11,7 +19,11 @@ export const formatDate = (
   dateString: string | null | undefined,
 ): string | null => {
   if (!dateString) return null;
-  return new Date(dateString + "T00:00:00").toLocaleDateString();
+
+  const dt = DateTime.fromISO(dateString);
+  if (!dt.isValid) return null;
+
+  return dt.toLocaleString(DateTime.DATE_SHORT);
 };
 
 /**
@@ -29,8 +41,133 @@ export const formatDateWithOptions = (
   },
 ): string | null => {
   if (!dateString) return null;
-  return new Date(dateString + "T00:00:00").toLocaleDateString(
-    "en-US",
-    options,
-  );
+
+  const dt = DateTime.fromISO(dateString);
+  if (!dt.isValid) return null;
+
+  // Combine Luxon's DATE_SHORT with custom options for type safety
+  return dt.toLocaleString({ ...DateTime.DATE_SHORT, ...options });
+};
+
+/**
+ * Returns current date in YYYY-MM-DD format in local timezone
+ */
+export const getCurrentDateString = (): string => {
+  const date = DateTime.now().toISODate();
+  return date || "";
+};
+
+/**
+ * Formats datetime for tour availability display
+ * @param datetime - ISO datetime string
+ * @returns Object with dateStr and timeStr for flexible display
+ */
+export const formatDateTime = (datetime: string) => {
+  const dt = DateTime.fromISO(datetime);
+
+  if (!dt.isValid) {
+    return { dateStr: "Invalid date", timeStr: "Invalid time" };
+  }
+
+  const dateStr = dt.toFormat(DISPLAY_DATE_FORMAT); // "Thu, Jun 20, 2024"
+  const timeStr = dt.toFormat(DISPLAY_TIME_FORMAT); // "2:30 PM"
+
+  return { dateStr, timeStr };
+};
+
+/**
+ * Formats datetime as a single display string for lists
+ * @param datetime - ISO datetime string
+ * @returns Formatted string like "Thu, Jun 20, 2024 at 2:30 PM"
+ */
+export const formatDisplayDateTime = (datetime: string): string => {
+  const dt = DateTime.fromISO(datetime);
+
+  if (!dt.isValid) {
+    return "Invalid date";
+  }
+
+  const dateStr = dt.toFormat(DISPLAY_DATE_FORMAT);
+  const timeStr = dt.toFormat(DISPLAY_TIME_FORMAT);
+  return `${dateStr} at ${timeStr}`;
+};
+
+/**
+ * Converts a datetime-local input value to ISO string for database storage
+ * Keeps the local timezone information for proper user experience
+ * @param dateTimeLocal - Value from datetime-local input (YYYY-MM-DDTHH:mm)
+ * @returns ISO string in local timezone
+ */
+export const dateTimeLocalToISO = (dateTimeLocal: string): string => {
+  if (!dateTimeLocal) return "";
+
+  const dt = DateTime.fromISO(dateTimeLocal, { zone: "local" });
+  if (!dt.isValid) return "";
+
+  return dt.toISO() || "";
+};
+
+/**
+ * Converts an ISO datetime string to datetime-local input format
+ * @param isoString - ISO datetime string
+ * @returns datetime-local format (YYYY-MM-DDTHH:mm)
+ */
+export const isoToDateTimeLocal = (isoString: string): string => {
+  if (!isoString) return "";
+
+  const dt = DateTime.fromISO(isoString);
+  if (!dt.isValid) return "";
+
+  return dt.toFormat(INPUT_DATETIME_FORMAT);
+};
+
+/**
+ * Creates a DateTime object from date and time components
+ * @param date - Date in YYYY-MM-DD format
+ * @param time - Time in HH:mm format
+ * @returns DateTime object
+ */
+export const createDateTime = (date: string, time: string): DateTime => {
+  return DateTime.fromISO(`${date}T${time}:00`, { zone: "local" });
+};
+
+/**
+ * Gets current date and time in different formats
+ */
+export const getCurrentDateTime = () => {
+  const now = DateTime.now();
+  return {
+    iso: now.toISO() || "",
+    date: now.toISODate() || "",
+    time: now.toFormat(TIME_FORMAT),
+    dateTimeLocal: now.toFormat(INPUT_DATETIME_FORMAT),
+  };
+};
+
+/**
+ * Returns current timestamp in ISO format (local timezone)
+ * Use this instead of new Date().toISOString()
+ */
+export const nowISO = (): string => {
+  const iso = DateTime.now().toISO();
+  return iso || "";
+};
+
+/**
+ * Returns today's date in ISO format (YYYY-MM-DD)
+ * Use this instead of new Date().toISOString().slice(0, 10)
+ */
+export const todayISODate = (): string => {
+  const date = DateTime.now().toISODate();
+  return date || "";
+};
+
+/**
+ * Factory function for creating DateTime objects with explicit zone handling
+ * @param iso - ISO string
+ * @param zone - timezone (defaults to 'local')
+ * @returns DateTime object
+ */
+export const toDateTime = (iso: string, zone: string = "local"): DateTime => {
+  return DateTime.fromISO(iso, { zone });
 };
