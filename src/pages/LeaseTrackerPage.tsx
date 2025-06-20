@@ -278,15 +278,6 @@ export function LeaseTrackerPage() {
 
         {/* Draggable Cards Section */}
         <div className="bg-gray-50 rounded-xl p-4">
-          <div className="mb-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-1">
-              Project Information
-            </h3>
-            <p className="text-xs text-gray-500">
-              Drag cards to reorder them by importance. Your layout will be saved automatically.
-            </p>
-          </div>
-          
           <DragDropList 
             items={cardOrder} 
             onReorder={handleCardReorder}
