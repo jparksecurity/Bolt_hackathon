@@ -23,7 +23,8 @@ import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
 import { formatDate } from "../../utils/dateUtils";
 import type { Database } from "../../types/database";
-import { updateItemOrder } from "../../utils/updateOrder";
+
+import { useReorderState } from "../../hooks/useReorderState";
 
 interface PropertiesOfInterestProps {
   projectId?: string;
@@ -130,6 +131,25 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     shareId,
     dataType: "properties",
   });
+
+  const { handleReorder, isReordering, reorderError, clearError } =
+    useReorderState(
+      properties,
+      () => {
+        // Refetch will be handled in onSuccess callback
+      },
+      {
+        tableName: "properties",
+        supabase,
+        onSuccess: () => {
+          fetchProperties();
+        },
+        onError: (error) => {
+          console.error("Error reordering properties:", error);
+          alert("Error reordering properties. Please try again.");
+        },
+      },
+    );
 
   const resetForm = () => {
     setFormData({
@@ -291,18 +311,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     } catch (error) {
       console.error("Error deleting property:", error);
       alert("Error deleting property. Please try again.");
-    }
-  };
-
-  const handleReorder = async (oldIndex: number, newIndex: number) => {
-    if (readonly) return;
-
-    try {
-      await updateItemOrder(properties, oldIndex, newIndex, 'properties', supabase);
-      await fetchProperties();
-    } catch (error) {
-      console.error("Error reordering properties:", error);
-      alert("Error reordering properties. Please try again.");
     }
   };
 
@@ -554,12 +562,22 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           ))}
         </div>
       ) : (
-        <DragDropList items={properties} onReorder={handleReorder}>
+        <DragDropList
+          items={properties}
+          onReorder={handleReorder}
+          disabled={readonly || isReordering}
+        >
           {(property) => (
             <div
               key={property.id}
-              className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow group"
+              className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow group relative"
             >
+              {isReordering && (
+                <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-lg">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
@@ -590,22 +608,26 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => openEditModal(property)}
-                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Edit property"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(property.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                    title="Delete property"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                {!readonly && (
+                  <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => openEditModal(property)}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title="Edit property"
+                      disabled={isReordering}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(property.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Delete property"
+                      disabled={isReordering}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -723,6 +745,20 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
             </div>
           )}
         </DragDropList>
+      )}
+
+      {reorderError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-red-800">{reorderError}</span>
+            <button
+              onClick={clearError}
+              className="text-red-600 hover:text-red-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Add/Edit Modal */}

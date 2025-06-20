@@ -239,7 +239,13 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     if (readonly) return;
 
     try {
-      await updateItemOrder(documents, oldIndex, newIndex, 'project_documents', supabase);
+      await updateItemOrder(
+        documents,
+        oldIndex,
+        newIndex,
+        "project_documents",
+        supabase,
+      );
       await fetchDocuments();
     } catch (error) {
       console.error("Error reordering documents:", error);

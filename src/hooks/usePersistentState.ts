@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 /**
  * Custom hook for persisting state to localStorage with automatic JSON serialization
@@ -8,7 +8,7 @@ import { useState, useCallback } from 'react';
  */
 export function usePersistentState<T>(
   key: string,
-  defaultValue: T
+  defaultValue: T,
 ): [T, (value: T) => void] {
   const [state, setState] = useState<T>(() => {
     try {
@@ -17,21 +17,27 @@ export function usePersistentState<T>(
         return JSON.parse(saved);
       }
     } catch (error) {
-      console.warn(`Failed to parse localStorage value for key "${key}":`, error);
+      console.warn(
+        `Failed to parse localStorage value for key "${key}":`,
+        error,
+      );
     }
     return defaultValue;
   });
 
-  const setPersistentState = useCallback((value: T) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      setState(value);
-    } catch (error) {
-      console.warn(`Failed to save to localStorage for key "${key}":`, error);
-      // Still update state even if localStorage fails
-      setState(value);
-    }
-  }, [key]);
+  const setPersistentState = useCallback(
+    (value: T) => {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+        setState(value);
+      } catch (error) {
+        console.warn(`Failed to save to localStorage for key "${key}":`, error);
+        // Still update state even if localStorage fails
+        setState(value);
+      }
+    },
+    [key],
+  );
 
   return [state, setPersistentState];
-} 
+}

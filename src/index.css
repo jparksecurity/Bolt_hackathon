@@ -614,8 +614,6 @@ h6 {
   opacity: 1;
 }
 
-
-
 /* Responsive design */
 @media (max-width: 768px) {
   .dashboard-layout {

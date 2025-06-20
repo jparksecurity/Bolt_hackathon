@@ -8,6 +8,7 @@ import {
   Trash2,
   X,
   Save,
+  Calendar,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
@@ -16,7 +17,8 @@ import { useProjectData } from "../../hooks/useProjectData";
 import { formatDate } from "../../utils/dateUtils";
 import { getCurrentDateString } from "../../utils/dateUtils";
 import { Database } from "../../types/database";
-import { updateItemOrder } from "../../utils/updateOrder";
+
+import { useReorderState } from "../../hooks/useReorderState";
 
 interface ProjectRoadmapProps {
   projectId?: string;
@@ -31,6 +33,7 @@ interface RoadmapFormData {
   description: string;
   status: Database["public"]["Enums"]["roadmap_status"];
   expected_date: string;
+  completed_date: string;
 }
 
 export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
@@ -47,6 +50,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
     description: "",
     status: "pending",
     expected_date: "",
+    completed_date: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -61,12 +65,32 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
     dataType: "roadmap",
   });
 
+  const { handleReorder, isReordering, reorderError, clearError } =
+    useReorderState(
+      roadmapSteps,
+      () => {
+        // Refetch will be handled in onSuccess callback
+      },
+      {
+        tableName: "project_roadmap",
+        supabase,
+        onSuccess: () => {
+          fetchRoadmap();
+        },
+        onError: (error) => {
+          console.error("Error reordering roadmap steps:", error);
+          alert("Error reordering steps. Please try again.");
+        },
+      },
+    );
+
   const resetForm = () => {
     setFormData({
       title: "",
       description: "",
       status: "pending",
       expected_date: "",
+      completed_date: "",
     });
     setEditingStep(null);
   };
@@ -82,6 +106,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
       description: step.description || "",
       status: step.status,
       expected_date: step.expected_date || "",
+      completed_date: step.completed_date || "",
     });
     setEditingStep(step);
     setIsModalOpen(true);
@@ -159,41 +184,18 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
     }
   };
 
-  const handleStatusUpdate = async (
-    stepId: string,
-    newStatus: Database["public"]["Enums"]["roadmap_status"],
+  const getStatusColor = (
+    status: Database["public"]["Enums"]["roadmap_status"],
   ) => {
-    if (readonly) return;
-
-    try {
-      const updateData: Partial<RoadmapStep> = {
-        status: newStatus,
-        completed_date:
-          newStatus === "completed" ? getCurrentDateString() : null,
-      };
-
-      const { error } = await supabase
-        .from("project_roadmap")
-        .update(updateData)
-        .eq("id", stepId);
-
-      if (error) throw error;
-
-      await fetchRoadmap();
-    } catch {
-      alert("Error updating status. Please try again.");
-    }
-  };
-
-  const handleReorder = async (oldIndex: number, newIndex: number) => {
-    if (readonly) return;
-
-    try {
-      await updateItemOrder(roadmapSteps, oldIndex, newIndex, 'project_roadmap', supabase);
-      await fetchRoadmap();
-    } catch (error) {
-      console.error("Error reordering roadmap steps:", error);
-      alert("Error reordering steps. Please try again.");
+    switch (status) {
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "in-progress":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-gray-100 text-gray-600";
+      default:
+        return "bg-gray-100 text-gray-600";
     }
   };
 
@@ -319,103 +321,101 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
           </div>
         ) : (
           // Interactive view for authenticated mode
-          <DragDropList items={roadmapSteps} onReorder={handleReorder}>
-            {(step, index) => (
-              <div key={step.id} className="flex items-start space-x-4">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer ${
-                      step.status === "completed"
-                        ? "bg-green-100 text-green-600"
-                        : step.status === "in-progress"
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-gray-100 text-gray-400"
-                    }`}
-                    onClick={() => {
-                      const statuses: (
-                        | "pending"
-                        | "in-progress"
-                        | "completed"
-                      )[] = ["pending", "in-progress", "completed"];
-                      const currentIndex = statuses.indexOf(step.status);
-                      const nextStatus =
-                        statuses[(currentIndex + 1) % statuses.length];
-                      handleStatusUpdate(step.id, nextStatus);
-                    }}
-                    title="Click to cycle through status"
-                  >
-                    {step.status === "completed" ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : step.status === "in-progress" ? (
-                      <Clock className="w-5 h-5" />
-                    ) : (
-                      <Circle className="w-5 h-5" />
+          <DragDropList
+            items={roadmapSteps}
+            onReorder={handleReorder}
+            disabled={readonly || isReordering}
+          >
+            {(step) => (
+              <div
+                key={step.id}
+                className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow group relative"
+              >
+                {isReordering && (
+                  <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-lg">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {step.title}
+                      </h4>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                          step.status,
+                        )}`}
+                      >
+                        {step.status}
+                      </span>
+                    </div>
+                    {step.description && (
+                      <p className="text-gray-600 text-sm mb-3">
+                        {step.description}
+                      </p>
                     )}
                   </div>
-                  {index < roadmapSteps.length - 1 && (
-                    <div className="w-px h-16 bg-gray-200 mt-2" />
-                  )}
-                </div>
-
-                <div className="flex-1 pb-8">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">
-                      {step.title}
-                    </h4>
-                    <div className="flex items-center space-x-2">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          step.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : step.status === "in-progress"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {step.status === "completed"
-                          ? "Completed"
-                          : step.status === "in-progress"
-                            ? "In Progress"
-                            : "Pending"}
-                      </span>
+                  {!readonly && (
+                    <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => openEditModal(step)}
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                         title="Edit step"
+                        disabled={isReordering}
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(step.id)}
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                         title="Delete step"
+                        disabled={isReordering}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
-                  {step.description && (
-                    <p className="text-gray-600 text-sm mb-2">
-                      {step.description}
-                    </p>
                   )}
-                  <div className="text-xs text-gray-500">
-                    {step.completed_date ? (
-                      <span>Completed: {formatDate(step.completed_date)}</span>
-                    ) : step.expected_date ? (
-                      <span>
-                        Completion date: {formatDate(step.expected_date)}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {step.expected_date && (
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        Expected: {formatDate(step.expected_date)}
                       </span>
-                    ) : (
-                      <span>No date set</span>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  {step.completed_date && (
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-gray-600">
+                        Completed: {formatDate(step.completed_date)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </DragDropList>
         )
       ) : null}
+
+      {reorderError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-red-800">{reorderError}</span>
+            <button
+              onClick={clearError}
+              className="text-red-600 hover:text-red-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Modal - only show if not readonly */}
       {isModalOpen && !readonly && (

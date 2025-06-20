@@ -51,7 +51,7 @@ export function LeaseTrackerPage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [cardOrder, setCardOrder] = usePersistentState<ProjectCard[]>(
     `project-card-order-${id}`,
-    DEFAULT_CARD_ORDER
+    DEFAULT_CARD_ORDER,
   );
 
   const fetchProject = useCallback(async () => {
@@ -71,7 +71,7 @@ export function LeaseTrackerPage() {
       }
 
       setProject(data);
-      
+
       // Load dashboard card order from database if available
       if (data.dashboard_card_order) {
         setCardOrder(data.dashboard_card_order as ProjectCard[]);
@@ -83,33 +83,36 @@ export function LeaseTrackerPage() {
     }
   }, [id, supabase, setCardOrder]);
 
-  const handleCardReorder = useCallback(async (oldIndex: number, newIndex: number) => {
-    const newOrder = [...cardOrder];
-    const [removed] = newOrder.splice(oldIndex, 1);
-    newOrder.splice(newIndex, 0, removed);
-    
-    // Update order_index for all cards
-    const updatedOrder = newOrder.map((card, index) => ({
-      ...card,
-      order_index: index,
-    }));
-    
-    // Update UI immediately (localStorage persistence handled by hook)
-    setCardOrder(updatedOrder);
-    
-    // Save to database in background
-    if (project?.id) {
-      try {
-        await supabase
-          .from("projects")
-          .update({ dashboard_card_order: updatedOrder })
-          .eq("id", project.id);
-      } catch (error) {
-        console.warn("Failed to save dashboard order to database:", error);
-        // UI still works via localStorage
+  const handleCardReorder = useCallback(
+    async (oldIndex: number, newIndex: number) => {
+      const newOrder = [...cardOrder];
+      const [removed] = newOrder.splice(oldIndex, 1);
+      newOrder.splice(newIndex, 0, removed);
+
+      // Update order_index for all cards
+      const updatedOrder = newOrder.map((card, index) => ({
+        ...card,
+        order_index: index,
+      }));
+
+      // Update UI immediately (localStorage persistence handled by hook)
+      setCardOrder(updatedOrder);
+
+      // Save to database in background
+      if (project?.id) {
+        try {
+          await supabase
+            .from("projects")
+            .update({ dashboard_card_order: updatedOrder })
+            .eq("id", project.id);
+        } catch (error) {
+          console.warn("Failed to save dashboard order to database:", error);
+          // UI still works via localStorage
+        }
       }
-    }
-  }, [cardOrder, setCardOrder, supabase, project?.id]);
+    },
+    [cardOrder, setCardOrder, supabase, project?.id],
+  );
 
   const copyToClipboard = async (text: string): Promise<boolean> => {
     if (navigator.clipboard) {
