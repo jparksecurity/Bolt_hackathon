@@ -23,7 +23,6 @@ import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
 import { formatDisplayDateTime } from "../../utils/dateUtils";
 import type { Database } from "../../types/database";
-
 import { useReorderState } from "../../hooks/useReorderState";
 
 interface PropertiesOfInterestProps {
