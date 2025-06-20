@@ -6,6 +6,7 @@ INSERT INTO projects (
   id, clerk_user_id, title, status, start_date, desired_move_in_date, expected_fee,
   broker_commission, commission_paid_by, payment_due,
   company_name, expected_headcount, contact_name, contact_title, contact_phone, contact_email,
+  city, state,
   created_at, updated_at
 ) VALUES (
   '550e8400-e29b-41d4-a716-446655440000',
@@ -24,6 +25,8 @@ INSERT INTO projects (
   'Head of Operations',
   '(555) 123-4567',
   'sarah.chen@techflow.com',
+  'San Francisco',
+  'CA',
   NOW(),
   NOW()
 );

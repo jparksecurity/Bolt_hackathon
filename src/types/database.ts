@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          variables?: Json;
-          operationName?: string;
           query?: string;
+          variables?: Json;
           extensions?: Json;
+          operationName?: string;
         };
         Returns: Json;
       };
@@ -59,6 +59,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "client_requirements_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      client_tour_availability: {
+        Row: {
+          client_email: string | null;
+          client_name: string | null;
+          created_at: string | null;
+          id: string;
+          notes: string | null;
+          project_id: string;
+          proposed_datetime: string;
+        };
+        Insert: {
+          client_email?: string | null;
+          client_name?: string | null;
+          created_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          project_id: string;
+          proposed_datetime: string;
+        };
+        Update: {
+          client_email?: string | null;
+          client_name?: string | null;
+          created_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          project_id?: string;
+          proposed_datetime?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "client_tour_availability_project_id_fkey";
             columns: ["project_id"];
             isOneToOne: false;
             referencedRelation: "projects";
@@ -186,6 +224,7 @@ export type Database = {
       projects: {
         Row: {
           broker_commission: number | null;
+          city: string | null;
           clerk_user_id: string;
           commission_paid_by: string | null;
           company_name: string | null;
@@ -202,12 +241,14 @@ export type Database = {
           payment_due: string | null;
           public_share_id: string | null;
           start_date: string | null;
+          state: string | null;
           status: string;
           title: string;
           updated_at: string | null;
         };
         Insert: {
           broker_commission?: number | null;
+          city?: string | null;
           clerk_user_id: string;
           commission_paid_by?: string | null;
           company_name?: string | null;
@@ -224,12 +265,14 @@ export type Database = {
           payment_due?: string | null;
           public_share_id?: string | null;
           start_date?: string | null;
+          state?: string | null;
           status: string;
           title: string;
           updated_at?: string | null;
         };
         Update: {
           broker_commission?: number | null;
+          city?: string | null;
           clerk_user_id?: string;
           commission_paid_by?: string | null;
           company_name?: string | null;
@@ -246,6 +289,7 @@ export type Database = {
           payment_due?: string | null;
           public_share_id?: string | null;
           start_date?: string | null;
+          state?: string | null;
           status?: string;
           title?: string;
           updated_at?: string | null;
@@ -256,6 +300,7 @@ export type Database = {
         Row: {
           address: string | null;
           availability: string | null;
+          cam_rate: string | null;
           condition: string | null;
           contract_term: string | null;
           created_at: string | null;
@@ -270,6 +315,7 @@ export type Database = {
           monthly_cost: string | null;
           name: string;
           order_index: number;
+          parking_rate: string | null;
           people_capacity: string | null;
           price_per_sf: string | null;
           project_id: string;
@@ -285,6 +331,7 @@ export type Database = {
         Insert: {
           address?: string | null;
           availability?: string | null;
+          cam_rate?: string | null;
           condition?: string | null;
           contract_term?: string | null;
           created_at?: string | null;
@@ -299,6 +346,7 @@ export type Database = {
           monthly_cost?: string | null;
           name: string;
           order_index: number;
+          parking_rate?: string | null;
           people_capacity?: string | null;
           price_per_sf?: string | null;
           project_id: string;
@@ -314,6 +362,7 @@ export type Database = {
         Update: {
           address?: string | null;
           availability?: string | null;
+          cam_rate?: string | null;
           condition?: string | null;
           contract_term?: string | null;
           created_at?: string | null;
@@ -328,6 +377,7 @@ export type Database = {
           monthly_cost?: string | null;
           name?: string;
           order_index?: number;
+          parking_rate?: string | null;
           people_capacity?: string | null;
           price_per_sf?: string | null;
           project_id?: string;
@@ -365,6 +415,18 @@ export type Database = {
           created_at: string;
         }[];
       };
+      get_public_client_tour_availability: {
+        Args: { share_id: string };
+        Returns: {
+          id: string;
+          project_id: string;
+          created_at: string;
+          client_name: string;
+          client_email: string;
+          proposed_datetime: string;
+          notes: string;
+        }[];
+      };
       get_public_project: {
         Args: { share_id: string };
         Returns: {
@@ -383,6 +445,8 @@ export type Database = {
           contact_title: string;
           contact_phone: string;
           contact_email: string;
+          city: string;
+          state: string;
           created_at: string;
           updated_at: string;
         }[];
@@ -403,15 +467,15 @@ export type Database = {
       get_public_project_roadmap: {
         Args: { share_id: string };
         Returns: {
-          created_at: string;
-          order_index: number;
-          completed_date: string;
           expected_date: string;
-          status: string;
-          description: string;
-          title: string;
-          project_id: string;
           id: string;
+          project_id: string;
+          title: string;
+          description: string;
+          status: string;
+          completed_date: string;
+          order_index: number;
+          created_at: string;
         }[];
       };
       get_public_project_updates: {
@@ -442,13 +506,15 @@ export type Database = {
           lease_structure: string;
           current_state: string;
           condition: string;
+          cam_rate: string;
+          parking_rate: string;
           misc_notes: string;
           virtual_tour_url: string;
           suggestion: string;
           flier_url: string;
           tour_datetime: string;
-          tour_status: string;
           tour_location: string;
+          tour_status: string;
           status: string;
           decline_reason: string;
           order_index: number;
