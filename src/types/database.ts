@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          variables?: Json;
           query?: string;
-          operationName?: string;
+          variables?: Json;
           extensions?: Json;
+          operationName?: string;
         };
         Returns: Json;
       };
@@ -113,7 +113,7 @@ export type Database = {
           name: string;
           order_index: number;
           project_id: string;
-          source_type: string | null;
+          source_type: Database["public"]["Enums"]["document_source_type"];
         };
         Insert: {
           created_at?: string | null;
@@ -123,7 +123,7 @@ export type Database = {
           name: string;
           order_index: number;
           project_id: string;
-          source_type?: string | null;
+          source_type: Database["public"]["Enums"]["document_source_type"];
         };
         Update: {
           created_at?: string | null;
@@ -133,7 +133,7 @@ export type Database = {
           name?: string;
           order_index?: number;
           project_id?: string;
-          source_type?: string | null;
+          source_type?: Database["public"]["Enums"]["document_source_type"];
         };
         Relationships: [
           {
@@ -154,7 +154,7 @@ export type Database = {
           id: string;
           order_index: number;
           project_id: string;
-          status: string;
+          status: Database["public"]["Enums"]["roadmap_status"];
           title: string;
         };
         Insert: {
@@ -165,7 +165,7 @@ export type Database = {
           id?: string;
           order_index: number;
           project_id: string;
-          status?: string;
+          status: Database["public"]["Enums"]["roadmap_status"];
           title: string;
         };
         Update: {
@@ -176,7 +176,7 @@ export type Database = {
           id?: string;
           order_index?: number;
           project_id?: string;
-          status?: string;
+          status?: Database["public"]["Enums"]["roadmap_status"];
           title?: string;
         };
         Relationships: [
@@ -304,7 +304,7 @@ export type Database = {
           condition: string | null;
           contract_term: string | null;
           created_at: string | null;
-          current_state: string | null;
+          current_state: Database["public"]["Enums"]["property_current_state"];
           decline_reason: string | null;
           expected_monthly_cost: string | null;
           flier_url: string | null;
@@ -320,11 +320,11 @@ export type Database = {
           price_per_sf: string | null;
           project_id: string;
           sf: string | null;
-          status: string;
+          status: Database["public"]["Enums"]["property_status"];
           suggestion: string | null;
           tour_datetime: string | null;
           tour_location: string | null;
-          tour_status: string | null;
+          tour_status: Database["public"]["Enums"]["tour_status"] | null;
           updated_at: string | null;
           virtual_tour_url: string | null;
         };
@@ -335,7 +335,7 @@ export type Database = {
           condition?: string | null;
           contract_term?: string | null;
           created_at?: string | null;
-          current_state?: string | null;
+          current_state: Database["public"]["Enums"]["property_current_state"];
           decline_reason?: string | null;
           expected_monthly_cost?: string | null;
           flier_url?: string | null;
@@ -351,11 +351,11 @@ export type Database = {
           price_per_sf?: string | null;
           project_id: string;
           sf?: string | null;
-          status?: string;
+          status: Database["public"]["Enums"]["property_status"];
           suggestion?: string | null;
           tour_datetime?: string | null;
           tour_location?: string | null;
-          tour_status?: string | null;
+          tour_status?: Database["public"]["Enums"]["tour_status"] | null;
           updated_at?: string | null;
           virtual_tour_url?: string | null;
         };
@@ -366,7 +366,7 @@ export type Database = {
           condition?: string | null;
           contract_term?: string | null;
           created_at?: string | null;
-          current_state?: string | null;
+          current_state?: Database["public"]["Enums"]["property_current_state"];
           decline_reason?: string | null;
           expected_monthly_cost?: string | null;
           flier_url?: string | null;
@@ -382,11 +382,11 @@ export type Database = {
           price_per_sf?: string | null;
           project_id?: string;
           sf?: string | null;
-          status?: string;
+          status?: Database["public"]["Enums"]["property_status"];
           suggestion?: string | null;
           tour_datetime?: string | null;
           tour_location?: string | null;
-          tour_status?: string | null;
+          tour_status?: Database["public"]["Enums"]["tour_status"] | null;
           updated_at?: string | null;
           virtual_tour_url?: string | null;
         };
@@ -408,23 +408,23 @@ export type Database = {
       get_public_client_requirements: {
         Args: { share_id: string };
         Returns: {
-          requirement_text: string;
-          created_at: string;
           id: string;
           project_id: string;
           category: string;
+          requirement_text: string;
+          created_at: string;
         }[];
       };
       get_public_client_tour_availability: {
         Args: { share_id: string };
         Returns: {
-          notes: string;
-          proposed_datetime: string;
-          client_email: string;
-          client_name: string;
-          created_at: string;
           id: string;
           project_id: string;
+          created_at: string;
+          client_name: string;
+          client_email: string;
+          proposed_datetime: string;
+          notes: string;
         }[];
       };
       get_public_project: {
@@ -456,8 +456,8 @@ export type Database = {
         Returns: {
           id: string;
           project_id: string;
-          file_type: string;
           name: string;
+          file_type: string;
           document_url: string;
           source_type: string;
           order_index: number;
@@ -467,12 +467,12 @@ export type Database = {
       get_public_project_roadmap: {
         Args: { share_id: string };
         Returns: {
+          expected_date: string;
           id: string;
           project_id: string;
           title: string;
           description: string;
           status: string;
-          expected_date: string;
           completed_date: string;
           order_index: number;
           created_at: string;
@@ -481,26 +481,16 @@ export type Database = {
       get_public_project_updates: {
         Args: { share_id: string };
         Returns: {
-          update_date: string;
-          created_at: string;
           id: string;
           project_id: string;
           content: string;
+          update_date: string;
+          created_at: string;
         }[];
       };
       get_public_properties: {
         Args: { share_id: string };
         Returns: {
-          suggestion: string;
-          flier_url: string;
-          tour_datetime: string;
-          tour_location: string;
-          tour_status: string;
-          status: string;
-          decline_reason: string;
-          created_at: string;
-          updated_at: string;
-          order_index: number;
           id: string;
           project_id: string;
           name: string;
@@ -520,11 +510,39 @@ export type Database = {
           parking_rate: string;
           misc_notes: string;
           virtual_tour_url: string;
+          suggestion: string;
+          flier_url: string;
+          tour_datetime: string;
+          tour_location: string;
+          tour_status: string;
+          status: string;
+          decline_reason: string;
+          order_index: number;
+          created_at: string;
+          updated_at: string;
         }[];
       };
     };
     Enums: {
+      document_source_type: "upload" | "google_drive" | "onedrive" | "url";
       project_status: "Active" | "Pending" | "Completed" | "On Hold";
+      property_current_state:
+        | "Available"
+        | "Under Review"
+        | "Negotiating"
+        | "On Hold"
+        | "Declined";
+      property_status:
+        | "new"
+        | "active"
+        | "pending"
+        | "under_review"
+        | "negotiating"
+        | "on_hold"
+        | "declined"
+        | "accepted";
+      roadmap_status: "completed" | "in-progress" | "pending";
+      tour_status: "Scheduled" | "Completed" | "Cancelled" | "Rescheduled";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -643,7 +661,27 @@ export const Constants = {
   },
   public: {
     Enums: {
+      document_source_type: ["upload", "google_drive", "onedrive", "url"],
       project_status: ["Active", "Pending", "Completed", "On Hold"],
+      property_current_state: [
+        "Available",
+        "Under Review",
+        "Negotiating",
+        "On Hold",
+        "Declined",
+      ],
+      property_status: [
+        "new",
+        "active",
+        "pending",
+        "under_review",
+        "negotiating",
+        "on_hold",
+        "declined",
+        "accepted",
+      ],
+      roadmap_status: ["completed", "in-progress", "pending"],
+      tour_status: ["Scheduled", "Completed", "Cancelled", "Rescheduled"],
     },
   },
 } as const;

@@ -18,6 +18,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
+import { Database } from "../../types/database";
 
 interface ProjectDocumentsProps {
   projectId?: string;
@@ -25,16 +26,7 @@ interface ProjectDocumentsProps {
   readonly?: boolean;
 }
 
-interface Document {
-  id: string;
-  name: string;
-  file_type: string;
-  storage_path?: string | null;
-  document_url?: string | null;
-  source_type: "upload" | "google_drive" | "onedrive" | "url";
-  created_at: string;
-  order_index?: number | null;
-}
+type Document = Database["public"]["Tables"]["project_documents"]["Row"];
 
 const getFileIcon = (fileType: string, sourceType: string) => {
   // Show different icons based on source
@@ -117,7 +109,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   const [documentForm, setDocumentForm] = useState({
     name: "",
     url: "",
-    sourceType: "google_drive" as "google_drive" | "onedrive" | "url",
+    sourceType:
+      "google_drive" as Database["public"]["Enums"]["document_source_type"],
   });
 
   const addDocumentByUrl = async () => {
@@ -185,17 +178,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     try {
       if (!user) return;
 
-      // For uploaded files, also delete from storage
-      if (doc.source_type === "upload" && doc.storage_path) {
-        const { error: storageError } = await supabase.storage
-          .from("project-documents")
-          .remove([doc.storage_path]);
-
-        if (storageError) {
-          // Storage deletion failed, but continue with database deletion
-          console.warn("Storage deletion failed:", storageError);
-        }
-      }
+      // Note: Storage deletion is no longer handled here
+      // Documents are managed externally (Google Drive, OneDrive, URLs)
 
       // Delete from database
       const { error } = await supabase
@@ -372,7 +356,9 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                     </span>
                     <div className="text-xs text-gray-500">
                       {getSourceLabel(doc.source_type)} •{" "}
-                      {new Date(doc.created_at).toLocaleDateString()}
+                      {doc.created_at
+                        ? new Date(doc.created_at).toLocaleDateString()
+                        : "No date"}
                     </div>
                   </div>
                 </div>
@@ -410,7 +396,9 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                     </span>
                     <div className="text-xs text-gray-500">
                       {getSourceLabel(doc.source_type)} •{" "}
-                      {new Date(doc.created_at).toLocaleDateString()}
+                      {doc.created_at
+                        ? new Date(doc.created_at).toLocaleDateString()
+                        : "No date"}
                     </div>
                   </div>
                 </div>
@@ -470,10 +458,8 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
                   onChange={(e) =>
                     setDocumentForm({
                       ...documentForm,
-                      sourceType: e.target.value as
-                        | "google_drive"
-                        | "onedrive"
-                        | "url",
+                      sourceType: e.target
+                        .value as Database["public"]["Enums"]["document_source_type"],
                     })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"

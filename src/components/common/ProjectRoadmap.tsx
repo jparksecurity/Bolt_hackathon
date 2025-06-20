@@ -15,6 +15,7 @@ import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
 import { formatDate } from "../../utils/dateUtils";
 import { getCurrentDateString } from "../../utils/dateUtils";
+import { Database } from "../../types/database";
 
 interface ProjectRoadmapProps {
   projectId?: string;
@@ -22,20 +23,12 @@ interface ProjectRoadmapProps {
   readonly?: boolean;
 }
 
-interface RoadmapStep {
-  id: string;
-  title: string;
-  description?: string | null;
-  status: "completed" | "in-progress" | "pending";
-  expected_date?: string | null;
-  completed_date?: string | null;
-  order_index?: number | null;
-}
+type RoadmapStep = Database["public"]["Tables"]["project_roadmap"]["Row"];
 
 interface RoadmapFormData {
   title: string;
   description: string;
-  status: "completed" | "in-progress" | "pending";
+  status: Database["public"]["Enums"]["roadmap_status"];
   expected_date: string;
 }
 
@@ -167,7 +160,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
 
   const handleStatusUpdate = async (
     stepId: string,
-    newStatus: "completed" | "in-progress" | "pending",
+    newStatus: Database["public"]["Enums"]["roadmap_status"],
   ) => {
     if (readonly) return;
 
