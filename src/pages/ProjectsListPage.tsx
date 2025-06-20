@@ -14,14 +14,13 @@ import {
   Filter,
   MapPin,
 } from "lucide-react";
-import { ProjectStatus, BaseProjectData } from "../types/project";
+import type { Database } from "../types/database";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { formatDate } from "../utils/dateUtils";
 import { formatLocation, getStatusColor } from "../utils/displayUtils";
 
-interface Project extends BaseProjectData {
-  deleted_at?: string | null;
-}
+type Project = Database["public"]["Tables"]["projects"]["Row"];
+type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
 
 export function ProjectsListPage() {
   const { user, isLoaded } = useUser();
@@ -68,10 +67,11 @@ export function ProjectsListPage() {
       setCreating(true);
       setError(null);
 
-      const newProject = {
+      // Use the generated Insert type for type safety
+      const newProject: ProjectInsert = {
         clerk_user_id: user.id,
         title: "Untitled Project",
-        status: ProjectStatus.PENDING,
+        status: "Pending",
       };
 
       const { error } = await supabase

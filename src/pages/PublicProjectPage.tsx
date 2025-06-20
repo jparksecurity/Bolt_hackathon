@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Eye, Lock, Calendar } from "lucide-react";
 import { useSupabaseClient } from "../services/supabase";
-import { BaseProjectData } from "../types/project";
+import type { Database } from "../types/database";
 import { Header } from "../components/layout/Header";
 import { ProjectHeader } from "../components/common/ProjectHeader";
 import { RecentUpdates } from "../components/common/RecentUpdates";
@@ -14,7 +14,9 @@ import { ClientTourAvailabilityModal } from "../components/common/ClientTourAvai
 export function PublicProjectPage() {
   const { shareId } = useParams<{ shareId: string }>();
   const supabase = useSupabaseClient();
-  const [project, setProject] = useState<BaseProjectData | null>(null);
+  const [project, setProject] = useState<
+    Database["public"]["Tables"]["projects"]["Row"] | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
@@ -153,7 +155,6 @@ export function PublicProjectPage() {
       <ClientTourAvailabilityModal
         isOpen={showAvailabilityModal}
         onClose={() => setShowAvailabilityModal(false)}
-        projectId={project.id}
         shareId={shareId!}
       />
     </div>

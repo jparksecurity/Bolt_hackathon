@@ -22,6 +22,7 @@ import {
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
 import { formatDate } from "../../utils/dateUtils";
+import type { Database } from "../../types/database";
 
 interface PropertiesOfInterestProps {
   projectId?: string;
@@ -29,36 +30,7 @@ interface PropertiesOfInterestProps {
   readonly?: boolean;
 }
 
-interface Property {
-  id: string;
-  name: string;
-  address?: string | null;
-  sf?: string | null;
-  people_capacity?: string | null;
-  price_per_sf?: string | null;
-  monthly_cost?: string | null;
-  expected_monthly_cost?: string | null;
-  contract_term?: string | null;
-  availability?: string | null;
-  lease_type?: string | null;
-  lease_structure?: string | null;
-  current_state?: string | null;
-  condition?: string | null;
-  cam_rate?: string | null;
-  parking_rate?: string | null;
-  misc_notes?: string | null;
-  virtual_tour_url?: string | null;
-  suggestion?: string | null;
-  flier_url?: string | null;
-  tour_datetime?: string | null;
-  tour_location?: string | null;
-  tour_status?: string | null;
-  status: string;
-  decline_reason?: string | null;
-  order_index?: number | null;
-  created_at: string;
-  updated_at: string;
-}
+type Property = Database["public"]["Tables"]["properties"]["Row"];
 
 interface PropertyFormData {
   name: string;

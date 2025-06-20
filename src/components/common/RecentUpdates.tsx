@@ -14,6 +14,7 @@ import { useSupabaseClient } from "../../services/supabase";
 import { useProjectData } from "../../hooks/useProjectData";
 import { formatDateWithOptions } from "../../utils/dateUtils";
 import { getCurrentDateString } from "../../utils/dateUtils";
+import type { Database } from "../../types/database";
 
 interface RecentUpdatesProps {
   projectId?: string;
@@ -21,12 +22,9 @@ interface RecentUpdatesProps {
   readonly?: boolean;
 }
 
-interface Update {
-  id: string;
-  content: string;
-  update_date: string;
-  created_at: string;
-}
+type Update = Database["public"]["Tables"]["project_updates"]["Row"];
+type UpdateInsert = Database["public"]["Tables"]["project_updates"]["Insert"];
+type UpdateUpdate = Database["public"]["Tables"]["project_updates"]["Update"];
 
 interface UpdateFormData {
   content: string;
@@ -77,7 +75,7 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
   const openEditModal = (update: Update) => {
     setFormData({
       content: update.content,
-      update_date: update.update_date,
+      update_date: update.update_date || getCurrentDateString(),
     });
     setEditingUpdate(update);
     setIsModalOpen(true);
@@ -94,13 +92,13 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
 
     setSaving(true);
     try {
-      const updateData = {
-        project_id: projectId,
-        content: formData.content.trim(),
-        update_date: formData.update_date,
-      };
-
       if (editingUpdate) {
+        // Use the generated Update type for type safety
+        const updateData: UpdateUpdate = {
+          content: formData.content.trim(),
+          update_date: formData.update_date,
+        };
+
         const { error } = await supabase
           .from("project_updates")
           .update(updateData)
@@ -108,9 +106,16 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
 
         if (error) throw error;
       } else {
+        // Use the generated Insert type for type safety
+        const insertData: UpdateInsert = {
+          project_id: projectId,
+          content: formData.content.trim(),
+          update_date: formData.update_date,
+        };
+
         const { error } = await supabase
           .from("project_updates")
-          .insert([updateData]);
+          .insert([insertData]);
 
         if (error) throw error;
       }

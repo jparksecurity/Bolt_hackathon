@@ -11,11 +11,9 @@ import { PropertiesOfInterest } from "../components/common/PropertiesOfInterest"
 import { RecentUpdates } from "../components/common/RecentUpdates";
 import { ClientTourAvailabilityCard } from "../components/common/ClientTourAvailabilityCard";
 import { DragDropList } from "../components/common/DragDropList";
-import { BaseProjectData } from "../types/project";
+import type { Database } from "../types/database";
 
-interface ProjectData extends BaseProjectData {
-  deleted_at?: string | null;
-}
+type ProjectData = Database["public"]["Tables"]["projects"]["Row"];
 
 interface ProjectCard {
   id: string;

@@ -11,20 +11,17 @@ import {
   ArrowRight,
   Maximize,
 } from "lucide-react";
-import { BaseProjectData } from "../types/project";
+import type { Database } from "../types/database";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { formatDate } from "../utils/dateUtils";
 import { getStatusColor } from "../utils/displayUtils";
 
-interface Project extends BaseProjectData {
-  deleted_at?: string | null;
-}
-
-interface Property {
-  id: string;
-  project_id: string;
-  sf?: string | null;
-}
+type Project = Database["public"]["Tables"]["projects"]["Row"];
+// Dashboard only needs a subset of property fields
+type Property = Pick<
+  Database["public"]["Tables"]["properties"]["Row"],
+  "id" | "project_id" | "sf"
+>;
 
 export function DashboardPage() {
   const { user, isLoaded } = useUser();

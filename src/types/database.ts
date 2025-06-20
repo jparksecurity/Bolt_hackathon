@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          query?: string;
           variables?: Json;
-          extensions?: Json;
+          query?: string;
           operationName?: string;
+          extensions?: Json;
         };
         Returns: Json;
       };
@@ -242,7 +242,7 @@ export type Database = {
           public_share_id: string | null;
           start_date: string | null;
           state: string | null;
-          status: string;
+          status: Database["public"]["Enums"]["project_status"];
           title: string;
           updated_at: string | null;
         };
@@ -266,7 +266,7 @@ export type Database = {
           public_share_id?: string | null;
           start_date?: string | null;
           state?: string | null;
-          status: string;
+          status: Database["public"]["Enums"]["project_status"];
           title: string;
           updated_at?: string | null;
         };
@@ -290,7 +290,7 @@ export type Database = {
           public_share_id?: string | null;
           start_date?: string | null;
           state?: string | null;
-          status?: string;
+          status?: Database["public"]["Enums"]["project_status"];
           title?: string;
           updated_at?: string | null;
         };
@@ -408,23 +408,23 @@ export type Database = {
       get_public_client_requirements: {
         Args: { share_id: string };
         Returns: {
+          requirement_text: string;
+          created_at: string;
           id: string;
           project_id: string;
           category: string;
-          requirement_text: string;
-          created_at: string;
         }[];
       };
       get_public_client_tour_availability: {
         Args: { share_id: string };
         Returns: {
+          notes: string;
+          proposed_datetime: string;
+          client_email: string;
+          client_name: string;
+          created_at: string;
           id: string;
           project_id: string;
-          created_at: string;
-          client_name: string;
-          client_email: string;
-          proposed_datetime: string;
-          notes: string;
         }[];
       };
       get_public_project: {
@@ -456,8 +456,8 @@ export type Database = {
         Returns: {
           id: string;
           project_id: string;
-          name: string;
           file_type: string;
+          name: string;
           document_url: string;
           source_type: string;
           order_index: number;
@@ -467,12 +467,12 @@ export type Database = {
       get_public_project_roadmap: {
         Args: { share_id: string };
         Returns: {
-          expected_date: string;
           id: string;
           project_id: string;
           title: string;
           description: string;
           status: string;
+          expected_date: string;
           completed_date: string;
           order_index: number;
           created_at: string;
@@ -481,16 +481,26 @@ export type Database = {
       get_public_project_updates: {
         Args: { share_id: string };
         Returns: {
+          update_date: string;
+          created_at: string;
           id: string;
           project_id: string;
           content: string;
-          update_date: string;
-          created_at: string;
         }[];
       };
       get_public_properties: {
         Args: { share_id: string };
         Returns: {
+          suggestion: string;
+          flier_url: string;
+          tour_datetime: string;
+          tour_location: string;
+          tour_status: string;
+          status: string;
+          decline_reason: string;
+          created_at: string;
+          updated_at: string;
+          order_index: number;
           id: string;
           project_id: string;
           name: string;
@@ -510,21 +520,11 @@ export type Database = {
           parking_rate: string;
           misc_notes: string;
           virtual_tour_url: string;
-          suggestion: string;
-          flier_url: string;
-          tour_datetime: string;
-          tour_location: string;
-          tour_status: string;
-          status: string;
-          decline_reason: string;
-          order_index: number;
-          created_at: string;
-          updated_at: string;
         }[];
       };
     };
     Enums: {
-      [_ in never]: never;
+      project_status: "Active" | "Pending" | "Completed" | "On Hold";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -642,6 +642,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      project_status: ["Active", "Pending", "Completed", "On Hold"],
+    },
   },
 } as const;
