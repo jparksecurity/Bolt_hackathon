@@ -13,6 +13,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
 import { useProjectData } from "../../hooks/useProjectData";
 import { formatDateWithOptions } from "../../utils/dateUtils";
+import { getCurrentDateString } from "../../utils/dateUtils";
 
 interface RecentUpdatesProps {
   projectId?: string;
@@ -43,7 +44,7 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
   const [editingUpdate, setEditingUpdate] = useState<Update | null>(null);
   const [formData, setFormData] = useState<UpdateFormData>({
     content: "",
-    update_date: new Date().toISOString().split("T")[0],
+    update_date: getCurrentDateString(),
   });
   const [saving, setSaving] = useState(false);
   const [showAllUpdates, setShowAllUpdates] = useState(false);
@@ -63,7 +64,7 @@ export const RecentUpdates: React.FC<RecentUpdatesProps> = ({
   const resetForm = () => {
     setFormData({
       content: "",
-      update_date: new Date().toLocaleDateString("en-CA"), // YYYY-MM-DD format in local timezone
+      update_date: getCurrentDateString(), // YYYY-MM-DD format in local timezone
     });
     setEditingUpdate(null);
   };

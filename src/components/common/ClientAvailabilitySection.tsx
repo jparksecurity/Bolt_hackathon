@@ -9,6 +9,7 @@ import {
   Mail,
   MessageSquare,
 } from "lucide-react";
+import { getCurrentDateString } from "../../utils/dateUtils";
 
 interface ClientAvailabilitySectionProps {
   shareId: string;
@@ -203,7 +204,7 @@ export const ClientAvailabilitySection: React.FC<
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            min={new Date().toISOString().split("T")[0]}
+            min={getCurrentDateString()}
             className="w-full md:w-auto px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             required
           />

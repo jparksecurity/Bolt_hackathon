@@ -10,6 +10,7 @@ import {
   MessageSquare,
   X,
 } from "lucide-react";
+import { getCurrentDateString } from "../../utils/dateUtils";
 
 interface ClientTourAvailabilityModalProps {
   isOpen: boolean;
@@ -292,7 +293,7 @@ export const ClientTourAvailabilityModal: React.FC<
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  min={new Date().toISOString().split("T")[0]}
+                  min={getCurrentDateString()}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

@@ -14,6 +14,7 @@ import {
 import { BaseProjectData } from "../types/project";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { formatDate } from "../utils/dateUtils";
+import { getStatusColor } from "../utils/displayUtils";
 
 interface Project extends BaseProjectData {
   deleted_at?: string | null;
@@ -90,21 +91,6 @@ export function DashboardPage() {
       setLoading(false);
     }
   }, [isLoaded, user, fetchDashboardData]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "status-active";
-      case "Pending":
-        return "status-pending";
-      case "Completed":
-        return "status-completed";
-      case "On Hold":
-        return "status-on-hold";
-      default:
-        return "bg-gray-500";
-    }
-  };
 
   // Calculate total square feet from properties of completed and in-progress projects
   const calculateTotalSquareFeet = () => {

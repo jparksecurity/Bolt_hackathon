@@ -19,6 +19,7 @@ import { ClientRequirementsSection } from "./ClientRequirementsSection";
 import { Modal } from "../ui/Modal";
 import { FormButton } from "../ui/FormButton";
 import { formatDate } from "../../utils/dateUtils";
+import { formatLocation, getStatusColor } from "../../utils/displayUtils";
 
 interface ProjectHeaderProps {
   project: BaseProjectData;
@@ -226,21 +227,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     await refetchRequirements();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "status-active";
-      case "Pending":
-        return "status-pending";
-      case "Completed":
-        return "status-completed";
-      case "On Hold":
-        return "status-on-hold";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   const hasContact = project.contact_name;
 
   const resetContactForm = () => {
@@ -317,15 +303,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     }
   };
 
-  // Helper function to format location display
-  const formatLocation = (city?: string | null, state?: string | null) => {
-    if (!city && !state) return null;
-    if (city && state) return `${city}, ${state}`;
-    if (city) return city;
-    if (state) return state;
-    return null;
-  };
-
   const locationDisplay = formatLocation(project.city, project.state);
 
   return (
@@ -353,7 +330,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </div>
           <div className="flex items-center space-x-4">
             <span
-              className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(project.status)}`}
+              className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(
+                project.status,
+              )}`}
             >
               {project.status}
             </span>

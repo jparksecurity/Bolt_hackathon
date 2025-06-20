@@ -17,6 +17,7 @@ import {
 import { ProjectStatus, BaseProjectData } from "../types/project";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 import { formatDate } from "../utils/dateUtils";
+import { formatLocation, getStatusColor } from "../utils/displayUtils";
 
 interface Project extends BaseProjectData {
   deleted_at?: string | null;
@@ -139,21 +140,6 @@ export function ProjectsListPage() {
     setDeleteConfirmation({ show: false, projectId: "", projectTitle: "" });
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "status-active";
-      case "Pending":
-        return "status-pending";
-      case "Completed":
-        return "status-completed";
-      case "On Hold":
-        return "status-on-hold";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   const filteredProjects = projects.filter(
     (project) =>
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -166,15 +152,6 @@ export function ProjectsListPage() {
       (project.state &&
         project.state.toLowerCase().includes(searchTerm.toLowerCase())),
   );
-
-  // Helper function to format location display
-  const formatLocation = (city?: string | null, state?: string | null) => {
-    if (!city && !state) return null;
-    if (city && state) return `${city}, ${state}`;
-    if (city) return city;
-    if (state) return state;
-    return null;
-  };
 
   useEffect(() => {
     if (isLoaded && user) {

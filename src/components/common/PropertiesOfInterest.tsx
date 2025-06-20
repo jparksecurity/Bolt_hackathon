@@ -357,7 +357,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getPropertyStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800";
@@ -464,7 +464,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       {property.name}
                     </h4>
                     <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getPropertyStatusColor(
                         property.status,
                       )}`}
                     >
@@ -618,7 +618,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       {property.name}
                     </h4>
                     <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getPropertyStatusColor(
                         property.status,
                       )}`}
                     >

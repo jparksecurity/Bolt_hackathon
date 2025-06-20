@@ -34,3 +34,10 @@ export const formatDateWithOptions = (
     options,
   );
 };
+
+/**
+ * Returns current date in YYYY-MM-DD using local timezone (en-CA format)
+ */
+export const getCurrentDateString = (): string => {
+  return new Date().toLocaleDateString("en-CA");
+};

@@ -14,6 +14,7 @@ import { useSupabaseClient } from "../../services/supabase";
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
 import { formatDate } from "../../utils/dateUtils";
+import { getCurrentDateString } from "../../utils/dateUtils";
 
 interface ProjectRoadmapProps {
   projectId?: string;
@@ -110,9 +111,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
         status: formData.status,
         expected_date: formData.expected_date || null,
         completed_date:
-          formData.status === "completed"
-            ? new Date().toLocaleDateString("en-CA")
-            : null,
+          formData.status === "completed" ? getCurrentDateString() : null,
         order_index: editingStep
           ? editingStep.order_index
           : roadmapSteps.length,
@@ -176,9 +175,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
       const updateData: Partial<RoadmapStep> = {
         status: newStatus,
         completed_date:
-          newStatus === "completed"
-            ? new Date().toLocaleDateString("en-CA")
-            : null,
+          newStatus === "completed" ? getCurrentDateString() : null,
       };
 
       const { error } = await supabase
