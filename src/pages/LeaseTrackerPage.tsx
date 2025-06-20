@@ -10,11 +10,27 @@ import { ProjectDocuments } from "../components/common/ProjectDocuments";
 import { PropertiesOfInterest } from "../components/common/PropertiesOfInterest";
 import { RecentUpdates } from "../components/common/RecentUpdates";
 import { ClientTourAvailabilityCard } from "../components/common/ClientTourAvailabilityCard";
+import { DragDropList } from "../components/common/DragDropList";
 import { BaseProjectData } from "../types/project";
 
 interface ProjectData extends BaseProjectData {
   deleted_at?: string | null;
 }
+
+interface ProjectCard {
+  id: string;
+  type: 'updates' | 'availability' | 'properties' | 'roadmap' | 'documents';
+  title: string;
+  order_index: number;
+}
+
+const DEFAULT_CARD_ORDER: ProjectCard[] = [
+  { id: 'updates', type: 'updates', title: 'Recent Updates', order_index: 0 },
+  { id: 'availability', type: 'availability', title: 'Client Tour Availability', order_index: 1 },
+  { id: 'properties', type: 'properties', title: 'Properties of Interest', order_index: 2 },
+  { id: 'roadmap', type: 'roadmap', title: 'Project Roadmap', order_index: 3 },
+  { id: 'documents', type: 'documents', title: 'Project Documents', order_index: 4 },
+];
 
 export function LeaseTrackerPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +41,7 @@ export function LeaseTrackerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [cardOrder, setCardOrder] = useState<ProjectCard[]>(DEFAULT_CARD_ORDER);
 
   const fetchProject = useCallback(async () => {
     if (!id) return;
@@ -49,6 +66,44 @@ export function LeaseTrackerPage() {
       setLoading(false);
     }
   }, [id, supabase]);
+
+  // Load saved card order from localStorage
+  useEffect(() => {
+    if (id) {
+      const savedOrder = localStorage.getItem(`project-card-order-${id}`);
+      if (savedOrder) {
+        try {
+          const parsedOrder = JSON.parse(savedOrder);
+          setCardOrder(parsedOrder);
+        } catch {
+          // If parsing fails, use default order
+          setCardOrder(DEFAULT_CARD_ORDER);
+        }
+      }
+    }
+  }, [id]);
+
+  // Save card order to localStorage
+  const saveCardOrder = useCallback((newOrder: ProjectCard[]) => {
+    if (id) {
+      localStorage.setItem(`project-card-order-${id}`, JSON.stringify(newOrder));
+    }
+  }, [id]);
+
+  const handleCardReorder = useCallback((oldIndex: number, newIndex: number) => {
+    const newOrder = [...cardOrder];
+    const [removed] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, removed);
+    
+    // Update order_index for all cards
+    const updatedOrder = newOrder.map((card, index) => ({
+      ...card,
+      order_index: index,
+    }));
+    
+    setCardOrder(updatedOrder);
+    saveCardOrder(updatedOrder);
+  }, [cardOrder, saveCardOrder]);
 
   const copyToClipboard = async (text: string): Promise<boolean> => {
     if (navigator.clipboard) {
@@ -127,6 +182,25 @@ export function LeaseTrackerPage() {
     }
   };
 
+  const renderCard = useCallback((card: ProjectCard) => {
+    if (!project) return null;
+
+    switch (card.type) {
+      case 'updates':
+        return <RecentUpdates key={card.id} projectId={project.id} />;
+      case 'availability':
+        return <ClientTourAvailabilityCard key={card.id} projectId={project.id} />;
+      case 'properties':
+        return <PropertiesOfInterest key={card.id} projectId={project.id} />;
+      case 'roadmap':
+        return <ProjectRoadmap key={card.id} projectId={project.id} />;
+      case 'documents':
+        return <ProjectDocuments key={card.id} projectId={project.id} />;
+      default:
+        return null;
+    }
+  }, [project]);
+
   useEffect(() => {
     if (isLoaded && user && id) {
       fetchProject();
@@ -199,23 +273,31 @@ export function LeaseTrackerPage() {
   return (
     <DashboardLayout headerContent={headerContent}>
       <div className="space-y-6">
-        {/* Project Header */}
+        {/* Project Header - Always at top */}
         <ProjectHeader project={project} onProjectUpdate={fetchProject} />
 
-        {/* Recent Updates */}
-        <RecentUpdates projectId={project.id} />
-
-        {/* Client Tour Availability Card */}
-        <ClientTourAvailabilityCard projectId={project.id} />
-
-        {/* Properties Section */}
-        <PropertiesOfInterest projectId={project.id} />
-
-        {/* Project Roadmap */}
-        <ProjectRoadmap projectId={project.id} />
-
-        {/* Project Documents */}
-        <ProjectDocuments projectId={project.id} />
+        {/* Draggable Cards Section */}
+        <div className="bg-gray-50 rounded-xl p-4">
+          <div className="mb-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-1">
+              Project Information
+            </h3>
+            <p className="text-xs text-gray-500">
+              Drag cards to reorder them by importance. Your layout will be saved automatically.
+            </p>
+          </div>
+          
+          <DragDropList 
+            items={cardOrder} 
+            onReorder={handleCardReorder}
+          >
+            {(card) => (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                {renderCard(card)}
+              </div>
+            )}
+          </DragDropList>
+        </div>
       </div>
     </DashboardLayout>
   );
