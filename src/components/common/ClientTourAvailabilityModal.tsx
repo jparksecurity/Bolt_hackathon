@@ -4,7 +4,6 @@ import { Calendar, Clock, Send, CheckCircle, AlertCircle, User, Mail, MessageSqu
 interface ClientTourAvailabilityModalProps {
   isOpen: boolean;
   onClose: () => void;
-  projectId: string;
   shareId: string;
 }
 
@@ -22,7 +21,6 @@ interface SelectedDateTime {
 export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalProps> = ({
   isOpen,
   onClose,
-  projectId,
   shareId,
 }) => {
   const [selectedDate, setSelectedDate] = useState("");
@@ -43,7 +41,6 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
         if (hour === 17 && minute > 0) break; // Stop at 5:00 PM
         
         const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const hour12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
         const ampm = hour >= 12 ? 'PM' : 'AM';
         const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
         const label = `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
@@ -63,7 +60,6 @@ export const ClientTourAvailabilityModal: React.FC<ClientTourAvailabilityModalPr
     }
 
     const datetime = `${selectedDate}T${selectedTime}:00`;
-    const dateTimeObj = new Date(datetime);
     
     // Check if this datetime is already selected
     const exists = selectedDateTimes.some(dt => dt.datetime === datetime);

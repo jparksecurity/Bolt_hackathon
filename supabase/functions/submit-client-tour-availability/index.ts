@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
           throw new Error(`Invalid date format: ${slot}`);
         }
         validSlots.push(date);
-      } catch (error) {
+      } catch {
         return new Response(
           JSON.stringify({ 
             error: `Invalid datetime format: ${slot}. Please use ISO format.` 

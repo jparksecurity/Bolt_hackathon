@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Calendar, Clock, Send, CheckCircle, AlertCircle, User, Mail, MessageSquare } from "lucide-react";
 
 interface ClientAvailabilitySectionProps {
-  projectId: string;
   shareId: string;
 }
 
@@ -12,7 +11,6 @@ interface TimeSlot {
 }
 
 export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps> = ({
-  projectId,
   shareId,
 }) => {
   const [selectedDate, setSelectedDate] = useState("");
@@ -32,7 +30,6 @@ export const ClientAvailabilitySection: React.FC<ClientAvailabilitySectionProps>
         if (hour === 17 && minute > 0) break; // Stop at 5:00 PM
         
         const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const hour12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
         const ampm = hour >= 12 ? 'PM' : 'AM';
         const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
         const label = `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
