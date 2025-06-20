@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { formatDisplayDateTime } from "../../utils/dateUtils";
+import { useSupabaseClient } from "../../services/supabase";
 
 interface SelectedDateTime {
   date: string;
@@ -27,6 +28,7 @@ interface ClientTourAvailabilityModalProps {
 export const ClientTourAvailabilityModal: React.FC<
   ClientTourAvailabilityModalProps
 > = ({ isOpen, onClose, shareId }) => {
+  const supabase = useSupabaseClient();
   const [selectedDateTime, setSelectedDateTime] = useState("");
   const [selectedDateTimes, setSelectedDateTimes] = useState<
     SelectedDateTime[]
@@ -124,27 +126,19 @@ export const ClientTourAvailabilityModal: React.FC<
         return date.toISOString();
       });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-client-tour-availability`,
+      const { error } = await supabase.rpc(
+        "submit_client_tour_availability",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            shareId,
-            clientName: clientName.trim() || undefined,
-            clientEmail: clientEmail.trim() || undefined,
-            proposedSlots,
-            notes: notes.trim() || undefined,
-          }),
+          share_id: shareId,
+          proposed_slots: proposedSlots,
+          client_name: clientName.trim() || null,
+          client_email: clientEmail.trim() || null,
+          notes: notes.trim() || null,
         },
       );
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to submit availability");
+      if (error) {
+        throw new Error(error.message || "Failed to submit availability");
       }
 
       setSubmitted(true);
