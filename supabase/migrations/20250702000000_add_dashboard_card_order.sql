@@ -17,7 +17,7 @@ RETURNS TABLE (
   state TEXT,
   start_date DATE,
   desired_move_in_date DATE,
-  status TEXT,
+  status project_status,
   broker_commission DECIMAL,
   expected_fee DECIMAL,
   dashboard_card_order JSONB,
