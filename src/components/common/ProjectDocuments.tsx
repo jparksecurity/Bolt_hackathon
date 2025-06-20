@@ -19,6 +19,7 @@ import { useSupabaseClient } from "../../services/supabase";
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
 import { Database } from "../../types/database";
+import { updateItemOrder } from "../../utils/updateOrder";
 
 interface ProjectDocumentsProps {
   projectId?: string;
@@ -237,41 +238,12 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
   const handleReorder = async (oldIndex: number, newIndex: number) => {
     if (readonly) return;
 
-    // Optimistically update the UI
-    const sortedDocuments = [...documents].sort((a, b) => {
-      const aOrder = a.order_index ?? 999999;
-      const bOrder = b.order_index ?? 999999;
-      return aOrder - bOrder;
-    });
-
-    const reorderedDocuments = [...sortedDocuments];
-    const [removed] = reorderedDocuments.splice(oldIndex, 1);
-    reorderedDocuments.splice(newIndex, 0, removed);
-
-    // Update order_index for all documents
-    const updates = reorderedDocuments.map((document, index) => ({
-      id: document.id,
-      order_index: index,
-    }));
-
     try {
-      // Update each document's order_index in the database
-      for (const update of updates) {
-        const { error } = await supabase
-          .from("project_documents")
-          .update({ order_index: update.order_index })
-          .eq("id", update.id);
-
-        if (error) throw error;
-      }
-
-      // Refresh the data
+      await updateItemOrder(documents, oldIndex, newIndex, 'project_documents', supabase);
       await fetchDocuments();
     } catch (error) {
       console.error("Error reordering documents:", error);
       alert("Error reordering documents. Please try again.");
-      // Refresh on error to revert optimistic update
-      await fetchDocuments();
     }
   };
 

@@ -16,6 +16,7 @@ import { useProjectData } from "../../hooks/useProjectData";
 import { formatDate } from "../../utils/dateUtils";
 import { getCurrentDateString } from "../../utils/dateUtils";
 import { Database } from "../../types/database";
+import { updateItemOrder } from "../../utils/updateOrder";
 
 interface ProjectRoadmapProps {
   projectId?: string;
@@ -187,40 +188,12 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
   const handleReorder = async (oldIndex: number, newIndex: number) => {
     if (readonly) return;
 
-    // Optimistically update the UI
-    const sortedSteps = [...roadmapSteps].sort((a, b) => {
-      const aOrder = a.order_index ?? 999999;
-      const bOrder = b.order_index ?? 999999;
-      return aOrder - bOrder;
-    });
-
-    const reorderedSteps = [...sortedSteps];
-    const [removed] = reorderedSteps.splice(oldIndex, 1);
-    reorderedSteps.splice(newIndex, 0, removed);
-
-    // Update order_index for all steps
-    const updates = reorderedSteps.map((step, index) => ({
-      id: step.id,
-      order_index: index,
-    }));
-
     try {
-      // Update each step's order_index in the database
-      for (const update of updates) {
-        const { error } = await supabase
-          .from("project_roadmap")
-          .update({ order_index: update.order_index })
-          .eq("id", update.id);
-
-        if (error) throw error;
-      }
-
-      // Refresh the data
+      await updateItemOrder(roadmapSteps, oldIndex, newIndex, 'project_roadmap', supabase);
       await fetchRoadmap();
-    } catch {
-      alert("Error reordering roadmap steps. Please try again.");
-      // Refresh on error to revert optimistic update
-      await fetchRoadmap();
+    } catch (error) {
+      console.error("Error reordering roadmap steps:", error);
+      alert("Error reordering steps. Please try again.");
     }
   };
 

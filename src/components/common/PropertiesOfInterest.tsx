@@ -23,6 +23,7 @@ import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
 import { formatDate } from "../../utils/dateUtils";
 import type { Database } from "../../types/database";
+import { updateItemOrder } from "../../utils/updateOrder";
 
 interface PropertiesOfInterestProps {
   projectId?: string;
@@ -296,36 +297,12 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const handleReorder = async (oldIndex: number, newIndex: number) => {
     if (readonly) return;
 
-    const sortedProperties = [...properties].sort((a, b) => {
-      const aOrder = a.order_index ?? 999999;
-      const bOrder = b.order_index ?? 999999;
-      return aOrder - bOrder;
-    });
-
-    const reorderedProperties = [...sortedProperties];
-    const [removed] = reorderedProperties.splice(oldIndex, 1);
-    reorderedProperties.splice(newIndex, 0, removed);
-
-    const updates = reorderedProperties.map((property, index) => ({
-      id: property.id,
-      order_index: index,
-    }));
-
     try {
-      for (const update of updates) {
-        const { error } = await supabase
-          .from("properties")
-          .update({ order_index: update.order_index })
-          .eq("id", update.id);
-
-        if (error) throw error;
-      }
-
+      await updateItemOrder(properties, oldIndex, newIndex, 'properties', supabase);
       await fetchProperties();
     } catch (error) {
       console.error("Error reordering properties:", error);
       alert("Error reordering properties. Please try again.");
-      await fetchProperties();
     }
   };
 
