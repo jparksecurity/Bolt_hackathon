@@ -447,12 +447,12 @@ export type Database = {
           created_at: string;
           updated_at: string;
           contact_name: string;
-          contact_email: string;
-          contact_phone: string;
           contact_title: string;
-          expected_headcount: string;
-          payment_due: string;
+          contact_phone: string;
+          contact_email: string;
           commission_paid_by: string;
+          payment_due: string;
+          expected_headcount: string;
         }[];
       };
       get_public_project_documents: {
@@ -516,12 +516,12 @@ export type Database = {
           flier_url: string;
           tour_datetime: string;
           tour_location: string;
-          tour_status: Database["public"]["Enums"]["tour_status"];
-          status: Database["public"]["Enums"]["property_status"];
           decline_reason: string;
-          order_index: number;
-          created_at: string;
+          status: Database["public"]["Enums"]["property_status"];
+          tour_status: Database["public"]["Enums"]["tour_status"];
           updated_at: string;
+          created_at: string;
+          order_index: number;
         }[];
       };
       submit_client_tour_availability: {
