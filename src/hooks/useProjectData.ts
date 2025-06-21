@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../services/supabase";
+import { sortByOrderKey } from "../utils/orderKey";
 
 interface UseProjectDataOptions {
   projectId?: string;
@@ -89,21 +90,21 @@ export function useProjectData<T = unknown>({
               .from("properties")
               .select("*")
               .eq("project_id", projectId)
-              .order("order_index", { ascending: true });
+              .order("order_key", { ascending: true });
             break;
           case "roadmap":
             result = await supabase
               .from("project_roadmap")
               .select("*")
               .eq("project_id", projectId)
-              .order("order_index", { ascending: true });
+              .order("order_key", { ascending: true });
             break;
           case "documents":
             result = await supabase
               .from("project_documents")
               .select("*")
               .eq("project_id", projectId)
-              .order("order_index", { ascending: true });
+              .order("order_key", { ascending: true });
             break;
           case "requirements":
             result = await supabase
@@ -128,7 +129,19 @@ export function useProjectData<T = unknown>({
         throw result.error;
       }
 
-      setData((result?.data || []) as T[]);
+      let data = (result?.data || []) as T[];
+
+      // Apply consistent sorting for orderable data types
+      if (
+        dataType === "properties" ||
+        dataType === "roadmap" ||
+        dataType === "documents"
+      ) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data = sortByOrderKey(data as any) as T[];
+      }
+
+      setData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

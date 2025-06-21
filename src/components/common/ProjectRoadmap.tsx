@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CheckCircle,
   Circle,
@@ -17,9 +17,9 @@ import { useProjectData } from "../../hooks/useProjectData";
 import { formatDate } from "../../utils/dateUtils";
 import { getCurrentDateString } from "../../utils/dateUtils";
 import { Database } from "../../types/database";
-
 import { useReorderState } from "../../hooks/useReorderState";
 import { ROADMAP_STATUSES } from "../../utils/validation";
+import { keyBeforeAll } from "../../utils/orderKey";
 
 interface ProjectRoadmapProps {
   projectId?: string;
@@ -57,7 +57,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
 
   // Use unified data hook for both public and authenticated modes
   const {
-    data: roadmapSteps,
+    data: initialRoadmapSteps,
     loading,
     refetch: fetchRoadmap,
   } = useProjectData<RoadmapStep>({
@@ -66,12 +66,14 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
     dataType: "roadmap",
   });
 
+  // Local state for optimistic updates
+  const [roadmapSteps, setRoadmapSteps] = useState(initialRoadmapSteps);
+
+  // Initialize reorder state first (needed for useEffect dependency)
   const { handleReorder, isReordering, reorderError, clearError } =
     useReorderState(
       roadmapSteps,
-      () => {
-        // Refetch will be handled in onSuccess callback
-      },
+      setRoadmapSteps, // Now provides real optimistic updates
       {
         tableName: "project_roadmap",
         supabase,
@@ -80,10 +82,17 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
         },
         onError: (error) => {
           console.error("Error reordering roadmap steps:", error);
-          alert("Error reordering steps. Please try again.");
+          console.error("Error reordering steps. Please try again.");
         },
       },
     );
+
+  // Update local state when initial data changes (but not during reordering)
+  useEffect(() => {
+    if (!isReordering) {
+      setRoadmapSteps(initialRoadmapSteps);
+    }
+  }, [initialRoadmapSteps, isReordering]);
 
   const resetForm = () => {
     setFormData({
@@ -132,9 +141,9 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
         expected_date: formData.expected_date || null,
         completed_date:
           formData.status === "completed" ? getCurrentDateString() : null,
-        order_index: editingStep
-          ? editingStep.order_index
-          : roadmapSteps.length,
+        order_key: editingStep
+          ? editingStep.order_key
+          : keyBeforeAll(roadmapSteps),
       };
 
       if (editingStep) {

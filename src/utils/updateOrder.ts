@@ -1,10 +1,13 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { arrayMove } from "@dnd-kit/sortable";
-
-interface OrderableItem {
-  id: string;
-  order_index?: number | null;
-}
+import {
+  generateSafeKey,
+  needsReindexing,
+  reindexOrderKeys,
+  batchUpdateOrderKeys,
+  logKeyStats,
+} from "./keyMaintenance";
+import { type OrderedItem } from "../types/ordered";
 
 export interface UpdateOrderResult<T> {
   success: boolean;
@@ -13,7 +16,7 @@ export interface UpdateOrderResult<T> {
 }
 
 /**
- * Shared utility for handling drag-and-drop reorder operations with optimistic updates
+ * Shared utility for handling drag-and-drop reorder operations with fractional indexing
  * @param items - Array of items to reorder
  * @param oldIndex - Original index of the dragged item
  * @param newIndex - New index where the item should be placed
@@ -21,7 +24,7 @@ export interface UpdateOrderResult<T> {
  * @param supabase - Supabase client instance
  * @returns Promise with result containing success status and new order
  */
-export async function updateItemOrder<T extends OrderableItem>(
+export async function updateItemOrder<T extends OrderedItem>(
   items: T[],
   oldIndex: number,
   newIndex: number,
@@ -29,40 +32,46 @@ export async function updateItemOrder<T extends OrderableItem>(
   supabase: SupabaseClient,
 ): Promise<UpdateOrderResult<T>> {
   try {
-    // Sort items by order_index first
-    const sortedItems = [...items].sort((a, b) => {
-      const aOrder = a.order_index ?? 999999;
-      const bOrder = b.order_index ?? 999999;
-      return aOrder - bOrder;
-    });
+    logKeyStats(items, `updateItemOrder(${tableName})`);
 
-    // Use arrayMove for cleaner reordering
-    const newOrder = arrayMove(sortedItems, oldIndex, newIndex);
+    // Create reordered array
+    const reorderedItems = arrayMove([...items], oldIndex, newIndex);
+    const draggedItem = reorderedItems[newIndex];
 
-    // Update order_index for all items
-    const updates = newOrder.map((item, index) => ({
-      id: item.id,
-      order_index: index,
-    }));
+    // Check if we need full reindexing
+    if (needsReindexing(items)) {
+      console.log(`Reindexing ${tableName} due to long keys`);
+      const reindexedItems = reindexOrderKeys(reorderedItems);
+      await batchUpdateOrderKeys(reindexedItems, tableName, supabase);
 
-    // Batch update all items
-    const updatePromises = updates.map((update) =>
-      supabase
-        .from(tableName)
-        .update({ order_index: update.order_index })
-        .eq("id", update.id),
+      return {
+        success: true,
+        newOrder: reindexedItems,
+      };
+    }
+
+    // Generate safe key for just the moved item
+    const newOrderKey = generateSafeKey(items, oldIndex, newIndex);
+
+    // Update only the dragged item in the database
+    const { error } = await supabase
+      .from(tableName)
+      .update({ order_key: newOrderKey })
+      .eq("id", draggedItem.id);
+
+    if (error) throw error;
+
+    // Return the new order with updated key
+    const newOrder = reorderedItems.map((item) =>
+      item.id === draggedItem.id ? { ...item, order_key: newOrderKey } : item,
     );
-
-    await Promise.all(updatePromises);
 
     return {
       success: true,
-      newOrder: newOrder.map((item, index) => ({
-        ...item,
-        order_index: index,
-      })),
+      newOrder,
     };
   } catch (error) {
+    console.error(`Error updating order in ${tableName}:`, error);
     return {
       success: false,
       newOrder: items,
@@ -82,7 +91,7 @@ export async function updateItemOrder<T extends OrderableItem>(
  * @param onRollback - Callback for rollback on failure
  * @param onSuccess - Callback for successful update
  */
-export async function optimisticUpdateOrder<T extends OrderableItem>(
+export async function optimisticUpdateOrder<T extends OrderedItem>(
   items: T[],
   oldIndex: number,
   newIndex: number,
@@ -91,20 +100,8 @@ export async function optimisticUpdateOrder<T extends OrderableItem>(
   onRollback: () => void,
   onSuccess?: (newOrder: T[]) => void,
 ): Promise<void> {
-  // Sort items first for consistent indexing
-  const sortedItems = [...items].sort((a, b) => {
-    const aOrder = a.order_index ?? 999999;
-    const bOrder = b.order_index ?? 999999;
-    return aOrder - bOrder;
-  });
-
-  // Apply optimistic update immediately
-  const optimisticOrder = arrayMove(sortedItems, oldIndex, newIndex).map(
-    (item, index) => ({
-      ...item,
-      order_index: index,
-    }),
-  );
+  // Apply optimistic update immediately with fractional keys
+  const optimisticOrder = arrayMove([...items], oldIndex, newIndex);
 
   onOptimisticUpdate(optimisticOrder);
 

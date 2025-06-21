@@ -1,11 +1,9 @@
 import { useState, useCallback } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { updateItemOrder, optimisticUpdateOrder } from "../utils/updateOrder";
+import { type OrderedItem } from "../types/ordered";
 
-interface OrderableItem {
-  id: string;
-  order_index?: number | null;
-}
+type OrderableItem = OrderedItem;
 
 interface UseReorderStateOptions {
   tableName: string;

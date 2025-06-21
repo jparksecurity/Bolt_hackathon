@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FileText,
   BarChart3,
@@ -19,7 +19,8 @@ import { useSupabaseClient } from "../../services/supabase";
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
 import { Database } from "../../types/database";
-import { updateItemOrder } from "../../utils/updateOrder";
+import { useReorderState } from "../../hooks/useReorderState";
+import { keyBeforeAll } from "../../utils/orderKey";
 import { DateTime } from "luxon";
 
 interface ProjectDocumentsProps {
@@ -89,7 +90,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
 
   // Use unified data hook for both public and authenticated modes
   const {
-    data: documents,
+    data: initialDocuments,
     loading,
     refetch: fetchDocuments,
   } = useProjectData<Document>({
@@ -97,6 +98,34 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     shareId,
     dataType: "documents",
   });
+
+  // Local state for optimistic updates
+  const [documents, setDocuments] = useState(initialDocuments);
+
+  // Initialize reorder state first (needed for useEffect dependency)
+  const { handleReorder, isReordering, reorderError, clearError } =
+    useReorderState(
+      documents,
+      setDocuments, // Now provides real optimistic updates
+      {
+        tableName: "project_documents",
+        supabase,
+        onSuccess: () => {
+          fetchDocuments();
+        },
+        onError: (error) => {
+          console.error("Error reordering documents:", error);
+          console.error("Error reordering documents. Please try again.");
+        },
+      },
+    );
+
+  // Update local state when initial data changes (but not during reordering)
+  useEffect(() => {
+    if (!isReordering) {
+      setDocuments(initialDocuments);
+    }
+  }, [initialDocuments, isReordering]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -153,7 +182,7 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
           file_type: extension,
           document_url: documentForm.url.trim(),
           source_type: documentForm.sourceType,
-          order_index: documents.length,
+          order_key: keyBeforeAll(documents),
         });
 
       if (dbError) throw dbError;
@@ -235,24 +264,6 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
     setShowRenameModal(false);
     setRenamingDocument(null);
     setNewDocumentName("");
-  };
-
-  const handleReorder = async (oldIndex: number, newIndex: number) => {
-    if (readonly) return;
-
-    try {
-      await updateItemOrder(
-        documents,
-        oldIndex,
-        newIndex,
-        "project_documents",
-        supabase,
-      );
-      await fetchDocuments();
-    } catch (error) {
-      console.error("Error reordering documents:", error);
-      alert("Error reordering documents. Please try again.");
-    }
   };
 
   const openDocument = async (doc: Document) => {
@@ -359,7 +370,11 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
         </div>
       ) : (
         // Interactive view for authenticated mode
-        <DragDropList items={documents} onReorder={handleReorder}>
+        <DragDropList
+          items={documents}
+          onReorder={handleReorder}
+          disabled={readonly || isReordering}
+        >
           {(doc) => {
             const { icon: IconComponent, color } = getFileIcon(
               doc.file_type,
@@ -413,6 +428,20 @@ export const ProjectDocuments: React.FC<ProjectDocumentsProps> = ({
             );
           }}
         </DragDropList>
+      )}
+
+      {reorderError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-red-800">{reorderError}</span>
+            <button
+              onClick={clearError}
+              className="text-red-600 hover:text-red-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Add Document Modal - only show if not readonly */}

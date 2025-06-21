@@ -42,10 +42,10 @@ export const SortableItem: React.FC<SortableItemProps> = ({
             <button
               {...attributes}
               {...listeners}
-              className={`drag-handle p-3 text-gray-400 hover:text-gray-600 transition-colors opacity-0 group-hover:opacity-100 ${
+              className={`drag-handle p-3 text-gray-400 hover:text-gray-600 transition-colors ${
                 disabled
                   ? "cursor-not-allowed opacity-30"
-                  : "cursor-grab active:cursor-grabbing"
+                  : "cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100"
               }`}
               disabled={disabled}
               aria-label="Drag to reorder"

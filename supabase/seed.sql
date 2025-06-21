@@ -55,7 +55,7 @@ INSERT INTO client_requirements (project_id, category, requirement_text) VALUES
 
 -- Insert project roadmap steps
 INSERT INTO project_roadmap (
-  id, project_id, title, description, status, expected_date, completed_date, order_index
+  id, project_id, title, description, status, expected_date, completed_date, order_key
 ) VALUES
 (
   '550e8400-e29b-41d4-a716-446655440010',
@@ -65,7 +65,7 @@ INSERT INTO project_roadmap (
   'completed',
   '2024-01-15',
   '2024-01-15',
-  1
+  'a0'
 ),
 (
   '550e8400-e29b-41d4-a716-446655440011',
@@ -75,7 +75,7 @@ INSERT INTO project_roadmap (
   'in-progress',
   '2024-02-01',
   NULL,
-  2
+  'a1'
 ),
 (
   '550e8400-e29b-41d4-a716-446655440012',
@@ -85,7 +85,7 @@ INSERT INTO project_roadmap (
   'pending',
   '2024-02-15',
   NULL,
-  3
+  'a2'
 );
 
 -- Insert properties with tour information
@@ -94,7 +94,7 @@ INSERT INTO properties (
   expected_monthly_cost, contract_term, availability, lease_type, lease_structure, current_state, condition, misc_notes,
   virtual_tour_url, suggestion, flier_url, 
   tour_datetime, tour_location, tour_status,
-  status, order_index, created_at, updated_at
+  status, order_key, created_at, updated_at
 ) VALUES
 (
   '550e8400-e29b-41d4-a716-446655440020',
@@ -120,7 +120,7 @@ INSERT INTO properties (
   'Meet at main lobby with building manager',
   'Scheduled',
   'active',
-  0,
+  'a0',
   NOW(),
   NOW()
 ),
@@ -148,7 +148,7 @@ INSERT INTO properties (
   'Property management office, 2nd floor',
   'Completed',
   'new',
-  1,
+  'a1',
   NOW(),
   NOW()
 ),
@@ -176,7 +176,7 @@ INSERT INTO properties (
   'Loading dock entrance - ask for Tom',
   'Cancelled',
   'declined',
-  2,
+  'a2',
   NOW(),
   NOW()
 ),
@@ -204,7 +204,7 @@ INSERT INTO properties (
   'Executive lobby, ask for Ms. Johnson',
   'Rescheduled',
   'pending',
-  3,
+  'a3',
   NOW(),
   NOW()
 );
@@ -217,13 +217,13 @@ WHERE id = '550e8400-e29b-41d4-a716-446655440022';
 
 -- Insert project documents
 INSERT INTO project_documents (
-  id, project_id, name, file_type, document_url, source_type, order_index, created_at
+  id, project_id, name, file_type, document_url, source_type, order_key, created_at
 ) VALUES
-('550e8400-e29b-41d4-a716-446655440030', '550e8400-e29b-41d4-a716-446655440000', 'Client Requirements.pdf', 'pdf', 'https://drive.google.com/file/d/1example-client-requirements-doc', 'google_drive', 0, NOW()),
-('550e8400-e29b-41d4-a716-446655440031', '550e8400-e29b-41d4-a716-446655440000', 'Market Analysis.xlsx', 'xlsx', 'https://docs.google.com/spreadsheets/d/1example-market-analysis-sheet', 'google_drive', 1, NOW()),
-('550e8400-e29b-41d4-a716-446655440032', '550e8400-e29b-41d4-a716-446655440000', 'Property Photos.zip', 'zip', 'https://drive.google.com/file/d/1example-property-photos-zip', 'google_drive', 2, NOW()),
-('550e8400-e29b-41d4-a716-446655440033', '550e8400-e29b-41d4-a716-446655440000', 'Lease Template.docx', 'docx', 'https://1drv.ms/w/example-lease-template-onedrive', 'onedrive', 3, NOW()),
-('550e8400-e29b-41d4-a716-446655440034', '550e8400-e29b-41d4-a716-446655440000', 'Financial Projections.pdf', 'pdf', 'https://drive.google.com/file/d/1example-financial-projections', 'google_drive', 4, NOW());
+('550e8400-e29b-41d4-a716-446655440030', '550e8400-e29b-41d4-a716-446655440000', 'Client Requirements.pdf', 'pdf', 'https://drive.google.com/file/d/1example-client-requirements-doc', 'google_drive', 'a0', NOW()),
+('550e8400-e29b-41d4-a716-446655440031', '550e8400-e29b-41d4-a716-446655440000', 'Market Analysis.xlsx', 'xlsx', 'https://docs.google.com/spreadsheets/d/1example-market-analysis-sheet', 'google_drive', 'a1', NOW()),
+('550e8400-e29b-41d4-a716-446655440032', '550e8400-e29b-41d4-a716-446655440000', 'Property Photos.zip', 'zip', 'https://drive.google.com/file/d/1example-property-photos-zip', 'google_drive', 'a2', NOW()),
+('550e8400-e29b-41d4-a716-446655440033', '550e8400-e29b-41d4-a716-446655440000', 'Lease Template.docx', 'docx', 'https://1drv.ms/w/example-lease-template-onedrive', 'onedrive', 'a3', NOW()),
+('550e8400-e29b-41d4-a716-446655440034', '550e8400-e29b-41d4-a716-446655440000', 'Financial Projections.pdf', 'pdf', 'https://drive.google.com/file/d/1example-financial-projections', 'google_drive', 'a4', NOW());
 
 -- Insert project updates
 INSERT INTO project_updates (

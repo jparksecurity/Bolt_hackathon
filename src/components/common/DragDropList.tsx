@@ -14,13 +14,10 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableItem } from "../ui/SortableItem";
+import { type OrderedItem } from "../../types/ordered";
+import { sortByOrderKey } from "../../utils/orderKey";
 
-interface DragDropItem {
-  id: string;
-  order_index?: number | null;
-}
-
-interface DragDropListProps<T extends DragDropItem> {
+interface DragDropListProps<T extends OrderedItem> {
   items: T[];
   onReorder: (oldIndex: number, newIndex: number) => void;
   children: (item: T, index: number) => React.ReactNode;
@@ -28,7 +25,7 @@ interface DragDropListProps<T extends DragDropItem> {
   showHandle?: boolean;
 }
 
-export function DragDropList<T extends DragDropItem>({
+export function DragDropList<T extends OrderedItem>({
   items,
   onReorder,
   children,
@@ -46,12 +43,8 @@ export function DragDropList<T extends DragDropItem>({
     }),
   );
 
-  // Sort items by order_index, fallback to array index
-  const sortedItems = [...items].sort((a, b) => {
-    const aOrder = a.order_index ?? 999999;
-    const bOrder = b.order_index ?? 999999;
-    return aOrder - bOrder;
-  });
+  // Always ensure items are sorted by order_key for consistent display
+  const sortedItems = sortByOrderKey(items);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -79,6 +72,12 @@ export function DragDropList<T extends DragDropItem>({
         strategy={verticalListSortingStrategy}
       >
         <div className="space-y-4">
+          {disabled && (
+            <div className="flex items-center justify-center p-4 text-sm text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+              <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-2" />
+              Reordering...
+            </div>
+          )}
           {sortedItems.map((item, index) => (
             <SortableItem
               key={item.id}

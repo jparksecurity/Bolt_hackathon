@@ -97,7 +97,7 @@ export const ProjectDocumentSchema = z.object({
   file_type: z.string(),
   document_url: z.string().url("Invalid URL"),
   source_type: documentSourceTypeSchema,
-  order_index: z.number().int().min(0),
+  order_key: z.string().min(1, "Order key is required"),
   created_at: z.string().nullable(),
 });
 
@@ -112,7 +112,7 @@ export const ProjectDocumentInsertSchema = ProjectDocumentSchema.omit({
     file_type: z.string(),
     document_url: z.string().url("Invalid URL"),
     source_type: documentSourceTypeSchema,
-    order_index: z.number().int().min(0),
+    order_key: z.string().min(1, "Order key is required"),
   });
 
 export const RoadmapStepSchema = z.object({
@@ -123,7 +123,7 @@ export const RoadmapStepSchema = z.object({
   status: roadmapStatusSchema,
   expected_date: z.string().nullable(),
   completed_date: z.string().nullable(),
-  order_index: z.number().int().min(0),
+  order_key: z.string().min(1, "Order key is required"),
   created_at: z.string().nullable(),
 });
 
@@ -136,7 +136,7 @@ export const RoadmapStepInsertSchema = RoadmapStepSchema.omit({
     project_id: z.string().uuid(),
     title: z.string().min(1, "Title is required"),
     status: roadmapStatusSchema,
-    order_index: z.number().int().min(0),
+    order_key: z.string().min(1, "Order key is required"),
   });
 
 export const PropertySchema = z.object({
@@ -166,7 +166,7 @@ export const PropertySchema = z.object({
   tour_status: tourStatusSchema.nullable(),
   status: propertyStatusSchema,
   decline_reason: z.string().nullable(),
-  order_index: z.number().int().min(0),
+  order_key: z.string().min(1, "Order key is required"),
   created_at: z.string().nullable(),
   updated_at: z.string().nullable(),
 });
@@ -182,7 +182,7 @@ export const PropertyInsertSchema = PropertySchema.omit({
     name: z.string().min(1, "Property name is required"),
     current_state: propertyCurrentStateSchema,
     status: propertyStatusSchema,
-    order_index: z.number().int().min(0),
+    order_key: z.string().min(1, "Order key is required"),
   });
 
 export const ProjectUpdateCreateSchema = z.object({

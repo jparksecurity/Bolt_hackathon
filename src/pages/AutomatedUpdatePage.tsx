@@ -149,7 +149,6 @@ export function AutomatedUpdatePage() {
           "price_per_sf",
           "people_capacity",
           "expected_headcount",
-          "order_index",
         ];
 
         if (numericFields.includes(field)) {

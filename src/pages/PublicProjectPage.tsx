@@ -12,27 +12,28 @@ import { ProjectDocuments } from "../components/common/ProjectDocuments";
 import { ClientTourAvailabilityModal } from "../components/common/ClientTourAvailabilityModal";
 import { ClientTourAvailabilityCard } from "../components/common/ClientTourAvailabilityCard";
 import { ProjectCard } from "../types/project";
+import { migrateDashboardCardOrder } from "../utils/dashboardCards";
 
 const DEFAULT_CARD_ORDER: ProjectCard[] = [
-  { id: "updates", type: "updates", title: "Recent Updates", order_index: 0 },
+  { id: "updates", type: "updates", title: "Recent Updates", order_key: "a0" },
   {
     id: "availability",
     type: "availability",
     title: "Client Tour Availability",
-    order_index: 1,
+    order_key: "a1",
   },
   {
     id: "properties",
     type: "properties",
     title: "Properties of Interest",
-    order_index: 2,
+    order_key: "a2",
   },
-  { id: "roadmap", type: "roadmap", title: "Project Roadmap", order_index: 3 },
+  { id: "roadmap", type: "roadmap", title: "Project Roadmap", order_key: "a3" },
   {
     id: "documents",
     type: "documents",
     title: "Project Documents",
-    order_index: 4,
+    order_key: "a4",
   },
 ];
 
@@ -79,12 +80,12 @@ export function PublicProjectPage() {
           public_share_id: shareId, // We know this from the URL
         } as Database["public"]["Tables"]["projects"]["Row"]);
 
-        // Load dashboard card order from database if available
-        if (projectData.dashboard_card_order) {
-          setCardOrder(
-            projectData.dashboard_card_order as unknown as ProjectCard[],
-          );
-        }
+        // Load and migrate dashboard card order from database if available
+        const migratedCardOrder = migrateDashboardCardOrder(
+          projectData.dashboard_card_order,
+          DEFAULT_CARD_ORDER,
+        );
+        setCardOrder(migratedCardOrder);
       } catch {
         setError("An error occurred while loading the project");
       } finally {
@@ -213,10 +214,7 @@ export function PublicProjectPage() {
     );
   }
 
-  // Sort cards by order_index
-  const sortedCards = [...cardOrder].sort(
-    (a, b) => a.order_index - b.order_index,
-  );
+  // Cards are already properly ordered from migration
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -235,7 +233,7 @@ export function PublicProjectPage() {
 
         <div className="p-6">
           {/* Render cards in order */}
-          {sortedCards.map((card) => renderCard(card))}
+          {cardOrder.map((card) => renderCard(card))}
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
 import {
@@ -30,6 +30,7 @@ import type { Database } from "../../types/database";
 import { useReorderState } from "../../hooks/useReorderState";
 import { nowISO } from "../../utils/dateUtils";
 import { PROPERTY_CURRENT_STATES, TOUR_STATUSES } from "../../utils/validation";
+import { keyBeforeAll } from "../../utils/orderKey";
 
 interface PropertiesOfInterestProps {
   projectId?: string;
@@ -122,7 +123,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const [saving, setSaving] = useState(false);
 
   const {
-    data: properties,
+    data: initialProperties,
     loading,
     refetch: fetchProperties,
   } = useProjectData<Property>({
@@ -131,12 +132,14 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     dataType: "properties",
   });
 
+  // Local state for optimistic updates
+  const [properties, setProperties] = useState(initialProperties);
+
+  // Initialize reorder state first (needed for useEffect dependency)
   const { handleReorder, isReordering, reorderError, clearError } =
     useReorderState(
       properties,
-      () => {
-        // Refetch will be handled in onSuccess callback
-      },
+      setProperties, // Now provides real optimistic updates
       {
         tableName: "properties",
         supabase,
@@ -145,10 +148,17 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         },
         onError: (error) => {
           console.error("Error reordering properties:", error);
-          alert("Error reordering properties. Please try again.");
+          console.error("Error reordering properties. Please try again.");
         },
       },
     );
+
+  // Update local state when initial data changes (but not during reordering)
+  useEffect(() => {
+    if (!isReordering) {
+      setProperties(initialProperties);
+    }
+  }, [initialProperties, isReordering]);
 
   const resetForm = () => {
     setFormData({
@@ -265,9 +275,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           (formData.status as Database["public"]["Enums"]["property_status"]) ||
           "new",
         decline_reason: formData.decline_reason.trim() || null,
-        order_index: editingProperty
-          ? editingProperty.order_index
-          : properties.length,
+        order_key: editingProperty
+          ? editingProperty.order_key
+          : keyBeforeAll(properties),
         updated_at: nowISO(),
       };
 

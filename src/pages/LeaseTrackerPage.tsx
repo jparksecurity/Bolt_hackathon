@@ -14,29 +14,33 @@ import { DragDropList } from "../components/common/DragDropList";
 import type { Database } from "../types/database";
 import { usePersistentState } from "../hooks/usePersistentState";
 import { ProjectCard } from "../types/project";
+import {
+  migrateDashboardCardOrder,
+  saveDashboardCardOrder,
+} from "../utils/dashboardCards";
 
 type ProjectData = Database["public"]["Tables"]["projects"]["Row"];
 
 const DEFAULT_CARD_ORDER: ProjectCard[] = [
-  { id: "updates", type: "updates", title: "Recent Updates", order_index: 0 },
+  { id: "updates", type: "updates", title: "Recent Updates", order_key: "a0" },
   {
     id: "availability",
     type: "availability",
     title: "Client Tour Availability",
-    order_index: 1,
+    order_key: "a1",
   },
   {
     id: "properties",
     type: "properties",
     title: "Properties of Interest",
-    order_index: 2,
+    order_key: "a2",
   },
-  { id: "roadmap", type: "roadmap", title: "Project Roadmap", order_index: 3 },
+  { id: "roadmap", type: "roadmap", title: "Project Roadmap", order_key: "a3" },
   {
     id: "documents",
     type: "documents",
     title: "Project Documents",
-    order_index: 4,
+    order_key: "a4",
   },
 ];
 
@@ -72,18 +76,27 @@ export function LeaseTrackerPage() {
 
       setProject(data);
 
-      // Load dashboard card order from database if available
+      // Load and migrate dashboard card order from database if available
+      const migratedCardOrder = migrateDashboardCardOrder(
+        data.dashboard_card_order,
+        DEFAULT_CARD_ORDER,
+      );
+      setCardOrder(migratedCardOrder);
+
+      // Save migrated data back to database if it was migrated
       if (data.dashboard_card_order) {
-        try {
-          const cardOrder = Array.isArray(data.dashboard_card_order)
-            ? (data.dashboard_card_order as unknown as ProjectCard[])
-            : (JSON.parse(
-                data.dashboard_card_order as string,
-              ) as ProjectCard[]);
-          setCardOrder(cardOrder);
-        } catch {
-          // If parsing fails, use default order
-          console.warn("Failed to parse dashboard card order, using default");
+        // Compare by checking if the raw data doesn't have order_key
+        const needsMigration = Array.isArray(data.dashboard_card_order)
+          ? !data.dashboard_card_order.every(
+              (card: unknown) =>
+                typeof card === "object" &&
+                card !== null &&
+                "order_key" in (card as Record<string, unknown>),
+            )
+          : true;
+
+        if (needsMigration) {
+          saveDashboardCardOrder(migratedCardOrder, data.id, supabase);
         }
       }
     } catch {
@@ -99,10 +112,10 @@ export function LeaseTrackerPage() {
       const [removed] = newOrder.splice(oldIndex, 1);
       newOrder.splice(newIndex, 0, removed);
 
-      // Update order_index for all cards
+      // Generate simple sequential order keys
       const updatedOrder = newOrder.map((card, index) => ({
         ...card,
-        order_index: index,
+        order_key: `a${index}`,
       }));
 
       // Update UI immediately (localStorage persistence handled by hook)
@@ -110,15 +123,7 @@ export function LeaseTrackerPage() {
 
       // Save to database in background
       if (project?.id) {
-        try {
-          await supabase
-            .from("projects")
-            .update({ dashboard_card_order: updatedOrder })
-            .eq("id", project.id);
-        } catch (error) {
-          console.warn("Failed to save dashboard order to database:", error);
-          // UI still works via localStorage
-        }
+        await saveDashboardCardOrder(updatedOrder, project.id, supabase);
       }
     },
     [cardOrder, setCardOrder, supabase, project?.id],
@@ -302,7 +307,12 @@ export function LeaseTrackerPage() {
 
         {/* Draggable Cards Section */}
         <div className="bg-gray-50 rounded-xl p-4">
-          <DragDropList items={cardOrder} onReorder={handleCardReorder}>
+          <DragDropList
+            items={cardOrder}
+            onReorder={handleCardReorder}
+            showHandle={true}
+            disabled={false}
+          >
             {(card) => (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {renderCard(card)}
