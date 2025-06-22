@@ -9,7 +9,7 @@ import {
 } from "./keyMaintenance";
 import { type OrderedItem } from "../types/ordered";
 
-export interface UpdateOrderResult<T> {
+interface UpdateOrderResult<T> {
   success: boolean;
   newOrder: T[];
   error?: Error;

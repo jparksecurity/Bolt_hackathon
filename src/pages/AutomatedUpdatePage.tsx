@@ -17,11 +17,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import {
-  PROPERTY_STATUSES,
-  PROPERTY_CURRENT_STATES,
-  TOUR_STATUSES,
-} from "../utils/validation";
+import { Constants } from "../types/database";
 
 interface UpdateSuggestion {
   id: string;
@@ -158,23 +154,25 @@ export function AutomatedUpdatePage() {
 
         // Validate constrained fields
         if (field === "status") {
-          return PROPERTY_STATUSES.includes(
-            value.toLowerCase() as (typeof PROPERTY_STATUSES)[number],
+          return Constants.public.Enums.property_status.includes(
+            value.toLowerCase() as (typeof Constants.public.Enums.property_status)[number],
           )
             ? value.toLowerCase()
             : "new";
         }
 
         if (field === "current_state") {
-          return PROPERTY_CURRENT_STATES.includes(
-            value as (typeof PROPERTY_CURRENT_STATES)[number],
+          return Constants.public.Enums.property_current_state.includes(
+            value as (typeof Constants.public.Enums.property_current_state)[number],
           )
             ? value
             : null;
         }
 
         if (field === "tour_status") {
-          return TOUR_STATUSES.includes(value as (typeof TOUR_STATUSES)[number])
+          return Constants.public.Enums.tour_status.includes(
+            value as (typeof Constants.public.Enums.tour_status)[number],
+          )
             ? value
             : null;
         }

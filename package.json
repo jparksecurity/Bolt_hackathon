@@ -14,14 +14,14 @@
     "supabase:status": "npx supabase status",
     "supabase:reset": "npx supabase db reset",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "knip": "npx knip --production --fix --allow-remove-files"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.31.9",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@hookform/resolvers": "^5.1.1",
     "@supabase/supabase-js": "^2.50.0",
     "@types/luxon": "^3.6.2",
     "fractional-indexing": "^3.2.0",
@@ -29,9 +29,7 @@
     "luxon": "^3.6.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-hook-form": "^7.58.1",
-    "react-router-dom": "^7.6.2",
-    "zod": "^3.25.67"
+    "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

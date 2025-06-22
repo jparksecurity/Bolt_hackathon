@@ -18,7 +18,7 @@ import { formatDate } from "../../utils/dateUtils";
 import { getCurrentDateString } from "../../utils/dateUtils";
 import { Database } from "../../types/database";
 import { useReorderState } from "../../hooks/useReorderState";
-import { ROADMAP_STATUSES } from "../../utils/validation";
+import { Constants } from "../../types/database";
 import { keyBeforeAll } from "../../utils/orderKey";
 
 interface ProjectRoadmapProps {
@@ -507,7 +507,7 @@ export const ProjectRoadmap: React.FC<ProjectRoadmapProps> = ({
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
-                  {ROADMAP_STATUSES.map((status) => (
+                  {Constants.public.Enums.roadmap_status.map((status) => (
                     <option key={status} value={status}>
                       {status === "in-progress"
                         ? "In Progress"

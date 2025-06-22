@@ -20,7 +20,7 @@ import { Modal } from "../ui/Modal";
 import { FormButton } from "../ui/FormButton";
 import { formatDate, nowISO } from "../../utils/dateUtils";
 import { formatLocation, getStatusColor } from "../../utils/displayUtils";
-import { PROJECT_STATUSES } from "../../utils/validation";
+import { Constants } from "../../types/database";
 
 // Type aliases for better readability
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
@@ -603,7 +603,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 }
                 className="form-input w-full px-4 py-3 rounded-lg"
               >
-                {PROJECT_STATUSES.map((status) => (
+                {Constants.public.Enums.project_status.map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>

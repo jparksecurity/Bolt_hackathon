@@ -29,7 +29,7 @@ import {
 import type { Database } from "../../types/database";
 import { useReorderState } from "../../hooks/useReorderState";
 import { nowISO } from "../../utils/dateUtils";
-import { PROPERTY_CURRENT_STATES, TOUR_STATUSES } from "../../utils/validation";
+import { Constants } from "../../types/database";
 import { keyBeforeAll } from "../../utils/orderKey";
 
 interface PropertiesOfInterestProps {
@@ -72,7 +72,7 @@ const leaseTypes = ["Direct Lease", "Sublease", "Sub-sublease", "Coworking"];
 
 const leaseStructures = ["NNN", "Full Service"];
 
-const currentStates = PROPERTY_CURRENT_STATES;
+const currentStates = Constants.public.Enums.property_current_state;
 
 const conditions = [
   "Plug & Play",
@@ -82,7 +82,7 @@ const conditions = [
   "Turnkey",
 ];
 
-const tourStatuses = TOUR_STATUSES;
+const tourStatuses = Constants.public.Enums.tour_status;
 
 export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   projectId,
