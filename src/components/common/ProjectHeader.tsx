@@ -55,6 +55,7 @@ interface ProjectFormData {
   company_name: string;
   expected_headcount: string;
   expected_fee: string;
+  expected_contract_value: string;
   broker_commission: string;
   commission_paid_by: string;
   payment_due: string;
@@ -96,6 +97,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     company_name: "",
     expected_headcount: "",
     expected_fee: "",
+    expected_contract_value: "",
     broker_commission: "",
     commission_paid_by: "",
     payment_due: "",
@@ -139,6 +141,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       company_name: project.company_name || "",
       expected_headcount: project.expected_headcount || "",
       expected_fee: project.expected_fee?.toString() || "",
+      expected_contract_value: project.expected_contract_value?.toString() || "",
       broker_commission: project.broker_commission?.toString() || "",
       commission_paid_by: project.commission_paid_by || "",
       payment_due: project.payment_due || "",
@@ -169,6 +172,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         expected_headcount: projectFormData.expected_headcount.trim() || null,
         expected_fee: projectFormData.expected_fee
           ? parseFloat(projectFormData.expected_fee)
+          : null,
+        expected_contract_value: projectFormData.expected_contract_value
+          ? parseFloat(projectFormData.expected_contract_value)
           : null,
         broker_commission: projectFormData.broker_commission
           ? parseFloat(projectFormData.broker_commission)
@@ -310,21 +316,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     }
   };
 
-  // Calculate Expected Contract Value
-  // This is a simplified calculation - in reality, this would be more complex
-  // based on actual lease terms, escalations, etc.
-  const calculateExpectedContractValue = () => {
-    if (!project.expected_fee) return 0;
-    
-    // For now, we'll use the expected_fee as the total contract value
-    // In a real scenario, this might be calculated from:
-    // - Monthly rent × lease term in months
-    // - Plus any additional fees, escalations, etc.
-    return project.expected_fee;
-  };
-
-  const expectedContractValue = calculateExpectedContractValue();
-
   const locationDisplay = formatLocation(project.city, project.state);
 
   return (
@@ -430,7 +421,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               </p>
               <p className="text-purple-900 font-bold text-lg">
                 $
-                {expectedContractValue.toLocaleString()}
+                {project.expected_contract_value
+                  ? project.expected_contract_value.toLocaleString()
+                  : "0"}
               </p>
             </div>
           </div>
@@ -754,6 +747,25 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                   setProjectFormData({
                     ...projectFormData,
                     expected_fee: e.target.value,
+                  })
+                }
+                className="form-input w-full px-4 py-3 rounded-lg"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Expected Contract Value ($)
+              </label>
+              <input
+                type="number"
+                value={projectFormData.expected_contract_value}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    expected_contract_value: e.target.value,
                   })
                 }
                 className="form-input w-full px-4 py-3 rounded-lg"
