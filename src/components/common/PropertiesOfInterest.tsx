@@ -126,15 +126,11 @@ const getTourStatusIcon = (
   }
 };
 
-// Helper function to open Google Maps
 const openGoogleMaps = (address: string) => {
   if (!address) return;
   
-  // Encode the address for URL
   const encodedAddress = encodeURIComponent(address);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-  
-  // Open in new tab
   window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
 };
 
@@ -215,7 +211,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   }, [initialProperties, isReordering]);
 
-  const toggleExpanded = (propertyId: string) => {
+  const togglePropertyExpansion = (propertyId: string) => {
     setExpandedProperties(prev => {
       const newSet = new Set(prev);
       if (newSet.has(propertyId)) {
@@ -389,6 +385,287 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   };
 
+  // Shared property card component for both readonly and interactive views
+  const PropertyCard: React.FC<{ property: Property; isExpanded: boolean }> = ({ property, isExpanded }) => {
+    const { icon: TourIcon, color: tourColor } = getTourStatusIcon(property.tour_status);
+
+    return (
+      <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow group relative">
+        {isReordering && !readonly && (
+          <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-lg">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="flex items-center space-x-3 mb-2">
+              <h4 className="text-lg font-semibold text-gray-900">
+                {property.name}
+              </h4>
+              <span
+                className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                  property.status,
+                )}`}
+              >
+                {property.status}
+              </span>
+              <span
+                className={`px-2 py-1 text-xs font-medium rounded-full ${getCurrentStateColor(
+                  property.current_state,
+                )}`}
+              >
+                {property.current_state}
+              </span>
+            </div>
+            {property.address && (
+              <div className="flex items-center space-x-2 text-gray-600 mb-3">
+                <MapPin className="w-4 h-4" />
+                <button
+                  onClick={() => openGoogleMaps(property.address!)}
+                  className="text-sm hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                  title="Click to view on Google Maps"
+                >
+                  {property.address}
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center space-x-2 ml-4">
+            {!readonly && (
+              <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => openEditModal(property)}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  title="Edit property"
+                  disabled={isReordering}
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(property.id)}
+                  className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                  title="Delete property"
+                  disabled={isReordering}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => togglePropertyExpansion(property.id)}
+              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              title={isExpanded ? "Show less details" : "Show more details"}
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Key Information - Always Visible */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {property.sf && (
+            <div className="flex items-center space-x-2">
+              <Home className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-600">
+                {property.sf} sq ft
+              </span>
+            </div>
+          )}
+          {property.monthly_cost && (
+            <div className="flex items-center space-x-2">
+              <DollarSign className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-600">
+                ${property.monthly_cost}/month
+              </span>
+            </div>
+          )}
+          {property.people_capacity && (
+            <div className="flex items-center space-x-2">
+              <Users className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-600">
+                {property.people_capacity} people
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Tour Information - Always Visible if exists */}
+        {property.tour_datetime && (
+          <div className="flex items-center space-x-2 mb-4 p-3 bg-blue-50 rounded-lg">
+            <TourIcon className={`w-4 h-4 ${tourColor}`} />
+            <span className="text-sm font-medium text-blue-900">
+              Tour: {formatDisplayDateTime(property.tour_datetime)}
+            </span>
+            {property.tour_location && (
+              <span className="text-sm text-blue-700">
+                at {property.tour_location}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Expanded Details */}
+        {isExpanded && (
+          <div className="space-y-4 pt-4 border-t border-gray-100">
+            {/* Financial Details */}
+            {(property.price_per_sf || property.expected_monthly_cost || property.cam_rate || property.parking_rate) && (
+              <div>
+                <h5 className="font-medium text-gray-900 mb-2">Financial Details</h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  {property.price_per_sf && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Ask Rate ($/SF):</span>
+                      <span className="font-medium">${property.price_per_sf}</span>
+                    </div>
+                  )}
+                  {property.expected_monthly_cost && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Expected Monthly:</span>
+                      <span className="font-medium">${property.expected_monthly_cost}</span>
+                    </div>
+                  )}
+                  {property.cam_rate && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">CAM Rate:</span>
+                      <span className="font-medium">{property.cam_rate}</span>
+                    </div>
+                  )}
+                  {property.parking_rate && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Parking Rate:</span>
+                      <span className="font-medium">{property.parking_rate}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Lease Details */}
+            {(property.lease_type || property.lease_structure || property.contract_term || property.availability || property.condition) && (
+              <div>
+                <h5 className="font-medium text-gray-900 mb-2">Lease Details</h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  {property.lease_type && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Lease Type:</span>
+                      <span className="font-medium">{property.lease_type}</span>
+                    </div>
+                  )}
+                  {property.lease_structure && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Structure:</span>
+                      <span className="font-medium">{property.lease_structure}</span>
+                    </div>
+                  )}
+                  {property.contract_term && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Term:</span>
+                      <span className="font-medium">{property.contract_term}</span>
+                    </div>
+                  )}
+                  {property.availability && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Availability:</span>
+                      <span className="font-medium">{property.availability}</span>
+                    </div>
+                  )}
+                  {property.condition && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Condition:</span>
+                      <span className="font-medium">{property.condition}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Broker Notes */}
+            {property.suggestion && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <FileText className="w-4 h-4 text-yellow-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-yellow-800">
+                      Broker Notes:
+                    </p>
+                    <p className="text-sm text-yellow-700">
+                      {property.suggestion}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Decline Reason */}
+            {property.decline_reason && property.status === "declined" && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <XCircle className="w-4 h-4 text-red-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800">
+                      Decline Reason:
+                    </p>
+                    <p className="text-sm text-red-700">
+                      {property.decline_reason}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Additional Notes */}
+            {property.misc_notes && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <FileText className="w-4 h-4 text-gray-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      Additional Notes:
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      {property.misc_notes}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Links */}
+            <div className="flex items-center space-x-4">
+              {property.virtual_tour_url && (
+                <a
+                  href={property.virtual_tour_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Virtual Tour</span>
+                </a>
+              )}
+              {property.flier_url && (
+                <a
+                  href={property.flier_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Property Flier</span>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="bg-white p-6 border border-gray-200 rounded-lg">
@@ -399,17 +676,17 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
 
   return (
     <div className="bg-white p-6 border border-gray-200 rounded-lg">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-gray-900">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">
           Properties of Interest
         </h3>
         {!readonly && (
           <button
             onClick={openAddModal}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+            className="flex items-center space-x-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span className="text-sm">Add Property</span>
+            <span>Add Property</span>
           </button>
         )}
       </div>
@@ -436,263 +713,15 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           )}
         </div>
       ) : readonly ? (
-        // Static view for readonly mode with expandable details
+        // Static view for readonly mode
         <div className="space-y-4">
-          {properties.map((property) => {
-            const { icon: TourIcon, color: tourColor } = getTourStatusIcon(
-              property.tour_status,
-            );
-            const isExpanded = expandedProperties.has(property.id);
-            
-            return (
-              <div
-                key={property.id}
-                className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
-              >
-                {/* Header with key information */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="text-lg font-semibold text-gray-900">
-                        {property.name}
-                      </h4>
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                          property.status,
-                        )}`}
-                      >
-                        {property.status}
-                      </span>
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${getCurrentStateColor(
-                          property.current_state,
-                        )}`}
-                      >
-                        {property.current_state}
-                      </span>
-                    </div>
-                    {property.address && (
-                      <div className="flex items-center space-x-2 text-gray-600 mb-3">
-                        <MapPin className="w-4 h-4" />
-                        <span 
-                          className="text-sm cursor-pointer hover:text-blue-600 hover:underline transition-colors"
-                          onClick={() => openGoogleMaps(property.address!)}
-                          title="Click to view on Google Maps"
-                        >
-                          {property.address}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Key metrics - always visible */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  {property.sf && (
-                    <div className="flex items-center space-x-2">
-                      <Home className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        {property.sf} sq ft
-                      </span>
-                    </div>
-                  )}
-                  {property.monthly_cost && (
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        ${property.monthly_cost}/month
-                      </span>
-                    </div>
-                  )}
-                  {property.people_capacity && (
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        {property.people_capacity} people
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Tour information - always visible if exists */}
-                {property.tour_datetime && (
-                  <div className="flex items-center space-x-2 mb-4 p-3 bg-blue-50 rounded-lg">
-                    <TourIcon className={`w-4 h-4 ${tourColor}`} />
-                    <span className="text-sm font-medium text-blue-900">
-                      Tour: {formatDisplayDateTime(property.tour_datetime)}
-                    </span>
-                    {property.tour_location && (
-                      <span className="text-sm text-blue-700">
-                        at {property.tour_location}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Quick links - always visible */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {property.virtual_tour_url && (
-                      <a
-                        href={property.virtual_tour_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        <span>Virtual Tour</span>
-                      </a>
-                    )}
-                    {property.flier_url && (
-                      <a
-                        href={property.flier_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        <FileText className="w-4 h-4" />
-                        <span>Property Flier</span>
-                      </a>
-                    )}
-                  </div>
-                  
-                  {/* Expand/Collapse button */}
-                  <button
-                    onClick={() => toggleExpanded(property.id)}
-                    className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 text-sm transition-colors"
-                  >
-                    <span>{isExpanded ? 'Less Details' : 'More Details'}</span>
-                    {isExpanded ? (
-                      <ChevronUp className="w-4 h-4" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Expanded details section */}
-                {isExpanded && (
-                  <div className="mt-6 pt-6 border-t border-gray-200 space-y-6">
-                    {/* Financial Details */}
-                    {(property.price_per_sf || property.expected_monthly_cost || property.cam_rate || property.parking_rate) && (
-                      <div>
-                        <h5 className="font-semibold text-gray-900 mb-3">Financial Details</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {property.price_per_sf && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Ask Rate ($/SF):</span>
-                              <span className="font-medium">${property.price_per_sf}</span>
-                            </div>
-                          )}
-                          {property.expected_monthly_cost && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Expected Monthly Cost:</span>
-                              <span className="font-medium">${property.expected_monthly_cost}</span>
-                            </div>
-                          )}
-                          {property.cam_rate && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">CAM Rate:</span>
-                              <span className="font-medium">{property.cam_rate}</span>
-                            </div>
-                          )}
-                          {property.parking_rate && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Parking Rate:</span>
-                              <span className="font-medium">{property.parking_rate}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Lease Information */}
-                    {(property.lease_type || property.lease_structure || property.contract_term || property.availability || property.condition) && (
-                      <div>
-                        <h5 className="font-semibold text-gray-900 mb-3">Lease Information</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {property.lease_type && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Lease Type:</span>
-                              <span className="font-medium">{property.lease_type}</span>
-                            </div>
-                          )}
-                          {property.lease_structure && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Lease Structure:</span>
-                              <span className="font-medium">{property.lease_structure}</span>
-                            </div>
-                          )}
-                          {property.contract_term && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Contract Term:</span>
-                              <span className="font-medium">{property.contract_term}</span>
-                            </div>
-                          )}
-                          {property.availability && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Availability:</span>
-                              <span className="font-medium">{property.availability}</span>
-                            </div>
-                          )}
-                          {property.condition && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Condition:</span>
-                              <span className="font-medium">{property.condition}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Broker Notes */}
-                    {property.suggestion && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <div className="flex items-start space-x-2">
-                          <FileText className="w-5 h-5 text-yellow-600 mt-0.5" />
-                          <div>
-                            <p className="text-sm font-medium text-yellow-800 mb-1">
-                              Broker Recommendation:
-                            </p>
-                            <p className="text-sm text-yellow-700">
-                              {property.suggestion}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Decline Reason */}
-                    {property.decline_reason && property.status === "declined" && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div className="flex items-start space-x-2">
-                          <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
-                          <div>
-                            <p className="text-sm font-medium text-red-800 mb-1">
-                              Decline Reason:
-                            </p>
-                            <p className="text-sm text-red-700">
-                              {property.decline_reason}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Additional Notes */}
-                    {property.misc_notes && (
-                      <div>
-                        <h5 className="font-semibold text-gray-900 mb-2">Additional Notes</h5>
-                        <p className="text-gray-700 text-sm bg-gray-50 p-3 rounded-lg">
-                          {property.misc_notes}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {properties.map((property) => (
+            <PropertyCard 
+              key={property.id} 
+              property={property} 
+              isExpanded={expandedProperties.has(property.id)}
+            />
+          ))}
         </div>
       ) : (
         // Interactive view for authenticated mode with drag and drop
@@ -702,177 +731,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           disabled={readonly || isReordering}
           showHandle={true}
         >
-          {(property) => {
-            const { icon: TourIcon, color: tourColor } = getTourStatusIcon(
-              property.tour_status,
-            );
-            return (
-              <div
-                key={property.id}
-                className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow group relative"
-              >
-                {isReordering && (
-                  <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-lg">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                  </div>
-                )}
-
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="text-lg font-semibold text-gray-900">
-                        {property.name}
-                      </h4>
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                          property.status,
-                        )}`}
-                      >
-                        {property.status}
-                      </span>
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${getCurrentStateColor(
-                          property.current_state,
-                        )}`}
-                      >
-                        {property.current_state}
-                      </span>
-                    </div>
-                    {property.address && (
-                      <div className="flex items-center space-x-2 text-gray-600 mb-3">
-                        <MapPin className="w-4 h-4" />
-                        <span 
-                          className="text-sm cursor-pointer hover:text-blue-600 hover:underline transition-colors"
-                          onClick={() => openGoogleMaps(property.address!)}
-                          title="Click to view on Google Maps"
-                        >
-                          {property.address}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {!readonly && (
-                    <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => openEditModal(property)}
-                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Edit property"
-                        disabled={isReordering}
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(property.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Delete property"
-                        disabled={isReordering}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  {property.sf && (
-                    <div className="flex items-center space-x-2">
-                      <Home className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        {property.sf} sq ft
-                      </span>
-                    </div>
-                  )}
-                  {property.monthly_cost && (
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        ${property.monthly_cost}/month
-                      </span>
-                    </div>
-                  )}
-                  {property.people_capacity && (
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        {property.people_capacity} people
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {property.tour_datetime && (
-                  <div className="flex items-center space-x-2 mb-4 p-3 bg-blue-50 rounded-lg">
-                    <TourIcon className={`w-4 h-4 ${tourColor}`} />
-                    <span className="text-sm font-medium text-blue-900">
-                      Tour: {formatDisplayDateTime(property.tour_datetime)}
-                    </span>
-                    {property.tour_location && (
-                      <span className="text-sm text-blue-700">
-                        at {property.tour_location}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {property.suggestion && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                    <div className="flex items-start space-x-2">
-                      <FileText className="w-4 h-4 text-yellow-600 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-yellow-800">
-                          Broker Notes:
-                        </p>
-                        <p className="text-sm text-yellow-700">
-                          {property.suggestion}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {property.decline_reason && property.status === "declined" && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                    <div className="flex items-start space-x-2">
-                      <XCircle className="w-4 h-4 text-red-600 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-red-800">
-                          Decline Reason:
-                        </p>
-                        <p className="text-sm text-red-700">
-                          {property.decline_reason}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center space-x-4">
-                  {property.virtual_tour_url && (
-                    <a
-                      href={property.virtual_tour_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      <span>Virtual Tour</span>
-                    </a>
-                  )}
-                  {property.flier_url && (
-                    <a
-                      href={property.flier_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>Property Flier</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            );
-          }}
+          {(property) => (
+            <PropertyCard 
+              key={property.id} 
+              property={property} 
+              isExpanded={expandedProperties.has(property.id)}
+            />
+          )}
         </DragDropList>
       )}
 
