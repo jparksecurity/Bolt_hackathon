@@ -19,7 +19,6 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
-  Info,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
@@ -64,7 +63,6 @@ interface PropertyFormData {
   tour_status: Database["public"]["Enums"]["tour_status"] | "";
   status: Database["public"]["Enums"]["property_status"];
   decline_reason: string;
-  unverified_rate_per_sf: string;
 }
 
 const getStatusColor = (
@@ -128,265 +126,16 @@ const getTourStatusIcon = (
   }
 };
 
-// Component for expandable property card in readonly mode
-const ExpandablePropertyCard: React.FC<{ property: Property }> = ({ property }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const { icon: TourIcon, color: tourColor } = getTourStatusIcon(property.tour_status);
-
-  const toggleExpanded = () => {
-    setIsExpanded(!isExpanded);
-  };
-
-  return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-      {/* Key Information - Always Visible */}
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center space-x-3 mb-2">
-              <h4 className="text-lg font-semibold text-gray-900">
-                {property.name}
-              </h4>
-              <span
-                className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                  property.status,
-                )}`}
-              >
-                {property.status}
-              </span>
-              <span
-                className={`px-2 py-1 text-xs font-medium rounded-full ${getCurrentStateColor(
-                  property.current_state,
-                )}`}
-              >
-                {property.current_state}
-              </span>
-            </div>
-            {property.address && (
-              <div className="flex items-center space-x-2 text-gray-600 mb-3">
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm">{property.address}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Key Metrics - Always Visible */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          {property.sf && (
-            <div className="flex items-center space-x-2">
-              <Home className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">
-                {property.sf} sq ft
-              </span>
-            </div>
-          )}
-          {property.monthly_cost && (
-            <div className="flex items-center space-x-2">
-              <DollarSign className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">
-                ${property.monthly_cost}/month
-              </span>
-            </div>
-          )}
-          {property.people_capacity && (
-            <div className="flex items-center space-x-2">
-              <Users className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">
-                {property.people_capacity} people
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Tour Information - Always Visible if Available */}
-        {property.tour_datetime && (
-          <div className="flex items-center space-x-2 mb-4 p-3 bg-blue-50 rounded-lg">
-            <TourIcon className={`w-4 h-4 ${tourColor}`} />
-            <span className="text-sm font-medium text-blue-900">
-              Tour: {formatDisplayDateTime(property.tour_datetime)}
-            </span>
-            {property.tour_location && (
-              <span className="text-sm text-blue-700">
-                at {property.tour_location}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Quick Links - Always Visible */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {property.virtual_tour_url && (
-              <a
-                href={property.virtual_tour_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>Virtual Tour</span>
-              </a>
-            )}
-            {property.flier_url && (
-              <a
-                href={property.flier_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
-              >
-                <FileText className="w-4 h-4" />
-                <span>Property Flier</span>
-              </a>
-            )}
-          </div>
-
-          {/* Expand/Collapse Button */}
-          <button
-            onClick={toggleExpanded}
-            className="flex items-center space-x-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <Info className="w-4 h-4" />
-            <span>{isExpanded ? "Less Details" : "More Details"}</span>
-            {isExpanded ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Expanded Details - Only Visible When Expanded */}
-      {isExpanded && (
-        <div className="border-t border-gray-200 bg-gray-50 p-6">
-          <div className="space-y-6">
-            {/* Financial Details */}
-            {(property.price_per_sf || property.expected_monthly_cost || property.cam_rate || property.parking_rate) && (
-              <div>
-                <h5 className="font-semibold text-gray-900 mb-3 flex items-center">
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  Financial Details
-                </h5>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  {property.price_per_sf && (
-                    <div>
-                      <span className="text-gray-600">Ask Rate:</span>
-                      <span className="ml-2 font-medium">${property.price_per_sf}/sq ft</span>
-                    </div>
-                  )}
-                  {property.expected_monthly_cost && (
-                    <div>
-                      <span className="text-gray-600">Expected Monthly:</span>
-                      <span className="ml-2 font-medium">${property.expected_monthly_cost}</span>
-                    </div>
-                  )}
-                  {property.cam_rate && (
-                    <div>
-                      <span className="text-gray-600">CAM Rate:</span>
-                      <span className="ml-2 font-medium">{property.cam_rate}</span>
-                    </div>
-                  )}
-                  {property.parking_rate && (
-                    <div>
-                      <span className="text-gray-600">Parking Rate:</span>
-                      <span className="ml-2 font-medium">{property.parking_rate}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Lease Information */}
-            {(property.lease_type || property.lease_structure || property.contract_term || property.availability || property.condition) && (
-              <div>
-                <h5 className="font-semibold text-gray-900 mb-3 flex items-center">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Lease Information
-                </h5>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  {property.lease_type && (
-                    <div>
-                      <span className="text-gray-600">Lease Type:</span>
-                      <span className="ml-2 font-medium">{property.lease_type}</span>
-                    </div>
-                  )}
-                  {property.lease_structure && (
-                    <div>
-                      <span className="text-gray-600">Structure:</span>
-                      <span className="ml-2 font-medium">{property.lease_structure}</span>
-                    </div>
-                  )}
-                  {property.contract_term && (
-                    <div>
-                      <span className="text-gray-600">Term:</span>
-                      <span className="ml-2 font-medium">{property.contract_term}</span>
-                    </div>
-                  )}
-                  {property.availability && (
-                    <div>
-                      <span className="text-gray-600">Availability:</span>
-                      <span className="ml-2 font-medium">{property.availability}</span>
-                    </div>
-                  )}
-                  {property.condition && (
-                    <div>
-                      <span className="text-gray-600">Condition:</span>
-                      <span className="ml-2 font-medium">{property.condition}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Broker Notes */}
-            {property.suggestion && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                  <FileText className="w-4 h-4 text-yellow-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-yellow-800">
-                      Broker Notes:
-                    </p>
-                    <p className="text-sm text-yellow-700">
-                      {property.suggestion}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Decline Reason */}
-            {property.decline_reason && property.status === "declined" && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                  <XCircle className="w-4 h-4 text-red-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-red-800">
-                      Decline Reason:
-                    </p>
-                    <p className="text-sm text-red-700">
-                      {property.decline_reason}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Additional Notes */}
-            {property.misc_notes && (
-              <div>
-                <h5 className="font-semibold text-gray-900 mb-2">Additional Notes</h5>
-                <p className="text-sm text-gray-700 bg-white p-3 rounded border">
-                  {property.misc_notes}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+// Helper function to open Google Maps
+const openGoogleMaps = (address: string) => {
+  if (!address) return;
+  
+  // Encode the address for URL
+  const encodedAddress = encodeURIComponent(address);
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+  
+  // Open in new tab
+  window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
 };
 
 export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
@@ -398,6 +147,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const supabase = useSupabaseClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [expandedProperties, setExpandedProperties] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState<PropertyFormData>({
     name: "",
     address: "",
@@ -423,7 +173,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     tour_status: "",
     status: "new",
     decline_reason: "",
-    unverified_rate_per_sf: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -466,6 +215,18 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     }
   }, [initialProperties, isReordering]);
 
+  const toggleExpanded = (propertyId: string) => {
+    setExpandedProperties(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(propertyId)) {
+        newSet.delete(propertyId);
+      } else {
+        newSet.add(propertyId);
+      }
+      return newSet;
+    });
+  };
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -492,7 +253,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       tour_status: "",
       status: "new",
       decline_reason: "",
-      unverified_rate_per_sf: "",
     });
     setEditingProperty(null);
   };
@@ -530,7 +290,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       tour_status: property.tour_status || "",
       status: property.status,
       decline_reason: property.decline_reason || "",
-      unverified_rate_per_sf: "", // This field doesn't exist in DB yet
     });
     setEditingProperty(property);
     setIsModalOpen(true);
@@ -677,11 +436,263 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           )}
         </div>
       ) : readonly ? (
-        // Expandable view for readonly mode (public sharing)
+        // Static view for readonly mode with expandable details
         <div className="space-y-4">
-          {properties.map((property) => (
-            <ExpandablePropertyCard key={property.id} property={property} />
-          ))}
+          {properties.map((property) => {
+            const { icon: TourIcon, color: tourColor } = getTourStatusIcon(
+              property.tour_status,
+            );
+            const isExpanded = expandedProperties.has(property.id);
+            
+            return (
+              <div
+                key={property.id}
+                className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+              >
+                {/* Header with key information */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {property.name}
+                      </h4>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                          property.status,
+                        )}`}
+                      >
+                        {property.status}
+                      </span>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getCurrentStateColor(
+                          property.current_state,
+                        )}`}
+                      >
+                        {property.current_state}
+                      </span>
+                    </div>
+                    {property.address && (
+                      <div className="flex items-center space-x-2 text-gray-600 mb-3">
+                        <MapPin className="w-4 h-4" />
+                        <span 
+                          className="text-sm cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+                          onClick={() => openGoogleMaps(property.address!)}
+                          title="Click to view on Google Maps"
+                        >
+                          {property.address}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Key metrics - always visible */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {property.sf && (
+                    <div className="flex items-center space-x-2">
+                      <Home className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {property.sf} sq ft
+                      </span>
+                    </div>
+                  )}
+                  {property.monthly_cost && (
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        ${property.monthly_cost}/month
+                      </span>
+                    </div>
+                  )}
+                  {property.people_capacity && (
+                    <div className="flex items-center space-x-2">
+                      <Users className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {property.people_capacity} people
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tour information - always visible if exists */}
+                {property.tour_datetime && (
+                  <div className="flex items-center space-x-2 mb-4 p-3 bg-blue-50 rounded-lg">
+                    <TourIcon className={`w-4 h-4 ${tourColor}`} />
+                    <span className="text-sm font-medium text-blue-900">
+                      Tour: {formatDisplayDateTime(property.tour_datetime)}
+                    </span>
+                    {property.tour_location && (
+                      <span className="text-sm text-blue-700">
+                        at {property.tour_location}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Quick links - always visible */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    {property.virtual_tour_url && (
+                      <a
+                        href={property.virtual_tour_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <span>Virtual Tour</span>
+                      </a>
+                    )}
+                    {property.flier_url && (
+                      <a
+                        href={property.flier_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        <FileText className="w-4 h-4" />
+                        <span>Property Flier</span>
+                      </a>
+                    )}
+                  </div>
+                  
+                  {/* Expand/Collapse button */}
+                  <button
+                    onClick={() => toggleExpanded(property.id)}
+                    className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 text-sm transition-colors"
+                  >
+                    <span>{isExpanded ? 'Less Details' : 'More Details'}</span>
+                    {isExpanded ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Expanded details section */}
+                {isExpanded && (
+                  <div className="mt-6 pt-6 border-t border-gray-200 space-y-6">
+                    {/* Financial Details */}
+                    {(property.price_per_sf || property.expected_monthly_cost || property.cam_rate || property.parking_rate) && (
+                      <div>
+                        <h5 className="font-semibold text-gray-900 mb-3">Financial Details</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {property.price_per_sf && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Ask Rate ($/SF):</span>
+                              <span className="font-medium">${property.price_per_sf}</span>
+                            </div>
+                          )}
+                          {property.expected_monthly_cost && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Expected Monthly Cost:</span>
+                              <span className="font-medium">${property.expected_monthly_cost}</span>
+                            </div>
+                          )}
+                          {property.cam_rate && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">CAM Rate:</span>
+                              <span className="font-medium">{property.cam_rate}</span>
+                            </div>
+                          )}
+                          {property.parking_rate && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Parking Rate:</span>
+                              <span className="font-medium">{property.parking_rate}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lease Information */}
+                    {(property.lease_type || property.lease_structure || property.contract_term || property.availability || property.condition) && (
+                      <div>
+                        <h5 className="font-semibold text-gray-900 mb-3">Lease Information</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {property.lease_type && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Lease Type:</span>
+                              <span className="font-medium">{property.lease_type}</span>
+                            </div>
+                          )}
+                          {property.lease_structure && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Lease Structure:</span>
+                              <span className="font-medium">{property.lease_structure}</span>
+                            </div>
+                          )}
+                          {property.contract_term && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Contract Term:</span>
+                              <span className="font-medium">{property.contract_term}</span>
+                            </div>
+                          )}
+                          {property.availability && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Availability:</span>
+                              <span className="font-medium">{property.availability}</span>
+                            </div>
+                          )}
+                          {property.condition && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Condition:</span>
+                              <span className="font-medium">{property.condition}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Broker Notes */}
+                    {property.suggestion && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-2">
+                          <FileText className="w-5 h-5 text-yellow-600 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-yellow-800 mb-1">
+                              Broker Recommendation:
+                            </p>
+                            <p className="text-sm text-yellow-700">
+                              {property.suggestion}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Decline Reason */}
+                    {property.decline_reason && property.status === "declined" && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-2">
+                          <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-red-800 mb-1">
+                              Decline Reason:
+                            </p>
+                            <p className="text-sm text-red-700">
+                              {property.decline_reason}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Notes */}
+                    {property.misc_notes && (
+                      <div>
+                        <h5 className="font-semibold text-gray-900 mb-2">Additional Notes</h5>
+                        <p className="text-gray-700 text-sm bg-gray-50 p-3 rounded-lg">
+                          {property.misc_notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         // Interactive view for authenticated mode with drag and drop
@@ -730,7 +741,13 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                     {property.address && (
                       <div className="flex items-center space-x-2 text-gray-600 mb-3">
                         <MapPin className="w-4 h-4" />
-                        <span className="text-sm">{property.address}</span>
+                        <span 
+                          className="text-sm cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+                          onClick={() => openGoogleMaps(property.address!)}
+                          title="Click to view on Google Maps"
+                        >
+                          {property.address}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1006,23 +1023,6 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                       placeholder="e.g., $24"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Unverified Rate ($/SF)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.unverified_rate_per_sf}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          unverified_rate_per_sf: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      placeholder="e.g., $22"
                     />
                   </div>
                   <div>
