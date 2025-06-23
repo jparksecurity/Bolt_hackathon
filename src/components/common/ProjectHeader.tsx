@@ -10,6 +10,7 @@ import {
   Mail,
   MapPin,
   X,
+  TrendingUp,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
@@ -54,6 +55,7 @@ interface ProjectFormData {
   company_name: string;
   expected_headcount: string;
   expected_fee: string;
+  expected_contract_value: string;
   broker_commission: string;
   commission_paid_by: string;
   payment_due: string;
@@ -95,6 +97,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     company_name: "",
     expected_headcount: "",
     expected_fee: "",
+    expected_contract_value: "",
     broker_commission: "",
     commission_paid_by: "",
     payment_due: "",
@@ -138,6 +141,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       company_name: project.company_name || "",
       expected_headcount: project.expected_headcount || "",
       expected_fee: project.expected_fee?.toString() || "",
+      expected_contract_value: project.expected_contract_value?.toString() || "",
       broker_commission: project.broker_commission?.toString() || "",
       commission_paid_by: project.commission_paid_by || "",
       payment_due: project.payment_due || "",
@@ -168,6 +172,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         expected_headcount: projectFormData.expected_headcount.trim() || null,
         expected_fee: projectFormData.expected_fee
           ? parseFloat(projectFormData.expected_fee)
+          : null,
+        expected_contract_value: projectFormData.expected_contract_value
+          ? parseFloat(projectFormData.expected_contract_value)
           : null,
         broker_commission: projectFormData.broker_commission
           ? parseFloat(projectFormData.broker_commission)
@@ -353,7 +360,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       </div>
 
       {/* Project metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
@@ -397,6 +404,25 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 $
                 {project.expected_fee
                   ? project.expected_fee.toLocaleString()
+                  : "0"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-purple-700 text-sm font-medium">
+                Expected Contract Value
+              </p>
+              <p className="text-purple-900 font-bold text-lg">
+                $
+                {project.expected_contract_value
+                  ? project.expected_contract_value.toLocaleString()
                   : "0"}
               </p>
             </div>
@@ -721,6 +747,25 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                   setProjectFormData({
                     ...projectFormData,
                     expected_fee: e.target.value,
+                  })
+                }
+                className="form-input w-full px-4 py-3 rounded-lg"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Expected Contract Value ($)
+              </label>
+              <input
+                type="number"
+                value={projectFormData.expected_contract_value}
+                onChange={(e) =>
+                  setProjectFormData({
+                    ...projectFormData,
+                    expected_contract_value: e.target.value,
                   })
                 }
                 className="form-input w-full px-4 py-3 rounded-lg"
