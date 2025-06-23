@@ -10,6 +10,7 @@ import {
   Mail,
   MapPin,
   X,
+  TrendingUp,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
@@ -309,6 +310,21 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     }
   };
 
+  // Calculate Expected Contract Value
+  // This is a simplified calculation - in reality, this would be more complex
+  // based on actual lease terms, escalations, etc.
+  const calculateExpectedContractValue = () => {
+    if (!project.expected_fee) return 0;
+    
+    // For now, we'll use the expected_fee as the total contract value
+    // In a real scenario, this might be calculated from:
+    // - Monthly rent × lease term in months
+    // - Plus any additional fees, escalations, etc.
+    return project.expected_fee;
+  };
+
+  const expectedContractValue = calculateExpectedContractValue();
+
   const locationDisplay = formatLocation(project.city, project.state);
 
   return (
@@ -353,7 +369,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       </div>
 
       {/* Project metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
@@ -398,6 +414,23 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 {project.expected_fee
                   ? project.expected_fee.toLocaleString()
                   : "0"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-purple-700 text-sm font-medium">
+                Expected Contract Value
+              </p>
+              <p className="text-purple-900 font-bold text-lg">
+                $
+                {expectedContractValue.toLocaleString()}
               </p>
             </div>
           </div>
