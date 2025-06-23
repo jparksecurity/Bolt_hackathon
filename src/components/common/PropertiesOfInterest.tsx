@@ -42,6 +42,7 @@ interface PropertyFormData {
   sf: string;
   people_capacity: string;
   price_per_sf: string;
+  unverified_rate_per_sf: string;
   monthly_cost: string;
   expected_monthly_cost: string;
   contract_term: string;
@@ -139,6 +140,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
     sf: "",
     people_capacity: "",
     price_per_sf: "",
+    unverified_rate_per_sf: "",
     monthly_cost: "",
     expected_monthly_cost: "",
     contract_term: "",
@@ -207,6 +209,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       sf: "",
       people_capacity: "",
       price_per_sf: "",
+      unverified_rate_per_sf: "",
       monthly_cost: "",
       expected_monthly_cost: "",
       contract_term: "",
@@ -242,6 +245,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
       sf: property.sf || "",
       people_capacity: property.people_capacity || "",
       price_per_sf: property.price_per_sf || "",
+      unverified_rate_per_sf: "", // This is a new field, so it will be empty for existing properties
       monthly_cost: property.monthly_cost || "",
       expected_monthly_cost: property.expected_monthly_cost || "",
       contract_term: property.contract_term || "",
@@ -845,7 +849,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Price per SF
+                      Ask Rate ($/SF)
                     </label>
                     <input
                       type="text"
@@ -857,12 +861,29 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                         })
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      placeholder="e.g., $24"
+                      placeholder="e.g., 40"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Monthly Cost
+                      Unverified Rate ($/SF)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.unverified_rate_per_sf}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          unverified_rate_per_sf: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      placeholder="e.g., 38"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Monthly Lease ($/m)
                     </label>
                     <input
                       type="text"
