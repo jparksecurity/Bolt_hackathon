@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { LandingPage } from "./pages/LandingPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ProjectsListPage } from "./pages/ProjectsListPage";
@@ -57,6 +58,26 @@ function App() {
             }
           />
         </Routes>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: "#333",
+              color: "#fff",
+            },
+            success: {
+              style: {
+                background: "#10b981",
+              },
+            },
+            error: {
+              style: {
+                background: "#ef4444",
+              },
+            },
+          }}
+        />
       </Router>
     </ErrorBoundary>
   );

@@ -1,28 +1,18 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Edit3,
-  Calendar,
-  DollarSign,
-  Info,
-  Building,
-  User,
-  Phone,
-  Mail,
-  MapPin,
-  X,
-  TrendingUp,
-  Briefcase,
-} from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
 import type { Database } from "../../types/database";
 import { useProjectData } from "../../hooks/useProjectData";
 import { ClientRequirementsSection } from "./ClientRequirementsSection";
+import { ContactModal } from "./ContactModal";
 import { Modal } from "../ui/Modal";
 import { FormButton } from "../ui/FormButton";
-import { formatDate, nowISO } from "../../utils/dateUtils";
-import { formatLocation, getStatusColor } from "../../utils/displayUtils";
+import { nowISO } from "../../utils/dateUtils";
 import { Constants } from "../../types/database";
+import { ProjectInfo } from "../ProjectHeader/ProjectInfo";
+import { KPICards } from "../ProjectHeader/KPICards";
+import { ContactSection } from "../ProjectHeader/ContactSection";
+import toast from "react-hot-toast";
 
 // Type aliases for better readability
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
@@ -33,21 +23,6 @@ interface ProjectHeaderProps {
   onProjectUpdate?: () => void;
   readonly?: boolean;
   shareId?: string;
-}
-
-interface ContactFormData {
-  name: string;
-  title: string;
-  phone: string;
-  email: string;
-}
-
-interface BrokerContactFormData {
-  name: string;
-  title: string;
-  phone: string;
-  email: string;
-  brokerage: string;
 }
 
 interface Requirement {
@@ -85,24 +60,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 }) => {
   const { user } = useUser();
   const supabase = useSupabaseClient();
-  const [showTooltip, setShowTooltip] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isBrokerContactModalOpen, setIsBrokerContactModalOpen] =
     useState(false);
-  const [contactFormData, setContactFormData] = useState<ContactFormData>({
-    name: "",
-    title: "",
-    phone: "",
-    email: "",
-  });
-  const [brokerContactFormData, setBrokerContactFormData] =
-    useState<BrokerContactFormData>({
-      name: "",
-      title: "",
-      phone: "",
-      email: "",
-      brokerage: "",
-    });
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -216,7 +176,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       setIsProjectModalOpen(false);
       onProjectUpdate?.();
     } catch {
-      alert("Error updating project. Please try again.");
+      toast.error("Error updating project. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -263,46 +223,11 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const hasContact = project.contact_name;
   const hasBrokerContact = project.broker_contact_name;
 
-  const resetContactForm = () => {
-    setContactFormData({
-      name: project.contact_name || "",
-      title: project.contact_title || "",
-      phone: project.contact_phone || "",
-      email: project.contact_email || "",
-    });
-  };
-
-  const resetBrokerContactForm = () => {
-    // Pre-fill with user data if broker contact is empty and not in readonly mode
-    if (!readonly && !project.broker_contact_name && user) {
-      setBrokerContactFormData({
-        name:
-          user.fullName ||
-          `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-          "",
-        title: "Commercial Real Estate Broker",
-        phone: user.primaryPhoneNumber?.phoneNumber || "",
-        email: user.primaryEmailAddress?.emailAddress || "",
-        brokerage: "",
-      });
-    } else {
-      setBrokerContactFormData({
-        name: project.broker_contact_name || "",
-        title: project.broker_contact_title || "",
-        phone: project.broker_contact_phone || "",
-        email: project.broker_contact_email || "",
-        brokerage: project.brokerage || "",
-      });
-    }
-  };
-
   const openContactModal = () => {
-    resetContactForm();
     setIsContactModalOpen(true);
   };
 
   const openBrokerContactModal = () => {
-    resetBrokerContactForm();
     setIsBrokerContactModalOpen(true);
   };
 
@@ -314,16 +239,19 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     setIsBrokerContactModalOpen(false);
   };
 
-  const saveContact = async () => {
-    if (!contactFormData.name.trim()) return;
-
+  const saveContact = async (contactData: {
+    name: string;
+    title: string;
+    phone: string;
+    email: string;
+  }) => {
     setSaving(true);
     try {
       const updateData = {
-        contact_name: contactFormData.name.trim(),
-        contact_title: contactFormData.title.trim() || null,
-        contact_phone: contactFormData.phone.trim() || null,
-        contact_email: contactFormData.email.trim() || null,
+        contact_name: contactData.name.trim(),
+        contact_title: contactData.title.trim() || null,
+        contact_phone: contactData.phone.trim() || null,
+        contact_email: contactData.email.trim() || null,
         updated_at: nowISO(),
       };
 
@@ -337,23 +265,27 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       setIsContactModalOpen(false);
       onProjectUpdate?.();
     } catch {
-      alert("Error saving contact. Please try again.");
+      toast.error("Error saving contact. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  const saveBrokerContact = async () => {
-    if (!brokerContactFormData.name.trim()) return;
-
+  const saveBrokerContact = async (brokerData: {
+    name: string;
+    title: string;
+    phone: string;
+    email: string;
+    brokerage?: string;
+  }) => {
     setSaving(true);
     try {
       const updateData = {
-        broker_contact_name: brokerContactFormData.name.trim(),
-        broker_contact_title: brokerContactFormData.title.trim() || null,
-        broker_contact_phone: brokerContactFormData.phone.trim() || null,
-        broker_contact_email: brokerContactFormData.email.trim() || null,
-        brokerage: brokerContactFormData.brokerage.trim() || null,
+        broker_contact_name: brokerData.name.trim(),
+        broker_contact_title: brokerData.title.trim() || null,
+        broker_contact_phone: brokerData.phone.trim() || null,
+        broker_contact_email: brokerData.email.trim() || null,
+        brokerage: brokerData.brokerage?.trim() || null,
         updated_at: nowISO(),
       };
 
@@ -367,7 +299,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       setIsBrokerContactModalOpen(false);
       onProjectUpdate?.();
     } catch {
-      alert("Error saving broker contact. Please try again.");
+      toast.error("Error saving broker contact. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -394,7 +326,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       if (error) throw error;
       onProjectUpdate?.();
     } catch {
-      alert("Error removing contact. Please try again.");
+      toast.error("Error removing contact. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -422,374 +354,32 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       if (error) throw error;
       onProjectUpdate?.();
     } catch {
-      alert("Error removing broker contact. Please try again.");
+      toast.error("Error removing broker contact. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  const locationDisplay = formatLocation(project.city, project.state);
-
   return (
     <div className="dashboard-card p-8">
-      <div className="flex items-start justify-between mb-8">
-        <div className="flex-1">
-          <div className="flex items-center space-x-4 mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {project.title}
-            </h1>
-            {locationDisplay && (
-              <div className="flex items-center space-x-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                <MapPin className="w-3 h-3" />
-                <span>{locationDisplay}</span>
-              </div>
-            )}
-            {!readonly && (
-              <button
-                onClick={openProjectModal}
-                className="p-2 text-gray-400 hover:text-gray-800 transition-colors rounded-lg hover:bg-gray-50"
-              >
-                <Edit3 className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-          <div className="flex items-center space-x-4">
-            <span
-              className={`px-4 py-2 text-white rounded-full font-semibold text-sm ${getStatusColor(
-                project.status,
-              )}`}
-            >
-              {project.status}
-            </span>
-            {project.company_name && (
-              <div className="flex items-center space-x-2 text-gray-600">
-                <Building className="w-4 h-4" />
-                <span className="font-medium">{project.company_name}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <ProjectInfo
+        project={project}
+        readonly={readonly}
+        onOpenProjectModal={openProjectModal}
+      />
 
-      {/* Project metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-gray-700 text-sm font-medium">Start Date</p>
-              <p className="text-gray-900 font-bold text-lg">
-                {formatDate(project.start_date) || "Not set"}
-              </p>
-            </div>
-          </div>
-        </div>
+      <KPICards project={project} readonly={readonly} />
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-blue-700 text-sm font-medium">
-                Desired Move-in
-              </p>
-              <p className="text-blue-900 font-bold text-lg">
-                {formatDate(project.desired_move_in_date) || "Not set"}
-              </p>
-            </div>
-          </div>
-        </div>
+      <ContactSection
+        project={project}
+        readonly={readonly}
+        saving={saving}
+        onOpenContactModal={openContactModal}
+        onOpenBrokerContactModal={openBrokerContactModal}
+        onDeleteContact={deleteContact}
+        onDeleteBrokerContact={deleteBrokerContact}
+      />
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-purple-700 text-sm font-medium">Lease Value</p>
-              <p className="text-purple-900 font-bold text-lg">
-                $
-                {project.expected_contract_value
-                  ? project.expected_contract_value.toLocaleString()
-                  : "0"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-green-700 text-sm font-medium">
-                Estimated Tenant Fee
-              </p>
-              <p className="text-green-900 font-bold text-lg">
-                $
-                {project.expected_fee
-                  ? project.expected_fee.toLocaleString()
-                  : "0"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 relative">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
-              <Info className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-gray-700 text-sm font-medium">
-                Broker Commission
-              </p>
-              <p className="text-gray-900 font-bold text-lg">
-                $
-                {project.broker_commission
-                  ? project.broker_commission.toLocaleString()
-                  : "0"}
-              </p>
-              {project.commission_paid_by && (
-                <p className="text-sm font-semibold text-blue-700 mt-1">
-                  Paid by {project.commission_paid_by}
-                </p>
-              )}
-            </div>
-            {project.broker_commission && project.broker_commission > 0 && (
-              <div
-                className="relative"
-                onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
-              >
-                <Info className="w-4 h-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors" />
-                {showTooltip && (
-                  <div className="absolute bottom-full right-0 mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg z-10">
-                    <div className="space-y-1">
-                      <div className="font-medium text-gray-300">
-                        Commission Details:
-                      </div>
-                      <div>
-                        • Amount: $
-                        {project.broker_commission?.toLocaleString() || "0"}
-                      </div>
-                      <div>
-                        • Paid by: {project.commission_paid_by || "TBD"}
-                      </div>
-                      <div>• Payment due: {project.payment_due || "TBD"}</div>
-                    </div>
-                    <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
-              <User className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-gray-700 text-sm font-medium">Head Count</p>
-              <p className="text-gray-900 font-bold text-lg">
-                {project.expected_headcount || "Not set"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Broker Information */}
-      <div className="bg-blue-50 rounded-xl p-6 mb-8 border border-blue-200">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="font-bold text-blue-900 flex items-center space-x-2">
-            <Briefcase className="w-5 h-5 text-blue-800" />
-            <span>Your Broker</span>
-          </h4>
-          {!readonly && (
-            <div className="flex items-center space-x-2">
-              {hasBrokerContact && (
-                <button
-                  onClick={deleteBrokerContact}
-                  className="p-2 text-blue-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
-                  title="Remove broker contact"
-                  disabled={saving}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-              <button
-                onClick={openBrokerContactModal}
-                className="p-2 text-blue-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-100"
-                title={
-                  hasBrokerContact
-                    ? "Edit broker contact"
-                    : "Add broker contact"
-                }
-              >
-                <Edit3 className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {hasBrokerContact ? (
-          <div className="space-y-4">
-            {/* Brokerage Name */}
-            {project.brokerage && (
-              <div className="bg-blue-100 rounded-lg p-4 border border-blue-200">
-                <div className="flex items-center space-x-3">
-                  <Building className="w-5 h-5 text-blue-700" />
-                  <div>
-                    <p className="text-sm font-medium text-blue-700">
-                      Brokerage
-                    </p>
-                    <p className="text-lg font-bold text-blue-900">
-                      {project.brokerage}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Broker Contact Details */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center">
-                  <Briefcase className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-blue-900">
-                    {project.broker_contact_name}
-                  </p>
-                  {project.broker_contact_title && (
-                    <p className="text-sm text-blue-700">
-                      {project.broker_contact_title}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {project.broker_contact_phone && (
-                <div className="flex items-center space-x-3">
-                  <Phone className="w-5 h-5 text-blue-600" />
-                  <span className="text-blue-900">
-                    {project.broker_contact_phone}
-                  </span>
-                </div>
-              )}
-              {project.broker_contact_email && (
-                <div className="flex items-center space-x-3">
-                  <Mail className="w-5 h-5 text-blue-600" />
-                  <span className="text-blue-900">
-                    {project.broker_contact_email}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-6">
-            <Briefcase className="w-12 h-12 text-blue-300 mx-auto mb-3" />
-            <p className="text-blue-600 mb-4">
-              No broker information added yet
-            </p>
-            {!readonly && (
-              <button
-                onClick={openBrokerContactModal}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Add Broker Info
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Contact Information */}
-      <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="font-bold text-gray-900 flex items-center space-x-2">
-            <User className="w-5 h-5 text-gray-800" />
-            <span>Primary Contact</span>
-          </h4>
-          {!readonly && (
-            <div className="flex items-center space-x-2">
-              {hasContact && (
-                <button
-                  onClick={deleteContact}
-                  className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
-                  title="Remove contact"
-                  disabled={saving}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-              <button
-                onClick={openContactModal}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
-                title={hasContact ? "Edit contact" : "Add contact"}
-              >
-                <Edit3 className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {hasContact ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">
-                  {project.contact_name}
-                </p>
-                {project.contact_title && (
-                  <p className="text-sm text-gray-600">
-                    {project.contact_title}
-                  </p>
-                )}
-              </div>
-            </div>
-            {project.contact_phone && (
-              <div className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-gray-400" />
-                <span className="text-gray-900">{project.contact_phone}</span>
-              </div>
-            )}
-            {project.contact_email && (
-              <div className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-gray-400" />
-                <span className="text-gray-900">{project.contact_email}</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-6">
-            <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">
-              No contact information added yet
-            </p>
-            {!readonly && (
-              <button
-                onClick={openContactModal}
-                className="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Add Contact
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Client Requirements Section */}
       <ClientRequirementsSection
         requirements={requirements}
         loading={loading}
@@ -1060,224 +650,39 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         </form>
       </Modal>
 
-      {/* Contact Edit Modal */}
-      <Modal
+      {/* Contact Modals */}
+      <ContactModal
         isOpen={isContactModalOpen}
         onClose={closeContactModal}
-        title={hasContact ? "Edit Contact" : "Add Contact"}
-        size="md"
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            saveContact();
-          }}
-          className="space-y-4"
-        >
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contact Name *
-            </label>
-            <input
-              type="text"
-              value={contactFormData.name}
-              onChange={(e) =>
-                setContactFormData({ ...contactFormData, name: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter contact name"
-              required
-            />
-          </div>
+        onSave={saveContact}
+        onDelete={hasContact ? deleteContact : undefined}
+        initialData={{
+          name: project.contact_name || "",
+          title: project.contact_title || "",
+          phone: project.contact_phone || "",
+          email: project.contact_email || "",
+        }}
+        type="contact"
+        hasExistingContact={!!hasContact}
+        saving={saving}
+      />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Title
-            </label>
-            <input
-              type="text"
-              value={contactFormData.title}
-              onChange={(e) =>
-                setContactFormData({
-                  ...contactFormData,
-                  title: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., Head of Operations"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={contactFormData.phone}
-              onChange={(e) =>
-                setContactFormData({
-                  ...contactFormData,
-                  phone: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="(555) 123-4567"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={contactFormData.email}
-              onChange={(e) =>
-                setContactFormData({
-                  ...contactFormData,
-                  email: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="contact@company.com"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <FormButton variant="secondary" onClick={closeContactModal}>
-              Cancel
-            </FormButton>
-            <FormButton
-              type="submit"
-              loading={saving}
-              disabled={!contactFormData.name.trim()}
-            >
-              {hasContact ? "Update Contact" : "Add Contact"}
-            </FormButton>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Broker Contact Edit Modal */}
-      <Modal
+      <ContactModal
         isOpen={isBrokerContactModalOpen}
         onClose={closeBrokerContactModal}
-        title={hasBrokerContact ? "Edit Broker Contact" : "Add Broker Contact"}
-        size="md"
-      >
-        <form onSubmit={saveBrokerContact} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Brokerage *
-            </label>
-            <input
-              type="text"
-              value={brokerContactFormData.brokerage}
-              onChange={(e) =>
-                setBrokerContactFormData({
-                  ...brokerContactFormData,
-                  brokerage: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., CBRE, JLL, Cushman & Wakefield"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Broker Name *
-            </label>
-            <input
-              type="text"
-              value={brokerContactFormData.name}
-              onChange={(e) =>
-                setBrokerContactFormData({
-                  ...brokerContactFormData,
-                  name: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter broker name"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Title
-            </label>
-            <input
-              type="text"
-              value={brokerContactFormData.title}
-              onChange={(e) =>
-                setBrokerContactFormData({
-                  ...brokerContactFormData,
-                  title: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., Commercial Real Estate Broker"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={brokerContactFormData.phone}
-              onChange={(e) =>
-                setBrokerContactFormData({
-                  ...brokerContactFormData,
-                  phone: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="(555) 123-4567"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={brokerContactFormData.email}
-              onChange={(e) =>
-                setBrokerContactFormData({
-                  ...brokerContactFormData,
-                  email: e.target.value,
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="broker@company.com"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <FormButton variant="secondary" onClick={closeBrokerContactModal}>
-              Cancel
-            </FormButton>
-            <FormButton
-              type="submit"
-              loading={saving}
-              disabled={
-                !brokerContactFormData.name.trim() ||
-                !brokerContactFormData.brokerage.trim()
-              }
-            >
-              {hasBrokerContact
-                ? "Update Broker Contact"
-                : "Add Broker Contact"}
-            </FormButton>
-          </div>
-        </form>
-      </Modal>
+        onSave={saveBrokerContact}
+        onDelete={hasBrokerContact ? deleteBrokerContact : undefined}
+        initialData={{
+          name: project.broker_contact_name || "",
+          title: project.broker_contact_title || "",
+          phone: project.broker_contact_phone || "",
+          email: project.broker_contact_email || "",
+          brokerage: project.brokerage || "",
+        }}
+        type="broker"
+        hasExistingContact={!!hasBrokerContact}
+        saving={saving}
+      />
     </div>
   );
 };

@@ -107,15 +107,15 @@ export function DashboardPage() {
     ["Active", "Pending"].includes(p.status),
   );
   const totalValue = projects.reduce(
-    (sum, p) => sum + (p.expected_fee || 0),
+    (sum, p) => sum + Number(p.expected_fee || 0),
     0,
   );
   const totalCommission = projects.reduce(
-    (sum, p) => sum + (p.broker_commission || 0),
+    (sum, p) => sum + Number(p.broker_commission || 0),
     0,
   );
   const totalLeaseValue = projects.reduce(
-    (sum, p) => sum + (p.expected_contract_value || 0),
+    (sum, p) => sum + Number(p.expected_contract_value || 0),
     0,
   );
   const totalSquareFeet = calculateTotalSquareFeet();
@@ -200,7 +200,7 @@ export function DashboardPage() {
                 Total Lease Value
               </p>
               <p className="text-3xl font-bold text-gray-900">
-                ${totalLeaseValue.toLocaleString()}
+                ${Number(totalLeaseValue).toLocaleString()}
               </p>
               <p className="text-xs text-purple-600 mt-1">Contract value</p>
             </div>
@@ -217,7 +217,7 @@ export function DashboardPage() {
                 Total Tenant Fees
               </p>
               <p className="text-3xl font-bold text-gray-900">
-                ${totalValue.toLocaleString()}
+                ${Number(totalValue).toLocaleString()}
               </p>
               <p className="text-xs text-blue-600 mt-1">Expected fees</p>
             </div>
@@ -234,7 +234,7 @@ export function DashboardPage() {
                 Total Commission
               </p>
               <p className="text-3xl font-bold text-gray-900">
-                ${totalCommission.toLocaleString()}
+                ${Number(totalCommission).toLocaleString()}
               </p>
               <p className="text-xs text-orange-600 mt-1">Expected earnings</p>
             </div>
@@ -320,7 +320,7 @@ export function DashboardPage() {
                           <TrendingUp className="w-4 h-4" />
                           <span>
                             {project.expected_contract_value
-                              ? `$${project.expected_contract_value.toLocaleString()} lease value`
+                              ? `$${Number(project.expected_contract_value).toLocaleString()} lease value`
                               : "Lease value not set"}
                           </span>
                         </div>
@@ -329,7 +329,7 @@ export function DashboardPage() {
                           <DollarSign className="w-4 h-4" />
                           <span>
                             {project.broker_commission
-                              ? `$${project.broker_commission.toLocaleString()} commission`
+                              ? `$${Number(project.broker_commission).toLocaleString()} commission`
                               : "Commission not set"}
                           </span>
                         </div>

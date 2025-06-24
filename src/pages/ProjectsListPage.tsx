@@ -317,7 +317,7 @@ export function ProjectsListPage() {
                           <TrendingUp className="w-4 h-4 text-purple-600" />
                           <span className="text-lg font-bold text-purple-600">
                             {project.expected_contract_value != null
-                              ? `$${project.expected_contract_value.toLocaleString()}`
+                              ? `$${Number(project.expected_contract_value).toLocaleString()}`
                               : "Not set"}
                           </span>
                         </div>
@@ -334,7 +334,7 @@ export function ProjectsListPage() {
                           <DollarSign className="w-4 h-4 text-green-600" />
                           <span className="text-lg font-bold text-green-600">
                             {project.broker_commission != null
-                              ? `$${project.broker_commission.toLocaleString()}`
+                              ? `$${Number(project.broker_commission).toLocaleString()}`
                               : "Not set"}
                           </span>
                         </div>
