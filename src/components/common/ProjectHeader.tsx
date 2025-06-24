@@ -11,6 +11,7 @@ import {
   MapPin,
   X,
   TrendingUp,
+  Briefcase,
 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
@@ -35,6 +36,13 @@ interface ProjectHeaderProps {
 }
 
 interface ContactFormData {
+  name: string;
+  title: string;
+  phone: string;
+  email: string;
+}
+
+interface BrokerContactFormData {
   name: string;
   title: string;
   phone: string;
@@ -78,7 +86,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const supabase = useSupabaseClient();
   const [showTooltip, setShowTooltip] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isBrokerContactModalOpen, setIsBrokerContactModalOpen] = useState(false);
   const [contactFormData, setContactFormData] = useState<ContactFormData>({
+    name: "",
+    title: "",
+    phone: "",
+    email: "",
+  });
+  const [brokerContactFormData, setBrokerContactFormData] = useState<BrokerContactFormData>({
     name: "",
     title: "",
     phone: "",
@@ -241,6 +256,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   };
 
   const hasContact = project.contact_name;
+  const hasBrokerContact = project.broker_contact_name;
 
   const resetContactForm = () => {
     setContactFormData({
@@ -251,13 +267,41 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     });
   };
 
+  const resetBrokerContactForm = () => {
+    // Pre-fill with user data if broker contact is empty and not in readonly mode
+    if (!readonly && !project.broker_contact_name && user) {
+      setBrokerContactFormData({
+        name: user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "",
+        title: "Commercial Real Estate Broker",
+        phone: user.primaryPhoneNumber?.phoneNumber || "",
+        email: user.primaryEmailAddress?.emailAddress || "",
+      });
+    } else {
+      setBrokerContactFormData({
+        name: project.broker_contact_name || "",
+        title: project.broker_contact_title || "",
+        phone: project.broker_contact_phone || "",
+        email: project.broker_contact_email || "",
+      });
+    }
+  };
+
   const openContactModal = () => {
     resetContactForm();
     setIsContactModalOpen(true);
   };
 
+  const openBrokerContactModal = () => {
+    resetBrokerContactForm();
+    setIsBrokerContactModalOpen(true);
+  };
+
   const closeContactModal = () => {
     setIsContactModalOpen(false);
+  };
+
+  const closeBrokerContactModal = () => {
+    setIsBrokerContactModalOpen(false);
   };
 
   const saveContact = async () => {
@@ -289,6 +333,35 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     }
   };
 
+  const saveBrokerContact = async () => {
+    if (!brokerContactFormData.name.trim()) return;
+
+    setSaving(true);
+    try {
+      const updateData = {
+        broker_contact_name: brokerContactFormData.name.trim(),
+        broker_contact_title: brokerContactFormData.title.trim() || null,
+        broker_contact_phone: brokerContactFormData.phone.trim() || null,
+        broker_contact_email: brokerContactFormData.email.trim() || null,
+        updated_at: nowISO(),
+      };
+
+      const { error } = await supabase
+        .from("projects")
+        .update(updateData)
+        .eq("id", project.id);
+
+      if (error) throw error;
+
+      setIsBrokerContactModalOpen(false);
+      onProjectUpdate?.();
+    } catch {
+      alert("Error saving broker contact. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const deleteContact = async () => {
     if (!confirm("Are you sure you want to remove this contact?")) return;
 
@@ -311,6 +384,33 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       onProjectUpdate?.();
     } catch {
       alert("Error removing contact. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteBrokerContact = async () => {
+    if (!confirm("Are you sure you want to remove the broker contact?")) return;
+
+    setSaving(true);
+    try {
+      const updateData = {
+        broker_contact_name: null,
+        broker_contact_title: null,
+        broker_contact_phone: null,
+        broker_contact_email: null,
+        updated_at: nowISO(),
+      };
+
+      const { error } = await supabase
+        .from("projects")
+        .update(updateData)
+        .eq("id", project.id);
+
+      if (error) throw error;
+      onProjectUpdate?.();
+    } catch {
+      alert("Error removing broker contact. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -567,6 +667,84 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 className="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
               >
                 Add Contact
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Broker Information */}
+      <div className="bg-blue-50 rounded-xl p-6 mb-8 border border-blue-200">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-bold text-blue-900 flex items-center space-x-2">
+            <Briefcase className="w-5 h-5 text-blue-800" />
+            <span>Your Broker</span>
+          </h4>
+          {!readonly && (
+            <div className="flex items-center space-x-2">
+              {hasBrokerContact && (
+                <button
+                  onClick={deleteBrokerContact}
+                  className="p-2 text-blue-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                  title="Remove broker contact"
+                  disabled={saving}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={openBrokerContactModal}
+                className="p-2 text-blue-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-100"
+                title={hasBrokerContact ? "Edit broker contact" : "Add broker contact"}
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {hasBrokerContact ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center">
+                <Briefcase className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-blue-900">
+                  {project.broker_contact_name}
+                </p>
+                {project.broker_contact_title && (
+                  <p className="text-sm text-blue-700">
+                    {project.broker_contact_title}
+                  </p>
+                )}
+              </div>
+            </div>
+            {project.broker_contact_phone && (
+              <div className="flex items-center space-x-3">
+                <Phone className="w-5 h-5 text-blue-600" />
+                <span className="text-blue-900">{project.broker_contact_phone}</span>
+              </div>
+            )}
+            {project.broker_contact_email && (
+              <div className="flex items-center space-x-3">
+                <Mail className="w-5 h-5 text-blue-600" />
+                <span className="text-blue-900">{project.broker_contact_email}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-6">
+            <Briefcase className="w-12 h-12 text-blue-300 mx-auto mb-3" />
+            <p className="text-blue-600 mb-4">
+              No broker information added yet
+            </p>
+            {!readonly && (
+              <button
+                onClick={openBrokerContactModal}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Add Broker Info
               </button>
             )}
           </div>
@@ -938,6 +1116,105 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               disabled={!contactFormData.name.trim()}
             >
               {hasContact ? "Update Contact" : "Add Contact"}
+            </FormButton>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Broker Contact Edit Modal */}
+      <Modal
+        isOpen={isBrokerContactModalOpen}
+        onClose={closeBrokerContactModal}
+        title={hasBrokerContact ? "Edit Broker Contact" : "Add Broker Contact"}
+        size="md"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveBrokerContact();
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Broker Name *
+            </label>
+            <input
+              type="text"
+              value={brokerContactFormData.name}
+              onChange={(e) =>
+                setBrokerContactFormData({ ...brokerContactFormData, name: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter broker name"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Title
+            </label>
+            <input
+              type="text"
+              value={brokerContactFormData.title}
+              onChange={(e) =>
+                setBrokerContactFormData({
+                  ...brokerContactFormData,
+                  title: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., Commercial Real Estate Broker"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone
+            </label>
+            <input
+              type="tel"
+              value={brokerContactFormData.phone}
+              onChange={(e) =>
+                setBrokerContactFormData({
+                  ...brokerContactFormData,
+                  phone: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="(555) 123-4567"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              value={brokerContactFormData.email}
+              onChange={(e) =>
+                setBrokerContactFormData({
+                  ...brokerContactFormData,
+                  email: e.target.value,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="broker@company.com"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <FormButton variant="secondary" onClick={closeBrokerContactModal}>
+              Cancel
+            </FormButton>
+            <FormButton
+              type="submit"
+              loading={saving}
+              disabled={!brokerContactFormData.name.trim()}
+            >
+              {hasBrokerContact ? "Update Broker Contact" : "Add Broker Contact"}
             </FormButton>
           </div>
         </form>
