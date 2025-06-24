@@ -15,7 +15,8 @@
     "supabase:reset": "npx supabase db reset",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "knip": "npx knip --production --fix --allow-remove-files"
+    "knip": "npx knip --production --fix --allow-remove-files",
+    "supabase:gen:types": "npx supabase gen types typescript --linked --schema public > src/types/database.ts"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.31.9",

@@ -87,20 +87,22 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   const supabase = useSupabaseClient();
   const [showTooltip, setShowTooltip] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-  const [isBrokerContactModalOpen, setIsBrokerContactModalOpen] = useState(false);
+  const [isBrokerContactModalOpen, setIsBrokerContactModalOpen] =
+    useState(false);
   const [contactFormData, setContactFormData] = useState<ContactFormData>({
     name: "",
     title: "",
     phone: "",
     email: "",
   });
-  const [brokerContactFormData, setBrokerContactFormData] = useState<BrokerContactFormData>({
-    name: "",
-    title: "",
-    phone: "",
-    email: "",
-    brokerage: "",
-  });
+  const [brokerContactFormData, setBrokerContactFormData] =
+    useState<BrokerContactFormData>({
+      name: "",
+      title: "",
+      phone: "",
+      email: "",
+      brokerage: "",
+    });
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -163,7 +165,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       payment_due: project.payment_due || "",
       city: project.city || "",
       state: project.state || "",
-      expected_contract_value: project.expected_contract_value?.toString() || "",
+      expected_contract_value:
+        project.expected_contract_value?.toString() || "",
     });
   };
 
@@ -273,7 +276,10 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     // Pre-fill with user data if broker contact is empty and not in readonly mode
     if (!readonly && !project.broker_contact_name && user) {
       setBrokerContactFormData({
-        name: user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || "",
+        name:
+          user.fullName ||
+          `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+          "",
         title: "Commercial Real Estate Broker",
         phone: user.primaryPhoneNumber?.phoneNumber || "",
         email: user.primaryEmailAddress?.emailAddress || "",
@@ -503,9 +509,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-purple-700 text-sm font-medium">
-                Lease Value
-              </p>
+              <p className="text-purple-700 text-sm font-medium">Lease Value</p>
               <p className="text-purple-900 font-bold text-lg">
                 $
                 {project.expected_contract_value
@@ -623,7 +627,11 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <button
                 onClick={openBrokerContactModal}
                 className="p-2 text-blue-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-100"
-                title={hasBrokerContact ? "Edit broker contact" : "Add broker contact"}
+                title={
+                  hasBrokerContact
+                    ? "Edit broker contact"
+                    : "Add broker contact"
+                }
               >
                 <Edit3 className="w-4 h-4" />
               </button>
@@ -639,13 +647,17 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 <div className="flex items-center space-x-3">
                   <Building className="w-5 h-5 text-blue-700" />
                   <div>
-                    <p className="text-sm font-medium text-blue-700">Brokerage</p>
-                    <p className="text-lg font-bold text-blue-900">{project.brokerage}</p>
+                    <p className="text-sm font-medium text-blue-700">
+                      Brokerage
+                    </p>
+                    <p className="text-lg font-bold text-blue-900">
+                      {project.brokerage}
+                    </p>
                   </div>
                 </div>
               </div>
             )}
-            
+
             {/* Broker Contact Details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center space-x-3">
@@ -666,13 +678,17 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               {project.broker_contact_phone && (
                 <div className="flex items-center space-x-3">
                   <Phone className="w-5 h-5 text-blue-600" />
-                  <span className="text-blue-900">{project.broker_contact_phone}</span>
+                  <span className="text-blue-900">
+                    {project.broker_contact_phone}
+                  </span>
                 </div>
               )}
               {project.broker_contact_email && (
                 <div className="flex items-center space-x-3">
                   <Mail className="w-5 h-5 text-blue-600" />
-                  <span className="text-blue-900">{project.broker_contact_email}</span>
+                  <span className="text-blue-900">
+                    {project.broker_contact_email}
+                  </span>
                 </div>
               )}
             </div>
@@ -1150,7 +1166,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         title={hasBrokerContact ? "Edit Broker Contact" : "Add Broker Contact"}
         size="md"
       >
-        <div className="space-y-4">
+        <form onSubmit={saveBrokerContact} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Brokerage *
@@ -1159,7 +1175,10 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               type="text"
               value={brokerContactFormData.brokerage}
               onChange={(e) =>
-                setBrokerContactFormData({ ...brokerContactFormData, brokerage: e.target.value })
+                setBrokerContactFormData({
+                  ...brokerContactFormData,
+                  brokerage: e.target.value,
+                })
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., CBRE, JLL, Cushman & Wakefield"
@@ -1175,7 +1194,10 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               type="text"
               value={brokerContactFormData.name}
               onChange={(e) =>
-                setBrokerContactFormData({ ...brokerContactFormData, name: e.target.value })
+                setBrokerContactFormData({
+                  ...brokerContactFormData,
+                  name: e.target.value,
+                })
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter broker name"
@@ -1242,17 +1264,19 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               Cancel
             </FormButton>
             <FormButton
-              onClick={(e) => {
-                e.preventDefault();
-                saveBrokerContact();
-              }}
+              type="submit"
               loading={saving}
-              disabled={!brokerContactFormData.name.trim() || !brokerContactFormData.brokerage.trim()}
+              disabled={
+                !brokerContactFormData.name.trim() ||
+                !brokerContactFormData.brokerage.trim()
+              }
             >
-              {hasBrokerContact ? "Update Broker Contact" : "Add Broker Contact"}
+              {hasBrokerContact
+                ? "Update Broker Contact"
+                : "Add Broker Contact"}
             </FormButton>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );

@@ -7,31 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-          extensions?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       client_requirements: {
@@ -224,6 +199,11 @@ export type Database = {
       projects: {
         Row: {
           broker_commission: number | null;
+          broker_contact_email: string | null;
+          broker_contact_name: string | null;
+          broker_contact_phone: string | null;
+          broker_contact_title: string | null;
+          brokerage: string | null;
           city: string | null;
           clerk_user_id: string;
           commission_paid_by: string | null;
@@ -236,6 +216,7 @@ export type Database = {
           dashboard_card_order: Json | null;
           deleted_at: string | null;
           desired_move_in_date: string | null;
+          expected_contract_value: number | null;
           expected_fee: number | null;
           expected_headcount: string | null;
           id: string;
@@ -249,6 +230,11 @@ export type Database = {
         };
         Insert: {
           broker_commission?: number | null;
+          broker_contact_email?: string | null;
+          broker_contact_name?: string | null;
+          broker_contact_phone?: string | null;
+          broker_contact_title?: string | null;
+          brokerage?: string | null;
           city?: string | null;
           clerk_user_id: string;
           commission_paid_by?: string | null;
@@ -261,6 +247,7 @@ export type Database = {
           dashboard_card_order?: Json | null;
           deleted_at?: string | null;
           desired_move_in_date?: string | null;
+          expected_contract_value?: number | null;
           expected_fee?: number | null;
           expected_headcount?: string | null;
           id?: string;
@@ -274,6 +261,11 @@ export type Database = {
         };
         Update: {
           broker_commission?: number | null;
+          broker_contact_email?: string | null;
+          broker_contact_name?: string | null;
+          broker_contact_phone?: string | null;
+          broker_contact_title?: string | null;
+          brokerage?: string | null;
           city?: string | null;
           clerk_user_id?: string;
           commission_paid_by?: string | null;
@@ -286,6 +278,7 @@ export type Database = {
           dashboard_card_order?: Json | null;
           deleted_at?: string | null;
           desired_move_in_date?: string | null;
+          expected_contract_value?: number | null;
           expected_fee?: number | null;
           expected_headcount?: string | null;
           id?: string;
@@ -443,6 +436,7 @@ export type Database = {
           status: Database["public"]["Enums"]["project_status"];
           broker_commission: number;
           expected_fee: number;
+          expected_contract_value: number;
           dashboard_card_order: Json;
           created_at: string;
           updated_at: string;
@@ -453,6 +447,11 @@ export type Database = {
           commission_paid_by: string;
           payment_due: string;
           expected_headcount: string;
+          broker_contact_name: string;
+          broker_contact_title: string;
+          broker_contact_phone: string;
+          broker_contact_email: string;
+          brokerage: string;
         }[];
       };
       get_public_project_documents: {
@@ -674,9 +673,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       document_source_type: ["upload", "google_drive", "onedrive", "url"],
