@@ -47,6 +47,7 @@ interface BrokerContactFormData {
   title: string;
   phone: string;
   email: string;
+  brokerage: string;
 }
 
 interface Requirement {
@@ -98,6 +99,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     title: "",
     phone: "",
     email: "",
+    brokerage: "",
   });
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -275,6 +277,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         title: "Commercial Real Estate Broker",
         phone: user.primaryPhoneNumber?.phoneNumber || "",
         email: user.primaryEmailAddress?.emailAddress || "",
+        brokerage: "",
       });
     } else {
       setBrokerContactFormData({
@@ -282,6 +285,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         title: project.broker_contact_title || "",
         phone: project.broker_contact_phone || "",
         email: project.broker_contact_email || "",
+        brokerage: project.brokerage || "",
       });
     }
   };
@@ -343,6 +347,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         broker_contact_title: brokerContactFormData.title.trim() || null,
         broker_contact_phone: brokerContactFormData.phone.trim() || null,
         broker_contact_email: brokerContactFormData.email.trim() || null,
+        brokerage: brokerContactFormData.brokerage.trim() || null,
         updated_at: nowISO(),
       };
 
@@ -399,6 +404,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         broker_contact_title: null,
         broker_contact_phone: null,
         broker_contact_email: null,
+        brokerage: null,
         updated_at: nowISO(),
       };
 
@@ -595,6 +601,100 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         </div>
       </div>
 
+      {/* Broker Information */}
+      <div className="bg-blue-50 rounded-xl p-6 mb-8 border border-blue-200">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-bold text-blue-900 flex items-center space-x-2">
+            <Briefcase className="w-5 h-5 text-blue-800" />
+            <span>Your Broker</span>
+          </h4>
+          {!readonly && (
+            <div className="flex items-center space-x-2">
+              {hasBrokerContact && (
+                <button
+                  onClick={deleteBrokerContact}
+                  className="p-2 text-blue-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                  title="Remove broker contact"
+                  disabled={saving}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={openBrokerContactModal}
+                className="p-2 text-blue-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-100"
+                title={hasBrokerContact ? "Edit broker contact" : "Add broker contact"}
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {hasBrokerContact ? (
+          <div className="space-y-4">
+            {/* Brokerage Name */}
+            {project.brokerage && (
+              <div className="bg-blue-100 rounded-lg p-4 border border-blue-200">
+                <div className="flex items-center space-x-3">
+                  <Building className="w-5 h-5 text-blue-700" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-700">Brokerage</p>
+                    <p className="text-lg font-bold text-blue-900">{project.brokerage}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Broker Contact Details */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center">
+                  <Briefcase className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-blue-900">
+                    {project.broker_contact_name}
+                  </p>
+                  {project.broker_contact_title && (
+                    <p className="text-sm text-blue-700">
+                      {project.broker_contact_title}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {project.broker_contact_phone && (
+                <div className="flex items-center space-x-3">
+                  <Phone className="w-5 h-5 text-blue-600" />
+                  <span className="text-blue-900">{project.broker_contact_phone}</span>
+                </div>
+              )}
+              {project.broker_contact_email && (
+                <div className="flex items-center space-x-3">
+                  <Mail className="w-5 h-5 text-blue-600" />
+                  <span className="text-blue-900">{project.broker_contact_email}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-6">
+            <Briefcase className="w-12 h-12 text-blue-300 mx-auto mb-3" />
+            <p className="text-blue-600 mb-4">
+              No broker information added yet
+            </p>
+            {!readonly && (
+              <button
+                onClick={openBrokerContactModal}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Add Broker Info
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Contact Information */}
       <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
@@ -667,84 +767,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 className="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
               >
                 Add Contact
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Broker Information */}
-      <div className="bg-blue-50 rounded-xl p-6 mb-8 border border-blue-200">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="font-bold text-blue-900 flex items-center space-x-2">
-            <Briefcase className="w-5 h-5 text-blue-800" />
-            <span>Your Broker</span>
-          </h4>
-          {!readonly && (
-            <div className="flex items-center space-x-2">
-              {hasBrokerContact && (
-                <button
-                  onClick={deleteBrokerContact}
-                  className="p-2 text-blue-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
-                  title="Remove broker contact"
-                  disabled={saving}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-              <button
-                onClick={openBrokerContactModal}
-                className="p-2 text-blue-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-100"
-                title={hasBrokerContact ? "Edit broker contact" : "Add broker contact"}
-              >
-                <Edit3 className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {hasBrokerContact ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-blue-900">
-                  {project.broker_contact_name}
-                </p>
-                {project.broker_contact_title && (
-                  <p className="text-sm text-blue-700">
-                    {project.broker_contact_title}
-                  </p>
-                )}
-              </div>
-            </div>
-            {project.broker_contact_phone && (
-              <div className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-blue-600" />
-                <span className="text-blue-900">{project.broker_contact_phone}</span>
-              </div>
-            )}
-            {project.broker_contact_email && (
-              <div className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-blue-600" />
-                <span className="text-blue-900">{project.broker_contact_email}</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-6">
-            <Briefcase className="w-12 h-12 text-blue-300 mx-auto mb-3" />
-            <p className="text-blue-600 mb-4">
-              No broker information added yet
-            </p>
-            {!readonly && (
-              <button
-                onClick={openBrokerContactModal}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Add Broker Info
               </button>
             )}
           </div>
@@ -1128,13 +1150,23 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         title={hasBrokerContact ? "Edit Broker Contact" : "Add Broker Contact"}
         size="md"
       >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            saveBrokerContact();
-          }}
-          className="space-y-4"
-        >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Brokerage *
+            </label>
+            <input
+              type="text"
+              value={brokerContactFormData.brokerage}
+              onChange={(e) =>
+                setBrokerContactFormData({ ...brokerContactFormData, brokerage: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., CBRE, JLL, Cushman & Wakefield"
+              required
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Broker Name *
@@ -1210,14 +1242,17 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               Cancel
             </FormButton>
             <FormButton
-              type="submit"
+              onClick={(e) => {
+                e.preventDefault();
+                saveBrokerContact();
+              }}
               loading={saving}
-              disabled={!brokerContactFormData.name.trim()}
+              disabled={!brokerContactFormData.name.trim() || !brokerContactFormData.brokerage.trim()}
             >
               {hasBrokerContact ? "Update Broker Contact" : "Add Broker Contact"}
             </FormButton>
           </div>
-        </form>
+        </div>
       </Modal>
     </div>
   );
