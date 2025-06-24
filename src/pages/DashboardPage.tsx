@@ -114,6 +114,10 @@ export function DashboardPage() {
     (sum, p) => sum + (p.broker_commission || 0),
     0,
   );
+  const totalLeaseValue = projects.reduce(
+    (sum, p) => sum + (p.expected_contract_value || 0),
+    0,
+  );
   const totalSquareFeet = calculateTotalSquareFeet();
 
   if (!isLoaded || loading) {
@@ -137,7 +141,7 @@ export function DashboardPage() {
   return (
     <DashboardLayout>
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
         <div className="dashboard-card p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -196,11 +200,28 @@ export function DashboardPage() {
                 Total Lease Value
               </p>
               <p className="text-3xl font-bold text-gray-900">
-                ${totalValue.toLocaleString()}
+                ${totalLeaseValue.toLocaleString()}
               </p>
-              <p className="text-xs text-blue-600 mt-1">Contract value</p>
+              <p className="text-xs text-purple-600 mt-1">Contract value</p>
             </div>
             <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="dashboard-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm font-medium mb-1">
+                Total Tenant Fees
+              </p>
+              <p className="text-3xl font-bold text-gray-900">
+                ${totalValue.toLocaleString()}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">Expected fees</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -287,11 +308,20 @@ export function DashboardPage() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                         <div className="flex items-center space-x-2 text-gray-600">
                           <Building className="w-4 h-4" />
                           <span>
                             {project.company_name || "No company specified"}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center space-x-2 text-gray-600">
+                          <TrendingUp className="w-4 h-4" />
+                          <span>
+                            {project.expected_contract_value
+                              ? `$${project.expected_contract_value.toLocaleString()} lease value`
+                              : "Lease value not set"}
                           </span>
                         </div>
 
