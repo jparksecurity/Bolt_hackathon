@@ -13,6 +13,7 @@ import {
   Search,
   Filter,
   MapPin,
+  TrendingUp,
 } from "lucide-react";
 import type { Database } from "../types/database";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
@@ -306,8 +307,25 @@ export function ProjectsListPage() {
                       </div>
                     </div>
 
-                    {/* Broker Commission */}
+                    {/* Lease Value */}
                     <div className="pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600">
+                          Lease Value
+                        </span>
+                        <div className="flex items-center space-x-1">
+                          <TrendingUp className="w-4 h-4 text-purple-600" />
+                          <span className="text-lg font-bold text-purple-600">
+                            {project.expected_contract_value != null
+                              ? `$${Number(project.expected_contract_value).toLocaleString()}`
+                              : "Not set"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Broker Commission */}
+                    <div className="pt-2 border-t border-gray-100">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600">
                           Broker Commission
@@ -316,7 +334,7 @@ export function ProjectsListPage() {
                           <DollarSign className="w-4 h-4 text-green-600" />
                           <span className="text-lg font-bold text-green-600">
                             {project.broker_commission != null
-                              ? `${project.broker_commission.toLocaleString()}`
+                              ? `$${Number(project.broker_commission).toLocaleString()}`
                               : "Not set"}
                           </span>
                         </div>

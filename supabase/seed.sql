@@ -1,11 +1,13 @@
 -- Seed data for Lease Tracking System
 -- This provides example data for development and testing
 
--- Insert the main project
+-- Insert the main project with enhanced data for new UI
 INSERT INTO projects (
-  id, clerk_user_id, title, status, start_date, desired_move_in_date, expected_fee,
-  broker_commission, commission_paid_by, payment_due,
-  company_name, expected_headcount, contact_name, contact_title, contact_phone, contact_email,
+  id, clerk_user_id, title, status, start_date, desired_move_in_date, 
+  expected_contract_value, expected_fee, broker_commission, commission_paid_by, payment_due,
+  company_name, expected_headcount, 
+  contact_name, contact_title, contact_phone, contact_email,
+  broker_contact_name, broker_contact_title, broker_contact_phone, broker_contact_email, brokerage,
   city, state,
   created_at, updated_at
 ) VALUES (
@@ -15,8 +17,9 @@ INSERT INTO projects (
   'Active',
   '2024-01-15',
   '2024-03-01',
-  0.00,
-  15000.00,
+  2400000.00,    -- $2.4M lease value (18,500 sf × $24/sf × 5.4 years avg)
+  125000.00,     -- $125K tenant fee (typical 5-6% of lease value)
+  48000.00,      -- $48K broker commission (2% of lease value)
   'Landlord',
   'Upon lease signing',
   'TechFlow Innovations',
@@ -25,6 +28,87 @@ INSERT INTO projects (
   'Head of Operations',
   '(555) 123-4567',
   'sarah.chen@techflow.com',
+  'Michael Rodriguez',
+  'Senior Commercial Broker',
+  '(555) 987-6543',
+  'mrodriguez@cbre.com',
+  'CBRE',
+  'San Francisco',
+  'CA',
+  NOW(),
+  NOW()
+);
+
+-- Insert a second project to showcase dashboard aggregation
+INSERT INTO projects (
+  id, clerk_user_id, title, status, start_date, desired_move_in_date, 
+  expected_contract_value, expected_fee, broker_commission, commission_paid_by, payment_due,
+  company_name, expected_headcount, 
+  contact_name, contact_title, contact_phone, contact_email,
+  broker_contact_name, broker_contact_title, broker_contact_phone, broker_contact_email, brokerage,
+  city, state,
+  created_at, updated_at
+) VALUES (
+  '550e8400-e29b-41d4-a716-446655440001',
+  'user_2yHntOGKi6N4kXscdHcJrYjEpWN',
+  'Warehouse Expansion Project',
+  'Pending',
+  '2024-02-01',
+  '2024-04-15',
+  1800000.00,    -- $1.8M lease value 
+  90000.00,      -- $90K tenant fee
+  36000.00,      -- $36K broker commission
+  'Tenant',
+  'Net 30 days after lease execution',
+  'LogiCorp Distribution',
+  '40-60 employees',
+  'David Kim',
+  'Facilities Manager', 
+  '(555) 234-5678',
+  'david.kim@logicorp.com',
+  'Jennifer Walsh',
+  'Industrial Specialist',
+  '(555) 876-5432',
+  'j.walsh@cushwake.com',
+  'Cushman & Wakefield',
+  'Oakland',
+  'CA',
+  NOW(),
+  NOW()
+);
+
+-- Insert a completed project for dashboard metrics
+INSERT INTO projects (
+  id, clerk_user_id, title, status, start_date, desired_move_in_date, 
+  expected_contract_value, expected_fee, broker_commission, commission_paid_by, payment_due,
+  company_name, expected_headcount, 
+  contact_name, contact_title, contact_phone, contact_email,
+  broker_contact_name, broker_contact_title, broker_contact_phone, broker_contact_email, brokerage,
+  city, state,
+  created_at, updated_at
+) VALUES (
+  '550e8400-e29b-41d4-a716-446655440002',
+  'user_2yHntOGKi6N4kXscdHcJrYjEpWN',
+  'Financial District Headquarters',
+  'Completed',
+  '2023-11-01',
+  '2024-01-01',
+  3200000.00,    -- $3.2M lease value 
+  160000.00,     -- $160K tenant fee
+  64000.00,      -- $64K broker commission
+  'Landlord',
+  'Paid upon lease signing',
+  'FinanceMax Solutions',
+  '120-150 employees',
+  'Emily Rodriguez',
+  'Chief Operating Officer',
+  '(555) 345-6789',
+  'emily.rodriguez@financemax.com',
+  'Robert Chen',
+  'Executive Director',
+  '(555) 765-4321',
+  'rchen@jll.com',
+  'JLL',
   'San Francisco',
   'CA',
   NOW(),
@@ -52,6 +136,26 @@ INSERT INTO client_requirements (project_id, category, requirement_text) VALUES
 ('550e8400-e29b-41d4-a716-446655440000', 'Other', 'Pet-friendly building preferred'),
 ('550e8400-e29b-41d4-a716-446655440000', 'Other', 'Natural light priority'),
 ('550e8400-e29b-41d4-a716-446655440000', 'Other', 'Flexible lease terms (3-5 years)');
+
+-- Insert client requirements for Warehouse project
+INSERT INTO client_requirements (project_id, category, requirement_text) VALUES
+('550e8400-e29b-41d4-a716-446655440001', 'Space Requirements', 'Minimum 25,000 sq ft warehouse space'),
+('550e8400-e29b-41d4-a716-446655440001', 'Space Requirements', 'Loading dock access (minimum 4 docks)'),
+('550e8400-e29b-41d4-a716-446655440001', 'Space Requirements', 'Office space for 15-20 staff'),
+('550e8400-e29b-41d4-a716-446655440001', 'Location', 'Within 10 miles of major highways'),
+('550e8400-e29b-41d4-a716-446655440001', 'Location', 'Industrial zoning preferred'),
+('550e8400-e29b-41d4-a716-446655440001', 'Other', 'Ground-level access required'),
+('550e8400-e29b-41d4-a716-446655440001', 'Other', 'Climate-controlled storage areas');
+
+-- Insert client requirements for completed Financial project
+INSERT INTO client_requirements (project_id, category, requirement_text) VALUES
+('550e8400-e29b-41d4-a716-446655440002', 'Space Requirements', 'Class A office building required'),
+('550e8400-e29b-41d4-a716-446655440002', 'Space Requirements', 'Executive conference facilities'),
+('550e8400-e29b-41d4-a716-446655440002', 'Space Requirements', 'Secure document storage'),
+('550e8400-e29b-41d4-a716-446655440002', 'Location', 'Financial District proximity essential'),
+('550e8400-e29b-41d4-a716-446655440002', 'Location', 'Premium building image required'),
+('550e8400-e29b-41d4-a716-446655440002', 'Other', 'Move-in completed January 2024'),
+('550e8400-e29b-41d4-a716-446655440002', 'Other', 'Long-term lease (7-10 years)');
 
 -- Insert project roadmap steps
 INSERT INTO project_roadmap (

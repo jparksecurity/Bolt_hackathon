@@ -22,7 +22,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useSupabaseClient } from "../../services/supabase";
 import { DragDropList } from "./DragDropList";
 import { useProjectData } from "../../hooks/useProjectData";
-import { formatDate, formatDisplayDateTime } from "../../utils/dateUtils";
+import { formatDisplayDateTime } from "../../utils/dateUtils";
 import { Database } from "../../types/database";
 import { useReorderState } from "../../hooks/useReorderState";
 import { keyBeforeAll } from "../../utils/orderKey";
