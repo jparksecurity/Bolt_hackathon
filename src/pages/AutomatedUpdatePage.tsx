@@ -1,332 +1,126 @@
 import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { useSupabaseClient } from "../services/supabase";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
-import { nowISO } from "../utils/dateUtils";
+import toast from "react-hot-toast";
 import {
   Bot,
   Send,
   CheckCircle,
   XCircle,
-  Calendar,
   Building,
-  User,
-  DollarSign,
-  MapPin,
   FileText,
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { Constants } from "../types/database";
-
-interface UpdateSuggestion {
-  id: string;
-  type: "project" | "property" | "client_requirement";
-  entityId: string;
-  entityName: string;
-  field: string;
-  currentValue: string | null;
-  suggestedValue: string;
-  reasoning: string;
-}
+import { useAIProcessing } from "../hooks/useAIProcessing";
+import { useSuggestionState } from "../hooks/useSuggestionState";
+import { useDatabaseUpdate } from "../hooks/useDatabaseUpdate";
+import { getFieldLabel } from "../utils/suggestionValidation";
 
 export function AutomatedUpdatePage() {
   const { isLoaded } = useUser();
-  const supabase = useSupabaseClient();
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Form state - simplified to single text input
   const [inputText, setInputText] = useState("");
-  const [suggestions, setSuggestions] = useState<UpdateSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [approvedSuggestions, setApprovedSuggestions] = useState<Set<string>>(
-    new Set(),
-  );
-  const [rejectedSuggestions, setRejectedSuggestions] = useState<Set<string>>(
-    new Set(),
-  );
 
-  const processWithAI = async () => {
+  // Use custom hooks for cleaner state management
+  const {
+    suggestions,
+    processing,
+    error,
+    showSuggestions,
+    processWithAI,
+    clearSuggestions,
+    clearError,
+  } = useAIProcessing();
+
+  const {
+    approved: approvedSuggestions,
+    rejected: rejectedSuggestions,
+    approveSuggestion,
+    rejectSuggestion,
+    clearSuggestionState,
+    getApprovedSuggestions,
+  } = useSuggestionState();
+
+  const { applying, updateResult, applyUpdates, clearUpdateResult } =
+    useDatabaseUpdate();
+
+  const handleProcessWithAI = async () => {
     if (!inputText.trim()) {
-      alert("Please provide some information to process.");
+      toast.error("Please provide some information to process.");
       return;
     }
 
-    setProcessing(true);
-    setError(null);
+    clearError();
+    clearSuggestionState();
+    clearUpdateResult();
 
-    try {
-      // Call the Supabase project-intelligence function
-      const { data, error } = await supabase.functions.invoke(
-        "project-intelligence",
-        {
-          body: {
-            inputText,
-          },
-        },
-      );
+    await processWithAI(inputText);
+  };
 
-      if (error) {
-        throw new Error(error.message || "Failed to process with AI");
-      }
+  const handleApplyUpdates = async () => {
+    const approvedSuggestionsList = getApprovedSuggestions(suggestions);
 
-      if (data?.suggestions) {
-        // Ensure each suggestion has a **unique** id so that React keys are not duplicated and
-        // approving/rejecting one suggestion does not mutate the state of another suggestion
-        // that happened to share the same id coming from the API.
-        const uniqueSuggestions: UpdateSuggestion[] = data.suggestions.map(
-          (s: UpdateSuggestion, idx: number) => ({
-            // Preserve all original fields but guarantee a unique id per entry.
-            ...s,
-            id: s.id ? `${s.id}-${idx}` : `suggestion-${idx}`,
-          }),
+    if (approvedSuggestionsList.length === 0) {
+      toast.error("No suggestions approved for application.");
+      return;
+    }
+
+    const result = await applyUpdates(approvedSuggestionsList);
+
+    if (result.success) {
+      if (result.processedCount > 0) {
+        toast.success(
+          `Successfully applied ${result.processedCount} update${result.processedCount > 1 ? "s" : ""}!`,
+          { duration: 4000 },
         );
-
-        setSuggestions(uniqueSuggestions);
-        setShowSuggestions(true);
-        setApprovedSuggestions(new Set());
-        setRejectedSuggestions(new Set());
-      } else {
-        throw new Error("No suggestions received from AI");
+        // Clear successful suggestions and reset state
+        clearSuggestions();
+        clearSuggestionState();
+        setInputText("");
       }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to process with AI. Please try again.",
+    } else {
+      toast.error(
+        `Failed to apply updates. ${result.processedCount} succeeded, ${result.failedCount} failed.`,
+        { duration: 6000 },
       );
-    } finally {
-      setProcessing(false);
+
+      // Show detailed errors if any
+      if (result.errors.length > 0) {
+        console.error("Update errors:", result.errors);
+      }
     }
   };
 
   const toggleSuggestion = (suggestionId: string, approve: boolean) => {
     if (approve) {
-      setApprovedSuggestions((prev) => new Set([...prev, suggestionId]));
-      setRejectedSuggestions((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(suggestionId);
-        return newSet;
-      });
+      approveSuggestion(suggestionId);
     } else {
-      setRejectedSuggestions((prev) => new Set([...prev, suggestionId]));
-      setApprovedSuggestions((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(suggestionId);
-        return newSet;
-      });
+      rejectSuggestion(suggestionId);
     }
   };
 
-  const applyApprovedSuggestions = async () => {
-    const approvedSuggestionsList = suggestions.filter((s) =>
-      approvedSuggestions.has(s.id),
-    );
-
-    if (approvedSuggestionsList.length === 0) {
-      alert("No suggestions approved for application.");
-      return;
-    }
-
-    setProcessing(true);
-    try {
-      // Helper function to coerce values to appropriate types with validation
-      const coerceValue = (
-        value: string,
-        field: string,
-      ): string | number | null => {
-        // Numeric fields that should be converted to numbers
-        const numericFields = [
-          "expected_fee",
-          "broker_commission",
-          "monthly_cost",
-          "expected_monthly_cost",
-          "price_per_sf",
-          "people_capacity",
-          "expected_headcount",
-        ];
-
-        if (numericFields.includes(field)) {
-          const numValue = parseFloat(value);
-          return isNaN(numValue) ? null : numValue;
-        }
-
-        // Validate constrained fields
-        if (field === "status") {
-          return Constants.public.Enums.property_status.includes(
-            value.toLowerCase() as (typeof Constants.public.Enums.property_status)[number],
-          )
-            ? value.toLowerCase()
-            : "new";
-        }
-
-        if (field === "current_state") {
-          return Constants.public.Enums.property_current_state.includes(
-            value as (typeof Constants.public.Enums.property_current_state)[number],
-          )
-            ? value
-            : null;
-        }
-
-        if (field === "tour_status") {
-          return Constants.public.Enums.tour_status.includes(
-            value as (typeof Constants.public.Enums.tour_status)[number],
-          )
-            ? value
-            : null;
-        }
-
-        return value || null;
-      };
-
-      // Process all suggestions in parallel with error tracking
-      const updatePromises = approvedSuggestionsList.map(async (suggestion) => {
-        try {
-          const updateData: Record<string, string | number | null> = {
-            [suggestion.field]: coerceValue(
-              suggestion.suggestedValue,
-              suggestion.field,
-            ),
-            updated_at: nowISO(),
-          };
-
-          // Determine table name and update data based on suggestion type
-          let tableName: "projects" | "properties" | "client_requirements";
-          if (suggestion.type === "project") {
-            tableName = "projects";
-          } else if (suggestion.type === "property") {
-            tableName = "properties";
-          } else {
-            tableName = "client_requirements";
-            // Client requirements don't need updated_at
-            delete updateData.updated_at;
-          }
-
-          const { error } = await supabase
-            .from(tableName)
-            .update(updateData)
-            .eq("id", suggestion.entityId);
-
-          if (error) {
-            throw new Error(
-              `Failed to update ${suggestion.type} "${suggestion.entityName}": ${error.message}`,
-            );
-          }
-
-          return {
-            success: true,
-            name: `${suggestion.entityName} (${suggestion.field})`,
-            suggestion,
-          };
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Unknown error occurred";
-          console.error(
-            `Error processing suggestion for ${suggestion.entityName}:`,
-            error,
-          );
-          return {
-            success: false,
-            error: errorMessage,
-            suggestion,
-          };
-        }
-      });
-
-      // Wait for all updates to complete
-      const results = await Promise.all(updatePromises);
-
-      // Separate successful and failed results
-      const successful = results
-        .filter((result) => result.success)
-        .map((result) => result.name as string);
-
-      const failed = results
-        .filter((result) => !result.success)
-        .map((result) => ({
-          suggestion: result.suggestion,
-          error: result.error as string,
-        }));
-
-      // Provide success/error feedback
-      if (failed.length === 0) {
-        alert(`Successfully updated ${successful.length} fields.`);
-      } else {
-        if (successful.length > 0) {
-          alert(
-            `Partially successful: ${successful.length} updates applied, ${failed.length} failed. Check console for details.`,
-          );
-        } else {
-          alert(
-            `All ${failed.length} updates failed. Check console for details.`,
-          );
-        }
-
-        // Log detailed error information
-        console.error("Failed suggestions:", failed);
-      }
-
-      setShowSuggestions(false);
-      setSuggestions([]);
-      setInputText("");
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      setError(`Failed to apply updates: ${errorMessage}`);
-      console.error("Error applying suggestions:", error);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const getFieldIcon = (field: string) => {
-    switch (field) {
-      case "desired_move_in_date":
-      case "start_date":
-        return Calendar;
-      case "company_name":
-        return Building;
-      case "contact_name":
-        return User;
-      case "broker_commission":
-      case "expected_fee":
-      case "monthly_cost":
-      case "expected_monthly_cost":
-        return DollarSign;
-      case "sf":
-      case "address":
-        return MapPin;
-      case "category":
-      case "requirement_text":
-        return FileText;
+  const getActionIcon = (action: string) => {
+    switch (action) {
+      case "update":
+        return <FileText className="w-4 h-4" />;
+      case "insert":
+        return <Building className="w-4 h-4" />;
       default:
-        return FileText;
+        return <FileText className="w-4 h-4" />;
     }
   };
 
-  const getFieldLabel = (field: string) => {
-    // Gracefully handle null/undefined field values
-    if (!field) return "Field";
-
-    const labels: Record<string, string> = {
-      desired_move_in_date: "Desired Move-in Date",
-      start_date: "Start Date",
-      company_name: "Company Name",
-      contact_name: "Contact Name",
-      broker_commission: "Broker Commission",
-      expected_fee: "Expected Fee",
-      monthly_cost: "Monthly Cost",
-      expected_monthly_cost: "Expected Monthly Cost",
-      sf: "Square Feet",
-      address: "Address",
-      category: "Category",
-      requirement_text: "Requirement Text",
-    };
-    return (
-      labels[field] ||
-      field.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())
-    );
+  const getEntityTypeLabel = (entityType: string) => {
+    switch (entityType) {
+      case "project":
+        return "Project";
+      case "property":
+        return "Property";
+      case "client_requirement":
+        return "Client Requirement";
+      default:
+        return entityType;
+    }
   };
 
   if (!isLoaded) {
@@ -392,6 +186,35 @@ export function AutomatedUpdatePage() {
             </div>
           )}
 
+          {updateResult && !updateResult.success && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-yellow-800">
+                    Update Results:
+                  </h4>
+                  <p className="text-yellow-800 text-sm">
+                    {updateResult.processedCount} succeeded,{" "}
+                    {updateResult.failedCount} failed
+                  </p>
+                  {updateResult.errors.length > 0 && (
+                    <details className="mt-2">
+                      <summary className="text-yellow-800 text-sm cursor-pointer">
+                        View error details
+                      </summary>
+                      <ul className="mt-1 text-xs text-yellow-700 space-y-1">
+                        {updateResult.errors.map((error, index) => (
+                          <li key={index}>• {error}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {!showSuggestions ? (
             <div className="space-y-6">
               {/* Single Text Input */}
@@ -416,7 +239,7 @@ export function AutomatedUpdatePage() {
               {/* Process Button */}
               <div className="flex justify-end">
                 <button
-                  onClick={processWithAI}
+                  onClick={handleProcessWithAI}
                   disabled={processing || !inputText.trim()}
                   className="btn-primary flex items-center space-x-2 px-6 py-3 disabled:opacity-50"
                 >
@@ -438,24 +261,29 @@ export function AutomatedUpdatePage() {
             <div className="space-y-6">
               {/* Suggestions Header */}
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  AI Suggestions ({suggestions.length})
-                </h3>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    AI Suggestions ({suggestions.length})
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Review and approve suggestions to apply them to your data
+                  </p>
+                </div>
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-600">
-                    {approvedSuggestions.size} approved,{" "}
-                    {rejectedSuggestions.size} rejected
-                  </span>
+                  <div className="text-sm text-gray-600">
+                    <span className="text-green-600 font-medium">
+                      {approvedSuggestions.size} approved
+                    </span>
+                    {" • "}
+                    <span className="text-red-600 font-medium">
+                      {rejectedSuggestions.size} rejected
+                    </span>
+                  </div>
                   <button
-                    onClick={() => {
-                      setShowSuggestions(false);
-                      setSuggestions([]);
-                      setApprovedSuggestions(new Set());
-                      setRejectedSuggestions(new Set());
-                    }}
-                    className="btn-secondary px-4 py-2"
+                    onClick={clearSuggestions}
+                    className="text-sm text-gray-500 hover:text-gray-700"
                   >
-                    Start Over
+                    ← Back to Input
                   </button>
                 </div>
               </div>
@@ -463,94 +291,56 @@ export function AutomatedUpdatePage() {
               {/* Suggestions List */}
               <div className="space-y-4">
                 {suggestions.map((suggestion) => {
-                  const IconComponent = getFieldIcon(suggestion.field);
                   const isApproved = approvedSuggestions.has(suggestion.id);
                   const isRejected = rejectedSuggestions.has(suggestion.id);
 
                   return (
                     <div
                       key={suggestion.id}
-                      className={`border rounded-lg p-4 transition-all ${
+                      className={`border rounded-lg p-4 ${
                         isApproved
-                          ? "border-green-300 bg-green-50"
+                          ? "border-green-200 bg-green-50"
                           : isRejected
-                            ? "border-red-300 bg-red-50"
+                            ? "border-red-200 bg-red-50"
                             : "border-gray-200 bg-white"
                       }`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <IconComponent className="w-5 h-5 text-gray-600" />
-                            <div>
-                              <h4 className="font-semibold text-gray-900">
-                                {suggestion.entityName} -{" "}
-                                {getFieldLabel(suggestion.field)}
-                              </h4>
-                              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                <span className="capitalize">
-                                  {suggestion.type}
-                                </span>
-                                <span>•</span>
-                                <span>Update</span>
-                              </div>
-                            </div>
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div
+                            className={`p-2 rounded-lg ${
+                              suggestion.action === "update"
+                                ? "bg-blue-100 text-blue-600"
+                                : "bg-green-100 text-green-600"
+                            }`}
+                          >
+                            {getActionIcon(suggestion.action)}
                           </div>
-
-                          <div className="grid grid-cols-2 gap-4 mb-3">
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 mb-1">
-                                Current Value
-                              </p>
-                              <p className="text-sm text-gray-900 overflow-x-auto">
-                                {(() => {
-                                  if (
-                                    suggestion.currentValue === null ||
-                                    suggestion.currentValue === undefined ||
-                                    suggestion.currentValue === ""
-                                  ) {
-                                    return (
-                                      <em className="text-gray-400">Not set</em>
-                                    );
-                                  }
-
-                                  return typeof suggestion.currentValue ===
-                                    "object"
-                                    ? JSON.stringify(suggestion.currentValue)
-                                    : String(suggestion.currentValue);
-                                })()}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-gray-500 mb-1">
-                                Suggested Value
-                              </p>
-                              <p className="text-sm font-semibold text-gray-900 overflow-x-auto">
-                                {typeof suggestion.suggestedValue === "object"
-                                  ? JSON.stringify(suggestion.suggestedValue)
-                                  : String(suggestion.suggestedValue)}
-                              </p>
-                            </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900">
+                              {suggestion.action === "update"
+                                ? "Update"
+                                : "Create"}{" "}
+                              {getEntityTypeLabel(suggestion.entityType)}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {suggestion.entityName}
+                            </p>
                           </div>
-
-                          <p className="text-sm text-gray-600 bg-gray-50 rounded p-2">
-                            <strong>Reasoning:</strong> {suggestion.reasoning}
-                          </p>
                         </div>
-
-                        <div className="flex items-center space-x-2 ml-4">
+                        <div className="flex items-center space-x-2">
                           <button
                             onClick={() =>
                               toggleSuggestion(suggestion.id, false)
                             }
                             className={`p-2 rounded-lg transition-colors ${
                               isRejected
-                                ? "bg-red-600 text-white"
-                                : "bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600"
+                                ? "bg-red-100 text-red-600"
+                                : "bg-gray-100 text-gray-400 hover:bg-red-100 hover:text-red-600"
                             }`}
                             title="Reject"
                           >
-                            <XCircle className="w-5 h-5" />
+                            <XCircle className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() =>
@@ -558,44 +348,73 @@ export function AutomatedUpdatePage() {
                             }
                             className={`p-2 rounded-lg transition-colors ${
                               isApproved
-                                ? "bg-green-600 text-white"
-                                : "bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600"
+                                ? "bg-green-100 text-green-600"
+                                : "bg-gray-100 text-gray-400 hover:bg-green-100 hover:text-green-600"
                             }`}
                             title="Approve"
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            <CheckCircle className="w-4 h-4" />
                           </button>
                         </div>
+                      </div>
+
+                      {/* Values */}
+                      <div className="space-y-2 mb-3">
+                        {Object.entries(suggestion.values).map(
+                          ([field, value]) => (
+                            <div
+                              key={field}
+                              className="flex justify-between text-sm"
+                            >
+                              <span className="font-medium text-gray-700">
+                                {getFieldLabel(field)}:
+                              </span>
+                              <span className="text-gray-600">
+                                {value?.toString() || "null"}
+                              </span>
+                            </div>
+                          ),
+                        )}
+                      </div>
+
+                      {/* Reasoning */}
+                      <div className="bg-gray-50 rounded p-3 text-sm text-gray-700">
+                        <strong>AI Reasoning:</strong> {suggestion.reasoning}
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Apply Button */}
-              {approvedSuggestions.size > 0 && (
-                <div className="flex justify-end pt-4 border-t border-gray-200">
-                  <button
-                    onClick={applyApprovedSuggestions}
-                    disabled={processing}
-                    className="btn-primary flex items-center space-x-2 px-6 py-3"
-                  >
-                    {processing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Applying Updates...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-5 h-5" />
-                        <span>
-                          Apply {approvedSuggestions.size} Approved Updates
-                        </span>
-                      </>
-                    )}
-                  </button>
+              {/* Action Buttons */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div className="text-sm text-gray-600">
+                  {approvedSuggestions.size > 0 && (
+                    <span>
+                      Ready to apply {approvedSuggestions.size} approved
+                      suggestion
+                      {approvedSuggestions.size > 1 ? "s" : ""}
+                    </span>
+                  )}
                 </div>
-              )}
+                <button
+                  onClick={handleApplyUpdates}
+                  disabled={applying || approvedSuggestions.size === 0}
+                  className="btn-primary flex items-center space-x-2 px-6 py-3 disabled:opacity-50"
+                >
+                  {applying ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Applying Updates...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Apply Updates ({approvedSuggestions.size})</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>

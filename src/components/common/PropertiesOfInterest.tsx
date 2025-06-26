@@ -136,7 +136,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   const supabase = useSupabaseClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [expandedProperties, setExpandedProperties] = useState<Set<string>>(new Set());
+  const [expandedProperties, setExpandedProperties] = useState<Set<string>>(
+    new Set(),
+  );
   const [formData, setFormData] = useState<PropertyFormData>({
     name: "",
     address: "",
@@ -205,7 +207,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
   }, [initialProperties, isReordering]);
 
   const toggleExpanded = (propertyId: string) => {
-    setExpandedProperties(prev => {
+    setExpandedProperties((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(propertyId)) {
         newSet.delete(propertyId);
@@ -464,9 +466,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
           {property.sf && (
             <div className="flex items-center space-x-2">
               <Home className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">
-                {property.sf} sq ft
-              </span>
+              <span className="text-sm text-gray-600">{property.sf} sq ft</span>
             </div>
           )}
           {property.monthly_cost && (
@@ -491,7 +491,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
         {isExpanded && (
           <div className="space-y-4 border-t border-gray-100 pt-4">
             {/* Financial Details */}
-            {(property.price_per_sf || property.expected_monthly_cost || property.cam_rate || property.parking_rate) && (
+            {(property.price_per_sf ||
+              property.expected_monthly_cost ||
+              property.cam_rate ||
+              property.parking_rate) && (
               <div>
                 <h5 className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
                   <DollarSign className="w-4 h-4 mr-1" />
@@ -501,13 +504,17 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   {property.price_per_sf && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Price per SF:</span>
-                      <span className="font-medium">{property.price_per_sf}</span>
+                      <span className="font-medium">
+                        {property.price_per_sf}
+                      </span>
                     </div>
                   )}
                   {property.expected_monthly_cost && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Expected Monthly:</span>
-                      <span className="font-medium">${property.expected_monthly_cost}</span>
+                      <span className="font-medium">
+                        ${property.expected_monthly_cost}
+                      </span>
                     </div>
                   )}
                   {property.cam_rate && (
@@ -519,7 +526,9 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   {property.parking_rate && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Parking Rate:</span>
-                      <span className="font-medium">{property.parking_rate}</span>
+                      <span className="font-medium">
+                        {property.parking_rate}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -527,7 +536,10 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
             )}
 
             {/* Lease Information */}
-            {(property.lease_type || property.lease_structure || property.contract_term || property.condition) && (
+            {(property.lease_type ||
+              property.lease_structure ||
+              property.contract_term ||
+              property.condition) && (
               <div>
                 <h5 className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
                   <FileText className="w-4 h-4 mr-1" />
@@ -543,13 +555,17 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                   {property.lease_structure && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Structure:</span>
-                      <span className="font-medium">{property.lease_structure}</span>
+                      <span className="font-medium">
+                        {property.lease_structure}
+                      </span>
                     </div>
                   )}
                   {property.contract_term && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Term:</span>
-                      <span className="font-medium">{property.contract_term}</span>
+                      <span className="font-medium">
+                        {property.contract_term}
+                      </span>
                     </div>
                   )}
                   {property.condition && (
@@ -610,9 +626,7 @@ export const PropertiesOfInterest: React.FC<PropertiesOfInterestProps> = ({
                 <p className="text-sm font-medium text-yellow-800">
                   Broker Notes:
                 </p>
-                <p className="text-sm text-yellow-700">
-                  {property.suggestion}
-                </p>
+                <p className="text-sm text-yellow-700">{property.suggestion}</p>
               </div>
             </div>
           </div>

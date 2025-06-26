@@ -26,14 +26,25 @@ const UpdateSuggestionSchema = z.object({
    * The kind of entity that will be affected when the suggestion is applied.
    * Determines which table the update should target on the frontend.
    */
-  type: z
+  entityType: z
     .enum(["project", "property", "client_requirement"])
     .describe("Target entity type"),
 
   /**
-   * The primary-key ID of the existing entity that should be updated.
+   * The action to perform: update existing entity or insert new entity.
    */
-  entityId: z.string().describe("Database id of the entity to update"),
+  action: z
+    .enum(["update", "insert"])
+    .describe("Action to perform: update or insert"),
+
+  /**
+   * The primary-key ID of the existing entity that should be updated.
+   * Required for update, null for insert.
+   */
+  entityId: z
+    .string()
+    .nullable()
+    .describe("Database id of the entity to update (null for insert)"),
 
   /**
    * Human-readable name of the entity – e.g. the project title or property
@@ -42,20 +53,16 @@ const UpdateSuggestionSchema = z.object({
   entityName: z.string().describe("Display name of the entity"),
 
   /**
-   * The specific field/column that is being suggested for change.
+   * Complete set of new values for the entity.
+   * For updates: only include fields that are changing.
+   * For inserts: include all required fields.
    */
-  field: z.string().describe("Field to be updated"),
-
-  /**
-   * The current value in the database for this field (may be omitted if null
-   * or unknown at suggestion-time).
-   */
-  currentValue: z.string().optional().describe("Existing value (if any)"),
-
-  /**
-   * The value the AI recommends setting.
-   */
-  suggestedValue: z.string().describe("AI-proposed new value"),
+  values: z
+    .record(
+      z.string(),
+      z.union([z.string(), z.number(), z.boolean(), z.null()]),
+    )
+    .describe("Complete set of new values"),
 
   /**
    * Explanation from the AI about why this change is being proposed.
@@ -130,10 +137,7 @@ const generateAISuggestions = async (
     temperature: 0,
   });
 
-  // Create structured output chain
-  const structuredModel = model.withStructuredOutput(
-    UpdateSuggestionsArraySchema,
-  );
+  // Note: Using regular text output instead of structured output to avoid Google AI schema conflicts
 
   // Create streamlined context with only fields useful for AI suggestions
   const context = {
@@ -209,15 +213,15 @@ INPUT TEXT TO ANALYZE:
 CURRENT PROJECT DATA CONTEXT:
 ${JSON.stringify(context, null, 2)}
 
-Your task: Generate intelligent suggestions for updating existing project data based on the input text. 
+Your task: Generate intelligent suggestions for improving project data based on the input text.
 
 IMPORTANT INSTRUCTIONS:
-1. ONLY suggest updates to existing entities - do not create new records
-2. Only suggest updates for fields that have clear, confident matches in the input text
-3. Suggest realistic values that match the field data types
-4. Provide clear reasoning for each suggestion
-5. Return an array of update suggestions
-6. If the entity has no existing value for a field, omit the "currentValue" property entirely
+1. Suggest both UPDATES to existing entities and INSERTS for new entities when appropriate
+2. Only suggest operations when you have high-confidence evidence from the input text
+3. For updates: only include fields that are changing in the values object
+4. For inserts: include all required fields and any additional fields with clear evidence
+5. Provide clear reasoning for each suggestion
+6. Return an array of suggestions with proper action types
 
 Focus on extracting and updating:
 
@@ -244,9 +248,16 @@ Focus on extracting and updating:
 **IDENTIFIERS:**
 - For **every** suggestion:
   - id should be a unique suggestion identifier (can be any string) – _not_ a DB id.
-  - entityId must be the DB primary-key of the existing entity you intend to update.
+  - For UPDATE actions: entityId must be the DB primary-key of the existing entity
+  - For INSERT actions: entityId should be null
+  - action must be either "update" or "insert"
 
-If you cannot confidently determine the appropriate entityId for an existing entity, do **not** emit the suggestion.
+**REQUIRED FIELDS FOR INSERTS:**
+- Projects: title, status (default: "Active")
+- Properties: name, project_id (must reference existing project)
+- Client Requirements: project_id, category, requirement_text
+
+If you cannot confidently determine the appropriate entityId for an update, or cannot provide required fields for an insert, do **not** emit that suggestion.
 
 **RELATIONSHIP AWARENESS:**
 - Each project contains its own nested properties and requirements
@@ -259,18 +270,71 @@ If you cannot confidently determine the appropriate entityId for an existing ent
 - **Date fields** (desired_move_in_date, start_date) → use ISO-8601 format YYYY-MM-DD.
 - **DateTime fields** (tour_datetime) → use full ISO-8601 timestamp format YYYY-MM-DDTHH:mm:ss when time is known; otherwise YYYY-MM-DD.
 - **Enum-constrained fields** – return the value exactly as listed below (case sensitive):
-  • status: "active" | "new" | "pending" | "declined"
+  • property status: "new" | "active" | "pending" | "declined"
   • current_state: "Available" | "Under Review" | "Negotiating" | "On Hold" | "Declined"
   • tour_status: "Scheduled" | "Completed" | "Cancelled" | "Rescheduled"
+  • project status: "Active" | "Pending" | "Completed" | "On Hold"
+- **For SOFT DELETES**: set action to "update" and include deleted_at with ISO timestamp in values
 - If the input text suggests a value that does **not** conform to these rules, **omit** that suggestion entirely.
+
+**RESPONSE FORMAT:**
+Return exactly this JSON structure with no markdown formatting:
+[
+  {
+    "id": "unique-suggestion-id",
+    "entityType": "project|property|client_requirement",
+    "action": "update|insert",
+    "entityId": "existing-entity-id" | null,
+    "entityName": "Human readable name",
+    "values": {
+      "field_name": "properly_formatted_value"
+    },
+    "reasoning": "Why this suggestion is being made"
+  }
+]
+
+CRITICAL: Use "entityType" not "type" in your response.
 
 These formatting rules are critical for downstream processing – any suggestion that violates them will be discarded.`;
 
   try {
-    const suggestions = await structuredModel.invoke(prompt);
+    // Get text response from AI
+    const response = await model.invoke(prompt);
+    const responseText = response.content as string;
+
+    // Try to parse JSON from the response
+    let suggestions: UpdateSuggestion[];
+    try {
+      // Look for JSON array in the response
+      const jsonMatch = responseText.match(/\[.*\]/s);
+      if (!jsonMatch) {
+        console.log("No JSON array found in AI response:", responseText);
+        return [];
+      }
+
+      const jsonText = jsonMatch[0];
+      const parsedResponse = JSON.parse(jsonText);
+
+      // Transform the response to match our schema (handle type -> entityType)
+      const transformedResponse = parsedResponse.map(
+        (suggestion: Record<string, unknown>) => ({
+          ...suggestion,
+          entityType: suggestion.type || suggestion.entityType,
+          type: undefined, // Remove the old type field
+        }),
+      );
+
+      // Validate the transformed response against our schema
+      suggestions = UpdateSuggestionsArraySchema.parse(transformedResponse);
+    } catch (parseError) {
+      console.error("Error parsing AI response as JSON:", parseError);
+      console.log("Raw AI response:", responseText);
+      return [];
+    }
+
     return suggestions;
   } catch (error) {
-    console.error("Error calling LangChain structured output:", error);
+    console.error("Error calling Google AI:", error);
     // Fallback to empty suggestions if AI fails
     return [];
   }
