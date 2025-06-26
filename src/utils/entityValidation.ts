@@ -47,9 +47,7 @@ const DEFAULT_VALUES = {
 /**
  * Validate a suggestion payload before database operation (basic validation only)
  */
-function validateSuggestion(
-  suggestion: UpdateSuggestion,
-): ValidationResult {
+function validateSuggestion(suggestion: UpdateSuggestion): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -300,21 +298,4 @@ function validateProjectSuggestion(
       );
     }
   }
-}
-
-/**
- * Get human-readable field name for error messages
- */
-function getFieldDisplayName(field: string): string {
-  const fieldNames: Record<string, string> = {
-    project_id: "Project ID",
-    requirement_text: "Requirement Text",
-    current_state: "Current State",
-    order_key: "Order Key",
-  };
-
-  return (
-    fieldNames[field] ||
-    field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
-  );
 }
