@@ -132,11 +132,11 @@ export const ClientTourAvailabilityModal: React.FC<
       const proposedSlots = selectedDateTimes.map((dt) => dt.datetime);
 
       const { error } = await supabase.rpc("submit_client_tour_availability", {
-        share_id: shareId,
-        proposed_slots: proposedSlots,
-        client_name: clientName.trim() || undefined,
-        client_email: clientEmail.trim() || undefined,
-        notes: notes.trim() || undefined,
+        _share_id: shareId,
+        _proposed_slots: proposedSlots,
+        _client_name: clientName.trim() || undefined,
+        _client_email: clientEmail.trim() || undefined,
+        _notes: notes.trim() || undefined,
       });
 
       if (error) {

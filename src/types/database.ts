@@ -527,11 +527,11 @@ export type Database = {
       };
       submit_client_tour_availability: {
         Args: {
-          share_id: string;
-          proposed_slots: string[];
-          client_name?: string;
-          client_email?: string;
-          notes?: string;
+          _share_id: string;
+          _proposed_slots: string[];
+          _client_name?: string;
+          _client_email?: string;
+          _notes?: string;
         };
         Returns: number;
       };
